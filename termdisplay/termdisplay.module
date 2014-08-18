@@ -8,13 +8,19 @@
 function termdisplay_menu() {
   $items = array();
   $items['group/%'] = array(
-    'page callback' => 'termdisplay_show',
+    'page callback' => 'termdisplay_vocabulary',
     'page arguments' => array(1),
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
   );
   $items['mpper/%'] = array(
-    'page callback' => 'term_parent',
+    'page callback' => 'termdisplay_term_list',
+    'page arguments' => array(1),
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  $items['mpp/%'] = array(
+    'page callback' => 'termdisplay_node_list',
     'page arguments' => array(1),
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
@@ -27,9 +33,9 @@ function termdisplay_menu() {
  * @param int $vid
  * @return string
  */
-function termdisplay_show($vid) {
+function termdisplay_vocabulary($vid) {
   $terms = _taxonomy_get_real_tree($vid);
-  $output = theme('term_parent', $terms);
+  $output = theme('term_list', $terms);
   return $output;
 }
 
@@ -38,9 +44,21 @@ function termdisplay_show($vid) {
  * @param int $tid
  * @return string
  */
-function term_parent($tid) {
-  $children = taxonomy_get_children($tid);
-  $output = theme('term_parent', $children);
+function termdisplay_term_list($tid) {
+  $terms = taxonomy_get_children($tid);
+  $output = theme('term_list', $terms);
+  return $output;
+}
+
+function termdisplay_node_list($tid) {
+  $result = db_query("SELECT n.nid, n.title, n.status FROM {term_node} tn JOIN {node} n ON tn.nid = n.nid WHERE tn.tid = %d", $tid);
+  $items = array();
+  while ($row = db_fetch_object($result)) {
+    $items[$row->nid]->nid = $row->nid;
+    $items[$row->nid]->name = $row->title;
+    $items[$row->nid]->status = $row->title;
+  }
+  $output = theme('term_list', $items);
   return $output;
 }
 
@@ -50,9 +68,9 @@ function term_parent($tid) {
  */
 function termdisplay_theme() {
   return array(
-    'term_parent' => array(
+    'term_list' => array(
       'arguments' => array('terms' => array()),
-      'template' => 'term-parent',
+      'template' => 'term-list',
     ),
   );
 }
@@ -64,8 +82,7 @@ function termdisplay_theme() {
  * @param type $form_id
  */
 function termdisplay_form_alter(&$form, $form_state, $form_id) {
-  $args = arg();
-  $tid = $args[5];
+  $tid = arg(5);
   $status = taxonomy_get_term($tid)->status;
   if ($form_id == 'taxonomy_form_term') {
     $form['identification']['status'] = array(
@@ -151,12 +168,10 @@ function _taxonomy_get_real_tree($vid) {
     } else {
       $terms[$term->tid] = $term;
     }
-
     if ($term->depth === 0) {
       $result_tree[$term->tid] = &$terms[$term->tid];
       continue;
     }
-
     foreach ($term->parents as $tid) {
       if ($tid) {
         if (!isset($terms[$tid])) {
