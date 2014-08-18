@@ -1,14 +1,19 @@
 Author : Neil.Chen
 Module Name : Term Display
 
-menu  : group/% 
-menu  : mpper/% 
+Menu  : group/% 
+Display term on vocabulary
 
-theme : term-parent.tpl.php
-admin : admin/content/taxonomy
+Menu  : mpper/% 
+Display term on term
+
+Menu  : mpp/%
+Display node on term
+
+Theme : term-list.tpl.php
+Admin : admin/content/taxonomy
 
 This module add field status for table term_data, 
-use control taxonomy hide and show.
+Use control taxonomy hide and show.
 Enable the module will produce a page to display the taxonomy.
 This page name is Taxonomy display.
-
