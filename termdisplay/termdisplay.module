@@ -3,7 +3,7 @@
 /**
  * Author : Neil
  * Implementation of hook_menu()
- * @return array
+ * @return array $items
  */
 function termdisplay_menu() {
   $items = array();
@@ -31,7 +31,7 @@ function termdisplay_menu() {
 /**
  * menu callback group/%
  * @param int $vid
- * @return string
+ * @return string $output
  */
 function termdisplay_vocabulary($vid) {
   $terms = _taxonomy_get_real_tree($vid);
@@ -64,7 +64,7 @@ function termdisplay_node_list($tid) {
 
 /**
  * Implementation of hook_theme()
- * @return array
+ * @return array 
  */
 function termdisplay_theme() {
   return array(
@@ -77,9 +77,9 @@ function termdisplay_theme() {
 
 /**
  * Implementation of hook_form_alter()
- * @param type $form
- * @param type $form_state
- * @param type $form_id
+ * @param array $form
+ * @param array $form_state
+ * @param string $form_id
  */
 function termdisplay_form_alter(&$form, $form_state, $form_id) {
   $tid = arg(5);
@@ -101,8 +101,8 @@ function termdisplay_form_alter(&$form, $form_state, $form_id) {
 
 /**
  * Implementation of hook_form_submit()
- * @param type $form
- * @param type $form_state
+ * @param array $form
+ * @param array $form_state
  */
 function termdisplay_form_submit($form, &$form_state) {
   term_data_set('status', $form_state['values']['status'], $form['#term']['tid']);
@@ -110,53 +110,18 @@ function termdisplay_form_submit($form, &$form_state) {
 
 /**
  * Update set status field
- * @param type $field
- * @param type $value
- * @param type $id
+ * @param string $field
+ * @param string $value
+ * @param int $id
  */
 function term_data_set($field, $value, $id) {
   db_query("UPDATE {term_data} SET %s = '%s' WHERE tid = %d", $field, $value, $id);
 }
 
 /**
- * get_parent_node_count 
- * @param type $tid
- * @param type $vid
- * @param type $node_count
- * @return type
- */
-function get_parent_node_count($tid, $vid = 0, $node_count = 0) {
-  $children = taxonomy_get_children($tid, $vid);
-  if (!empty($children)) {
-    foreach ($children as $term) {
-      $children = taxonomy_get_children($term->tid, $vid);
-      if (!empty($children)) {
-        $node_count += get_parent_node_count($term->tid, $vid, $node_count);
-      } else {
-        $node_count += get_taxonomy_node_conut($term->tid);
-      }
-    }
-  } else {
-    $node_count += get_taxonomy_node_conut($tid);
-  }
-  return $node_count;
-}
-
-/**
- * get_taxonomy_node_conut
- * @param type $tid
- * @return type
- */
-function get_taxonomy_node_conut($tid) {
-  $sql = "SELECT COUNT(*) AS len FROM node n INNER JOIN term_node tn ON tn.nid = n.nid WHERE tn.tid = %d";
-  $result = db_result(db_query($sql, $tid));
-  return $result;
-}
-
-/**
  * _taxonomy_get_real_tree
- * @param type $vid
- * @return \stdClass
+ * @param int $vid
+ * @return array $result_tree
  */
 function _taxonomy_get_real_tree($vid) {
   $result_tree = array();

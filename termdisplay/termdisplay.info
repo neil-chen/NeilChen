@@ -3,6 +3,6 @@ name = Term Display
 description = Taxonomy display control (show or hide)
 package = Other
 core = 6.x
-version = 6.x-1.1
+version = 6.x-1.0
 
 dependencies[] = taxonomy
