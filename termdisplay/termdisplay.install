@@ -1,31 +1,45 @@
 <?php
-/*
+
+/**
  * Author : Neil
+ * add status field 
+ * control term show list
+ * Implementation of hook_install()
  */
 function termdisplay_install() {
-  $sql = "ALTER TABLE {term_data} Add status tinyint not null default 1";
+  $sql = "ALTER TABLE {term_data} Add status TINTINT NOT NULL default 1";
   db_query($sql);
 }
 
+/**
+ * Implementation of hook_schema()
+ */
 function termdisplay_schema() {
   //
 }
 
+/**
+ * delete status field 
+ * Implementation of hook_uninstall()
+ */
 function termdisplay_uninstall() {
   db_query("ALTER TABLE {term_data} DROP status");
 }
 
-// add field status to table term_data
+/**
+ * add field status to table term_data
+ * Implementation of hook_update_x()
+ * @return array
+ */
 function termdisplay_update_6001() {
   $ret = array();
   $status = array(
-    'type'      => 'int',
-    'size'      => 'tiny',
-    'unsigned'  => TRUE,
-    'not null'  => TRUE,
-    'default'   => 1,
+    'type' => 'int',
+    'size' => 'tiny',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+    'default' => 1,
   );
   db_add_field($ret, 'term_data', 'status', $status);
   return $ret;
 }
-

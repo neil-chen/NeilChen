@@ -1,9 +1,8 @@
-
 Author : Neil.Chen
 Module Name : Term Display
 
 menu  : group/% 
-menu  : mpp/% 
+menu  : mpper/% 
 
 theme : term-parent.tpl.php
 admin : admin/content/taxonomy

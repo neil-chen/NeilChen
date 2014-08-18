@@ -1,73 +1,114 @@
 <?php
-/*
+
+/**
  * Author : Neil
+ * Implementation of hook_menu()
+ * @return array
  */
 function termdisplay_menu() {
   $items = array();
   $items['group/%'] = array(
-      'page callback' => 'termdisplay_show',
-      'page arguments' => array(1),
-      'access arguments' => array('access content'),
-      'type' => MENU_CALLBACK,
+    'page callback' => 'termdisplay_show',
+    'page arguments' => array(1),
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
   );
   $items['mpper/%'] = array(
-      'page callback' => 'term_parent',
-      'page arguments' => array(1),
-      'access arguments' => array('access content'),
-      'type' => MENU_CALLBACK,
+    'page callback' => 'term_parent',
+    'page arguments' => array(1),
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
   );
   return $items;
 }
 
+/**
+ * menu callback group/%
+ * @param int $vid
+ * @return string
+ */
 function termdisplay_show($vid) {
   $terms = _taxonomy_get_real_tree($vid);
   $output = theme('term_parent', $terms);
   return $output;
 }
 
+/**
+ * menu callback mpper/%
+ * @param int $tid
+ * @return string
+ */
 function term_parent($tid) {
   $children = taxonomy_get_children($tid);
   $output = theme('term_parent', $children);
   return $output;
 }
 
+/**
+ * Implementation of hook_theme()
+ * @return array
+ */
 function termdisplay_theme() {
   return array(
-      'term_parent' => array(
-          'arguments' => array('terms' => array()),
-          'template' => 'term-parent',
-      ),
+    'term_parent' => array(
+      'arguments' => array('terms' => array()),
+      'template' => 'term-parent',
+    ),
   );
 }
 
+/**
+ * Implementation of hook_form_alter()
+ * @param type $form
+ * @param type $form_state
+ * @param type $form_id
+ */
 function termdisplay_form_alter(&$form, $form_state, $form_id) {
   $args = arg();
   $tid = $args[5];
   $status = taxonomy_get_term($tid)->status;
   if ($form_id == 'taxonomy_form_term') {
     $form['identification']['status'] = array(
-        '#type' => 'select',
-        '#title' => t('Display'),
-        '#default_value' => $status,
-        '#options' => array(
-            '1' => 'Show',
-            '0' => 'Hide',
-        ),
-        '#description' => t('This term display?'),
+      '#type' => 'select',
+      '#title' => t('Display'),
+      '#default_value' => $status,
+      '#options' => array(
+        '1' => 'Show',
+        '0' => 'Hide',
+      ),
+      '#description' => t('This term display?'),
     );
     $form['#submit'][] = 'termdisplay_form_submit';
   }
 }
 
+/**
+ * Implementation of hook_form_submit()
+ * @param type $form
+ * @param type $form_state
+ */
 function termdisplay_form_submit($form, &$form_state) {
   term_data_set('status', $form_state['values']['status'], $form['#term']['tid']);
 }
 
+/**
+ * Update set status field
+ * @param type $field
+ * @param type $value
+ * @param type $id
+ */
 function term_data_set($field, $value, $id) {
   db_query("UPDATE {term_data} SET %s = '%s' WHERE tid = %d", $field, $value, $id);
 }
 
-function get_parent_node_count($tid, $vid=0, $node_count=0) {
+/**
+ * get_parent_node_count 
+ * @param type $tid
+ * @param type $vid
+ * @param type $node_count
+ * @return type
+ */
+function get_parent_node_count($tid, $vid = 0, $node_count = 0) {
   $children = taxonomy_get_children($tid, $vid);
   if (!empty($children)) {
     foreach ($children as $term) {
@@ -84,12 +125,22 @@ function get_parent_node_count($tid, $vid=0, $node_count=0) {
   return $node_count;
 }
 
+/**
+ * get_taxonomy_node_conut
+ * @param type $tid
+ * @return type
+ */
 function get_taxonomy_node_conut($tid) {
   $sql = "SELECT COUNT(*) AS len FROM node n INNER JOIN term_node tn ON tn.nid = n.nid WHERE tn.tid = %d";
   $result = db_result(db_query($sql, $tid));
   return $result;
 }
 
+/**
+ * _taxonomy_get_real_tree
+ * @param type $vid
+ * @return \stdClass
+ */
 function _taxonomy_get_real_tree($vid) {
   $result_tree = array();
   $terms = array();
