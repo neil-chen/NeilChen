@@ -6,5 +6,18 @@ drupal : About drupal php script.
 
 popup : Is a jQuery popup div.
 
-plupload : Fixed plupload connection reset
+plupload : Fixed plupload-1.x connection reset
 
+# Clones a repository to your computer
+# Use https 
+git clone https://github.com/neil-chen/NeilChen.git
+# Use ssh
+git clone git@github.com:neil-chen/NeilChen.git
+
+git fetch origin 
+
+git checkout master
+
+git pull
+
+git push origin BRANCHNAME
