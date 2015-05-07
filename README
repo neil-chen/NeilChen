@@ -6,3 +6,5 @@ drupal : About drupal php script.
 
 popup : Is a jQuery popup div.
 
+plupload : Fixed plupload connection reset
+
