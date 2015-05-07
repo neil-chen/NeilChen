@@ -680,7 +680,11 @@
 											status : httpStatus,
 											response : xhr.responseText
 										});
-									} else {
+									} else if (!xhr || !xhr.responseText || xhr.responseText == '' || xhr == '') {
+                    //added by neil, fix connection reset chunk miss 
+                    //if callback has not response , upload current chunk 
+                    uploadNextChunk();
+                  } else {
 										// Handle chunk response
 										if (chunks) {
 											chunkArgs = {
