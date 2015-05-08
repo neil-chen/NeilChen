@@ -1,0 +1,319 @@
+<?php
+
+/**
+ * Implementation of hook_install().
+ */
+function covidien_device_install() {
+  $files = file_scan_directory(drupal_get_path('module', 'covidien_device') . '/content_type', '.cck_import.inc');
+  foreach ($files as $absolute => $file) {
+    $form_state = array();
+    $form_state['values']['type_name'] = '<create>';
+    $fh = fopen($file->filename, 'r');
+    $theData = fread($fh, filesize($file->filename));
+    fclose($fh);
+    $form_state['values']['macro'] = "$theData";
+    drupal_execute('content_copy_import_form', $form_state);
+  }
+  covidien_device_update_6001();
+}
+
+// Uninstall Instruction
+function covidien_device_uninstall() {
+  
+}
+
+function covidien_device_update_6001() {
+  module_load_include('php', 'covidien_ui', 'includes/content_copy_import_update');
+
+  if (db_table_exists('device_component_download') == FALSE) {
+    drupal_install_schema('covidien_device');
+  }
+
+  $ret = array();
+  // List of new content types to import.
+  $import_new = array();
+  //Example 'contenttype.cck_import'
+  // List of content types to update.  
+  $import_updatearr = array(
+    'device_discrepancy.cck_import' => 'device_discrepancy',
+    'device.cck_import' => 'device',
+  );
+  // For delete action update the update action array also.
+  $import_deletearr = array();
+  //Example 'contenttype.cck_import'=>array('field_one'),
+
+  $arg = array(
+    'module_name' => 'covidien_device',
+    'import_new' => $import_new,
+    'import_updatearr' => $import_updatearr,
+    'import_deletearr' => $import_deletearr,
+  );
+  covidien_contenttype_update($arg);
+  return $ret;
+}
+
+function covidien_device_schema() {
+  $schema['device_component_download'] = array(
+    'fields' => array(
+      'id' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'device_nid' => array(
+        'type' => 'int',
+        'length' => 11,
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      ),
+      'from_component_nid' => array(
+        'type' => 'int',
+        'length' => 11,
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      ),
+      'to_component_nid' => array(
+        'type' => 'int',
+        'length' => 11,
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      ),
+      'user_id' => array(
+        'type' => 'int',
+        'length' => 11,
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      ),
+      'download_time' => array(
+        'type' => 'datetime',
+        'not null' => FALSE,
+      ),
+      'service_history' => array(
+        'type' => 'int',
+        'length' => 11,
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('id'),
+  );
+  return $schema;
+}
+
+/**
+ * Implements hook_update
+ * used on March 2013
+ */
+function covidien_device_update_6002() {
+  module_load_include('php', 'covidien_ui', 'includes/content_copy_import_update');
+  $ret = array();
+  // List of new content types to import.
+  $import_new = array();
+  //Example 'contenttype.cck_import'
+  // List of content types to update.  
+  $import_updatearr = array(
+    'device.cck_import' => 'device',
+  );
+  // For delete action update the update action array also.
+  $import_deletearr = array();
+  //Example 'contenttype.cck_import'=>array('field_one'),  
+  $arg = array(
+    'module_name' => 'covidien_device',
+    'import_new' => $import_new,
+    'import_updatearr' => $import_updatearr,
+    'import_deletearr' => $import_deletearr,
+  );
+  covidien_contenttype_update($arg);
+  return $ret;
+}
+
+/**
+ * Implements hook_update
+ * Content type changes for ETL data
+ */
+function covidien_device_update_6003() {
+  module_load_include('php', 'covidien_ui', 'includes/content_copy_import_update');
+  $ret = array();
+  // List of new content types to import.
+  //$import_new = array('sample.cck_import');
+  $import_new = array();
+  //Example 'contenttype.cck_import' 
+  // List of content types to update.
+  $import_updatearr = array(
+    'device.cck_import' => 'device',
+  );
+  // For delete action update the update action array also.If the content type not deleted
+  // @info: If content type deleted follow the below process
+  $import_deletearr = array();
+  $import_ctdeletearr = array();
+  //Example 'contenttype.cck_import'=>array('field_one'),  
+  $arg = array(
+    'module_name' => 'covidien_device',
+    'import_new' => $import_new,
+    'import_updatearr' => $import_updatearr,
+    'import_deletearr' => $import_deletearr,
+    'import_ctdeletearr' => $import_ctdeletearr,
+  );
+  covidien_contenttype_update($arg);
+  return $ret;
+}
+
+/**
+ * update customer name to account number on content_type_device 
+ */
+function covidien_device_update_6004() {
+  $sql = "SELECT c.field_customer_party_pk_nid AS customer_nid, c.nid AS account_nid
+        FROM {content_type_device} d
+        JOIN {content_type_bu_customer} c ON d.field_device_owner_nid = c.field_customer_party_pk_nid
+        GROUP BY c.nid";
+  $result = db_query($sql);
+  $update = "UPDATE {content_type_device} SET field_device_owner_nid = %d WHERE field_device_owner_nid = %d";
+  while ($row = db_fetch_object($result)) {
+    //update change customer_nid to account_nid
+    db_query($update, $row->account_nid, $row->customer_nid);
+  }
+  return array(array('success' => true, 'query' => 'Update Customer Name nid to Customer Account Number nid on content_type_device'));
+}
+
+/**
+ * Install the covidien_seeddata module.
+ */
+function covidien_device_update_6005() {
+  $ret = array();
+  $field = array('type' => 'varchar', 'length' => 255, 'description' => 'Guid.');
+  db_add_field($ret, 'content_type_devicetype', 'device_type_guid', $field);
+  return $ret;
+}
+
+
+/** V3.0 **/
+
+
+/**
+ * Update content_type_devicetype add field device_type_gateway_version
+ * @return array
+ */
+function covidien_device_update_6006() {
+  $alter_sql = "ALTER TABLE `content_type_devicetype` ADD COLUMN `device_type_gateway_version` varchar(10) NOT NULL DEFAULT 0 AFTER `device_type_guid`;";
+  db_query($alter_sql);
+  return array(array('success' => true, 'query' => 'Update content_type_devicetype add field device_type_gateway_version'));
+}
+
+/**
+ * create_sn_reprogramming_table
+ * create table sn_reserved_list sn_reprogram_history
+ */
+function create_sn_reprogramming_table() {
+  db_query("CREATE TABLE `sn_reprogram_history` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `originator_device_nid` int(11) DEFAULT NULL COMMENT 'which device client used when sending update message for SN. device type can also be retrieved by looking at it.',
+  `old_sn` varchar(128) DEFAULT NULL COMMENT 'old serial number',
+  `new_sn` varchar(128) DEFAULT NULL COMMENT 'new serial number',
+  `date_time` int(11) DEFAULT NULL COMMENT 'timestamp of receiving SN reprogramming message. UTC',
+  `description` varchar(256) DEFAULT NULL,
+  `is_spare_update` int(1) DEFAULT NULL COMMENT 'device from manufacture will have a spare SN number. before deliverying to filed, it should be updated to real acceptable SN.',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_UNIQUE` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8 COMMENT='history of serial number reprogramming';");
+  db_query("CREATE TABLE `sn_reserved_list` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `device_type_nid` int(11) NOT NULL,
+  `reserved_sn` varchar(128) NOT NULL COMMENT 'serial number reserved for manufacture, and should not be seen from field',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `id_UNIQUE` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COMMENT='serial number reserved for manufacture should not be seen fr';");
+}
+
+/**
+ * sn_reprogramming
+ * @return array
+ */
+function covidien_device_update_6007() {
+  create_sn_reprogramming_table();
+  return array(array('success' => true, 'query' => 'Create table sn_reserved_list sn_reprogram_history for serial number reprogramming'));
+}
+
+function covidien_device_update_6008() {
+  $ret = array();
+  $field = array('type' => 'int', 'length' => 11, 'description' => 'region');
+  db_add_field($ret, 'content_type_device', 'region_nid', $field);
+  return $ret;
+}
+
+/**
+ * Create table device_country_change_history
+ */
+function create_device_country_change_history_table() {
+  db_query("CREATE TABLE `device_country_change_history` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `originator_device_nid` int(11) NOT NULL COMMENT 'nid of device instance which country has changed',
+    `user_nid` int(11) NOT NULL COMMENT 'nid of current user',
+    `old_country_nid` int(11) NOT NULL COMMENT 'nid of old country',
+    `new_country_nid` int(11) NOT NULL COMMENT 'nid of new country',
+    `date_time` int(11) NOT NULL COMMENT 'timestamp contained in the postnotification which reports the new device country',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `idx_UNIQUE` (`id`)
+  ) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8 COMMENT='history of device country change';");
+}
+
+/**
+ * Create device country change history
+ * @return array
+ */
+function covidien_device_update_6009() {
+  create_device_country_change_history_table();
+  return array(array('success' => true, 'query' => 'Create table device_country_change_history for device country change history'));
+}
+
+function covidien_device_update_6010() {
+  $region_array = array(
+    'NONE',
+    'Asia',
+    'Australia',
+    'Canada',
+    'Emerging Markets',
+    'Europe A',
+    'Europe B',
+    'Japan',
+    'Latin America',
+    'United States',
+    'Covidien',
+  );
+  foreach ($region_array as $region_name) {
+    $nid = db_result(db_query("SELECT nid FROM {node} WHERE type='region' AND title='%s'", $region_name));
+    if (!$nid) {
+      $node = new stdClass();
+      $node->type = 'region';
+      $node->uid = 1;
+      $node->format = 0;
+      $node->title = $region_name;
+      node_save($node);
+    }
+  }
+  return array(array('success' => true, 'query' => 'Insert region list'));
+}
+
+/**
+ * Create table device_customer_history
+ */
+function create_device_customer_history_table() {
+  db_query("CREATE TABLE `device_customer_history` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `originator_device_nid` int(11) NOT NULL COMMENT 'nid of device instance which need to check customer address change',
+    `user_nid` int(11) NOT NULL COMMENT 'nid of current user',
+    `customer_name` varchar(255) NOT NULL COMMENT 'customer name',
+    `customer_address` varchar(255) NOT NULL COMMENT 'customer address',
+    `date_time` int(11) NOT NULL COMMENT 'timestamp of when this change happened',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `idx_UNIQUE` (`id`)
+  ) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8 COMMENT='history of device customer change';");
+}
+
+/**
+ * Create device customer change history
+ * @return array
+ */
+function covidien_device_update_6012() {
+  create_device_customer_history_table();
+  return array(array('success' => true, 'query' => 'Create table device_customer_history for device customer history information'));
+}

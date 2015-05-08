@@ -1,0 +1,182 @@
+<?php
+
+/**
+ * Implementation of hook_install().
+ */
+function covidien_ui_install() {
+
+  $files = file_scan_directory(drupal_get_path('module', 'covidien_ui') . '/content_type', '.cck_import.inc');
+  foreach ($files as $absolute => $file) {
+    $form_state = array();
+    $form_state['values']['type_name'] = '<create>';
+    $fh = fopen($file->filename, 'r');
+    $theData = fread($fh, filesize($file->filename));
+    fclose($fh);
+    $form_state['values']['macro'] = "$theData";
+    drupal_execute('content_copy_import_form', $form_state);
+  }
+  variable_set('covidien_ui_version', '3.0.3');
+  variable_set('covidien_ui_base_version', '3.0.3');
+  $ui_update_path = array();
+  variable_set('covidien_ui_update_path', serialize($ui_update_path));
+}
+
+// Uninstall Instruction
+function covidien_ui_uninstall() {
+  
+}
+
+/**
+ * Implements hook_update
+ * March 2013
+ */
+function covidien_ui_update_6001() {
+  module_load_include('php', 'covidien_ui', 'includes/content_copy_import_update');
+  $ret = array();
+  // List of new content types to import.
+  $import_new = array();
+  //Example 'contenttype.cck_import'
+  // List of content types to update.
+  $import_updatearr = array(
+    'devicetype.cck_import' => 'devicetype',
+  );
+  // For delete action update the update action array also.
+  $import_deletearr = array();
+  //Example 'contenttype.cck_import' => array('field_one'), 
+  $arg = array(
+    'module_name' => 'covidien_ui',
+    'import_new' => $import_new,
+    'import_updatearr' => $import_updatearr,
+    'import_deletearr' => $import_deletearr,
+  );
+  covidien_contenttype_update($arg);
+  /**
+   * Users modules CCK update and report update order conflict to avoid.
+   */
+  // List of new content types to import.
+  //$import_new = array('sample.cck_import');
+  $import_new = array('person_training_record.cck_import');
+  //Example 'contenttype.cck_import'
+  // List of content types to update.
+  $import_updatearr = array(
+    'person_application_role.cck_import' => 'person_application_role',
+    'person.cck_import' => 'person',
+  );
+  // For delete action update the update action array also.
+  $import_deletearr = array();
+  //Example 'contenttype.cck_import' => array('field_one'), 
+  $arg = array(
+    'module_name' => 'covidien_users',
+    'import_new' => $import_new,
+    'import_updatearr' => $import_updatearr,
+    'import_deletearr' => $import_deletearr,
+  );
+  covidien_contenttype_update($arg);
+  return $ret;
+}
+
+/**
+ * Implements hook_update
+ * May 2013 9.2
+ */
+function covidien_ui_update_6004() {
+  module_load_include('php', 'covidien_ui', 'includes/content_copy_import_update');
+  $ret = array();
+  // List of new content types to import.
+  $import_new = array('sku.cck_import');
+  //Example 'contenttype.cck_import'
+  // List of content types to update.
+  $import_updatearr = array();
+  // For delete action update the update action array also.
+  $import_deletearr = array();
+  //Example 'contenttype.cck_import' => array('field_one'), 
+  $arg = array(
+    'module_name' => 'covidien_ui',
+    'import_new' => $import_new,
+    'import_updatearr' => $import_updatearr,
+    'import_deletearr' => $import_deletearr,
+  );
+  covidien_contenttype_update($arg);
+
+  return $ret;
+}
+
+/**
+ * Implements hook_update
+ * Jul 2013
+ */
+function covidien_ui_update_6008() {
+  module_load_include('php', 'covidien_ui', 'includes/content_copy_import_update');
+  $ret = array();
+  // List of new content types to import.
+  $import_new = array();
+  //Example 'contenttype.cck_import'
+  // List of content types to update.
+  $import_updatearr = array(
+    'devicetype.cck_import' => 'devicetype',
+  );
+  // For delete action update the update action array also.
+  $import_deletearr = array();
+  //Example 'contenttype.cck_import' => array('field_one'), 
+  $arg = array(
+    'module_name' => 'covidien_ui',
+    'import_new' => $import_new,
+    'import_updatearr' => $import_updatearr,
+    'import_deletearr' => $import_deletearr,
+  );
+  covidien_contenttype_update($arg);
+  return $ret;
+}
+
+/**
+ * Install the covidien_seeddata module.
+ */
+function covidien_ui_update_6105() {
+  $ret = array();
+  $module_name = 'covidien_seeddata';
+  $result = db_result(db_query("SELECT status FROM {system} WHERE name = '%s'", $module_name));
+
+  if ($result === false) {
+    drupal_install_modules(array($module_name));
+  } elseif ($result === 0) {
+    module_enable(array($module_name));
+  }
+
+  return $ret;
+}
+
+/**
+ * Helper function for UI version update
+ */
+function covidien_version_update($version) {
+  $ui_update_path = variable_get('covidien_ui_update_path', '');
+  if (empty($ui_update_path)) {
+    $ui_update_path = array();
+  } else {
+    $ui_update_path = unserialize($ui_update_path);
+  }
+  $ui_update_path[] = variable_get('covidien_ui_version', '');
+  variable_set('covidien_ui_update_path', serialize($ui_update_path));
+  variable_set('covidien_ui_version', $version);
+  return true;
+}
+
+/**
+ * Upgrade to 3.0.10
+ * May 5, 2015
+ */
+function covidien_ui_update_6111() {
+  $ret = array();
+  covidien_version_update('3.0.10');
+  return $ret;
+}
+
+/**
+ * GATEWAY-2971 Added plupload module using on software file upload
+ * Install the plupload module.
+ */
+function covidien_ui_update_6112() {
+  $module_list = array('plupload');
+  drupal_install_modules($module_list);
+  return array(array('success' => true, 'query' => 'Install plupload module'));
+}

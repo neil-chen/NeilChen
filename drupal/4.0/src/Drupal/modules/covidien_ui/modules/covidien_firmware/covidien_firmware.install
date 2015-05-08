@@ -1,0 +1,248 @@
+<?php
+
+/**
+ * @file
+ * Install, update, and uninstall functions for Covidien Users module.
+ */
+function covidien_firmware_install() {
+  //create table firmware
+  $firmware = "CREATE TABLE IF NOT EXISTS `firmware` (
+      `vid` int(11) NOT NULL,
+      `nid` int(11) NOT NULL,
+      `part` varchar(50) DEFAULT NULL,
+      `version` varchar(50) DEFAULT NULL,
+      `device_type_id` int(10) DEFAULT NULL,
+      `description` varchar(255) DEFAULT NULL,
+      `file` varchar(255) DEFAULT NULL,
+      `file_id` int(10) DEFAULT NULL,
+      `file_integrity_check_value` varchar(50) DEFAULT NULL,
+      `type_id` int(10) DEFAULT '0',
+      `status` int(10) DEFAULT '0',
+      PRIMARY KEY (`vid`,`nid`),
+      KEY `fm_nid_idx` (`nid`),
+      KEY `fm_vid_idx` (`vid`),
+      KEY `fm_pt_version_idx` (`part`,`version`),
+      KEY `fm_device_type_nid_idx` (`device_type_id`)
+  	) ENGINE=InnoDB DEFAULT CHARSET=utf8";
+  db_query($firmware);
+  //create table firmware_status
+  $firmware_status = "CREATE TABLE `firmware_status` (
+    `id` int(10) NOT NULL AUTO_INCREMENT,
+    `name` varchar(20) NOT NULL,
+    PRIMARY KEY (`id`)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
+  db_query($firmware_status);
+  //create table firmware_type
+  $firmware_type = "CREATE TABLE IF NOT EXISTS `firmware_type` (
+    `id` int(11) NOT NULL,
+    `name` varchar(30) DEFAULT NULL,
+    PRIMARY KEY (`id`)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
+  db_query($firmware_type);
+  //insert firmware status 3 rows
+  db_query("INSERT INTO {firmware_status} (name) VALUES ('Limited Release'),('In Production'),('Archived')");
+  //create firmware exception
+  $firmware_exception = "CREATE TABLE IF NOT EXISTS `firmware_exception` ( `firmware_nid` INT(10) NOT NULL,`country_nid` INT(10) NOT NULL) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
+  db_query($firmware_exception);
+  //add roles for firmware
+  _covidien_firmware_add_roles_section();
+  covidien_firmware_update_6002();
+  covidien_firmware_update_6003();
+  covidien_firmware_update_6004();
+  covidien_firmware_update_6100();
+  covidien_firmware_update_6101();
+  covidien_firmware_update_6102();
+  covidien_firmware_update_6103();
+  covidien_firmware_update_6104();
+  return 'Create firmware table.';
+}
+
+function covidien_firmware_uninstall() {
+  $firmware_access_node = node_load(array('title' => 'Firmware catalog Tab', 'type' => 'app_section'));
+  $section_option['no'] = node_load(array('title' => 'auto section_access_option Firmware Management Tab-No', 'type' => 'section_access_option'));
+  $section_option['view'] = node_load(array('title' => 'auto section_access_option Firmware Management Tab-View Only', 'type' => 'section_access_option'));
+  $section_option['edit'] = node_load(array('title' => 'auto section_access_option Firmware Management Tab-View & Edit', 'type' => 'section_access_option'));
+  if ($firmware_access_node) {
+    node_delete($firmware_access_node->nid);
+  }
+  if ($section_option['no']) {
+    node_delete($section_option['no']->nid);
+  }
+  if ($section_option['view']) {
+    node_delete($section_option['view']->nid);
+  }
+  if ($section_option['edit']) {
+    node_delete($section_option['edit']->nid);
+  }
+  return 'Delete firmware role.';
+}
+
+function _covidien_firmware_add_roles_section() {
+  $firmware_access_node = node_load(array('title' => 'Firmware catalog Tab', 'type' => 'app_section'));
+  if ($firmware_access_node) {
+    return;
+  }
+  $catalog_section_tab = db_result(db_query("SELECT nid FROM node WHERE TYPE='app_section' AND title='Catalog Management Section'"));
+  $node = new stdClass();
+  $node->type = 'app_section';
+  $node->status = 1;
+  $node->uid = 1;
+  $node->title = 'Firmware catalog Tab';
+  $node->field_ipermit_class[0]['value'] = 0;
+  $node->field_parent_access_section[0]['nid'] = $catalog_section_tab;
+  $node->field_section_name[0]['value'] = 'Firmware catalog Tab';
+  $node->name = 'admin';
+  //add Firmware catalog Tab to access roles
+  node_save($node);
+  $nid = $node->nid;
+
+  $section_option['no'] = db_result(db_query("SELECT nid FROM node WHERE TYPE='access_option' AND title='No'"));
+  $node = new stdClass();
+  $node->type = 'section_access_option';
+  $node->status = 1;
+  $node->uid = 1;
+  $node->title = 'auto section_access_option Firmware Management Tab-No';
+  $node->field_access_option[0]['nid'] = $section_option['no'];
+  $node->field_app_section[0]['nid'] = $nid;
+  $node->name = 'admin';
+  //add Firmware catalog section to access roles
+  node_save($node);
+
+  $section_option['view'] = db_result(db_query("SELECT nid FROM node WHERE TYPE='access_option' AND title='View Only'"));
+  $node = new stdClass();
+  $node->type = 'section_access_option';
+  $node->status = 1;
+  $node->uid = 1;
+  $node->title = 'auto section_access_option Firmware Management Tab-View Only';
+  $node->field_access_option[0]['nid'] = $section_option['view'];
+  $node->field_app_section[0]['nid'] = $nid;
+  $node->name = 'admin';
+  //add Firmware catalog section to access roles
+  node_save($node);
+
+  $section_option['edit'] = db_result(db_query("SELECT nid FROM node WHERE TYPE='access_option' AND title='View & Edit'"));
+  $node = new stdClass();
+  $node->type = 'section_access_option';
+  $node->status = 1;
+  $node->uid = 1;
+  $node->title = 'auto section_access_option Firmware Management Tab-View & Edit';
+  $node->field_access_option[0]['nid'] = $section_option['edit'];
+  $node->field_app_section[0]['nid'] = $nid;
+  $node->name = 'admin';
+  //add Firmware catalog section to access roles
+  node_save($node);
+}
+
+function covidien_firmware_update_6002() {
+  $view_firmware = "CREATE OR REPLACE VIEW `view_firmware` AS (
+select  `n`.`nid` AS `nid`,  `n`.`title` AS `title`,  `f`.`part` AS `part`,  `f`.`version` AS `version`,  `f`.`device_type_id` AS `device_type_id`,  `f`.`description` AS `description`,  `f`.`file` AS `file`,  `f`.`file_id` AS `file_id`,  `n`.`created` AS `create_time`,  `n`.`changed` AS `update_time`,  `f`.`type_id` AS `type_id`,  `f`.`status` AS `status` from (`firmware` `f`  join `node` `n`  on ((`n`.`nid` = `f`.`nid`))));";
+
+  db_query($view_firmware);
+
+  return array(array('success' => true, 'query' => 'Create view_firmware'));
+}
+
+function covidien_firmware_update_6003() {
+  //get all cot admin roles nids
+  $role_result = db_query("SELECT nid FROM {node} WHERE title = '%s' AND type = 'roles'", 'Cot Admin');
+  $role_rows = array();
+  while ($role_row = db_fetch_object($role_result)) {
+    $role_rows[$role_row->nid] = $role_row->nid;
+  }
+  //get firmware option nid
+  $firmware_edit_nid = db_result(db_query("SELECT nid FROM {node} WHERE title LIKE '%s' AND type = 'section_access_option'", '%Firmware%Edit%'));
+  //get old firmware access nid by cot admin 
+  $query_args = array_merge(array('%Firmware%'), $role_rows);
+  $firmware_option_result = db_query("SELECT arap.nid FROM {node} n
+    JOIN {content_type_app_role_access_policy arap} ON n.nid = arap.field_section_access_option_nid
+    WHERE title LIKE '%s' AND TYPE = 'section_access_option' AND arap.field_app_role_nid IN (" . db_placeholders($role_rows) . ")", $query_args);
+  $firmware_access = array();
+  while ($row = db_fetch_object($firmware_option_result)) {
+    $firmware_access[$row->nid] = $row->nid;
+  }
+  //delete old firmware access by cot admin 
+  foreach ($firmware_access as $access_nid) {
+    node_delete($access_nid);
+  }
+
+  //save cot admin default access is edit
+  foreach ($role_rows as $role_nid) {
+    $node = new stdClass();
+    $node->type = 'app_role_access_policy';
+    $node->uid = 1;
+    $node->format = 0;
+    $node->title = 'Roles Access';
+    $node->field_app_role[] = array('nid' => $role_nid);
+    $node->field_section_access_option[] = array('nid' => $firmware_edit_nid);
+    node_save($node);
+  }
+  return array(array('success' => true, 'query' => 'Update All Cot Admin Firmware Access to Edit.'));
+}
+
+function covidien_firmware_update_6004() {
+  $view_firmware = "CREATE OR REPLACE VIEW `view_firmware` AS (
+select  `n`.`nid` AS `nid`, `n`.`vid` AS `vid`, `n`.`title` AS `title`,  `f`.`part` AS `part`,  `f`.`version` AS `version`,  `f`.`device_type_id` AS `device_type_id`,  `f`.`description` AS `description`,`fs`.`name` AS `status`, `f`.`file` AS `file`,  `f`.`file_id` AS `file_id`,  `n`.`created` AS `create_time`,  `n`.`changed` AS `update_time`,  `f`.`type_id` AS `type_id` from `firmware` `f`  join `node` `n`  on `n`.`nid` = `f`.`nid` join `firmware_status` `fs` on `f`.`status` = `fs`.`id`);";
+
+  db_query($view_firmware);
+
+  return array(array('success' => true, 'query' => 'Change status of view_firmware from id to name'));
+}
+
+function covidien_firmware_update_6100() {
+  db_query("INSERT INTO {firmware_status} (name) VALUES ('Obsolete')");
+  return array(array('success' => true, 'query' => 'Add firmware status Obsolete'));
+}
+
+function covidien_firmware_update_6101() {
+  $result = db_query("SELECT f.nid FROM {firmware} f 
+    LEFT JOIN {firmware_status} s ON f.status=s.id
+    WHERE s.name='Obsolete' OR s.name IS NULL");
+  $rows = array();
+  while ($row = db_fetch_object($result)) {
+    $rows[$row->nid] = $row->nid;
+  }
+  //update old Obsolete to Archived
+  if (count($rows)) {
+    $status_id = db_result(db_query("SELECT id FROM {firmware_status} WHERE name='Archived'"));
+    db_query("UPDATE {named_configuration} SET status=%d WHERE nid IN (" . db_placeholders($rows) . ")", array_merge(array($status_id), $rows));
+  }
+  db_query("DELETE FROM {firmware_status} WHERE name='Obsolete'");
+  return array(array('success' => true, 'query' => 'Remove firmware status Obsolete'));
+}
+
+function covidien_firmware_update_6102() {
+  $view_firmware = "CREATE OR REPLACE VIEW `view_firmware` AS (
+select  `n`.`nid` AS `nid`, `n`.`vid` AS `vid`, `n`.`title` AS `title`,  `f`.`part` AS `part`,  `f`.`version` AS `version`,  `f`.`device_type_id` AS `device_type_id`,  `f`.`description` AS `description`,`fs`.`name` AS `status`, `files`.`filepath` AS `uri`,  `f`.`file_id` AS `file_id`, `f`.`file_integrity_check_value`, `n`.`created` AS `create_time`,  `n`.`changed` AS `update_time`,  `f`.`type_id` AS `type_id` from `firmware` `f`  join `node` `n`  on `n`.`nid` = `f`.`nid` join `firmware_status` `fs` on `f`.`status` = `fs`.`id` left join `files` on `f`.`file_id` = `files`.`fid`);";
+
+  db_query($view_firmware);
+
+  module_load_include('module', 'covidien_ui');
+  covidien_update_log('Finished ' . __FUNCTION__);
+
+  return array(array('success' => true, 'query' => 'add file_integrity_check_value to view_firmware'));
+}
+
+function covidien_firmware_update_6103() {
+  module_load_include('module', 'covidien_ui');
+  covidien_update_log('Run ' . __FUNCTION__);
+
+  $view_firmware = "CREATE OR REPLACE VIEW `view_firmware` AS (
+    select  `n`.`nid` AS `nid`, `n`.`vid` AS `vid`, `n`.`title` AS `title`,  `f`.`part` AS `part`,  `f`.`version` AS `version`,  `f`.`device_type_id` AS `device_type_id`,  `f`.`description` AS `description`,`fs`.`name` AS `status`, `files`.`filepath` AS `uri`, `files`.`filesize`, `f`.`file_id` AS `file_id`, `f`.`file_integrity_check_value`, `n`.`created` AS `create_time`,  `n`.`changed` AS `update_time`,  `f`.`type_id` AS `type_id` from `firmware` `f`  join `node` `n`  on `n`.`nid` = `f`.`nid` join `firmware_status` `fs` on `f`.`status` = `fs`.`id` left join `files` on `f`.`file_id` = `files`.`fid`);";
+
+  db_query($view_firmware);
+
+  module_load_include('module', 'covidien_ui');
+  covidien_update_log('Finished ' . __FUNCTION__);
+
+  return array(array('success' => true, 'query' => 'add file size to view_firmware'));
+}
+
+function covidien_firmware_update_6104() {
+  //firmware_status
+  $status_id = db_result(db_query("SELECT id FROM {firmware_status} WHERE name='%s'", 'Unknown'));
+  if ($status_id) {
+    return array(array('success' => true, 'query' => 'Firmware status have Unknown'));
+  }
+  db_query("INSERT INTO {firmware_status} (name) VALUES ('Unknown')");
+  return array(array('success' => true, 'query' => 'Add firmware status Unknown'));
+}

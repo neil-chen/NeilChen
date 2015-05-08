@@ -1,0 +1,6 @@
+name = Feature license
+description = Feature license
+core = 6.x
+php = 5.0
+package = Covidien
+dependencies[] = covidien_ui

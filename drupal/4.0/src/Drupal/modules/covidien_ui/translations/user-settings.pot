@@ -1,0 +1,74 @@
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  Theme,v 1 2012/08/21 06:26:03 Covidien
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2009-06-16 19:00+0200\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: user-settings.tpl:25
+msgid "Password Construction Guidelines"
+msgstr ""
+
+#: user-settings.tpl:26
+msgid "Poor, weak passwords are easily cracked, and put the entire system at risk. Therefore, strong passwords are required. Try to create a password that is also easy to remember."
+msgstr ""
+
+#: user-settings.tpl:28
+msgid "Passwords should contain at least 8 characters."
+msgstr ""
+
+#: user-settings.tpl:29
+msgid "Passwords should contain at least 1 uppercase letter (e.g. N) and 1 lowercase letter (e.g. t)."
+msgstr ""
+
+#:user-settings.tpl:30
+msgid "Passwords should contain at least 1 numerical character (e.g. 5)."
+msgstr ""
+
+#: user-settings.tpl:31
+msgid "Passwords should contain at least 1 special character (e.g. $)."
+msgstr ""
+
+#: user-settings.tpl:40
+msgid "1. Password"
+msgstr ""
+
+#: user-settings.tpl:46
+msgid "Your current Password is:"
+msgstr ""
+
+#: user-settings.tpl:52
+msgid "Enter new Password:"
+msgstr ""
+
+#: user-settings.tpl:59
+msgid "Confirm new Password:"
+msgstr ""
+
+#:user-settings.tpl:68
+msgid "2. Email Notifications"
+msgstr ""
+
+#: user-settings.tpl:75
+msgid "Do you want to subscribe to any of the following email notifications?"
+msgstr ""
+
+#: user-settings.tpl:83
+msgid "3. Language"
+msgstr ""
+
+#: user-settings.tpl:110
+msgid "Cancel"
+msgstr ""

@@ -1,0 +1,9 @@
+CHANGELOG for Plupload integration for Drupal 6
+ 
+Plupload integration 6.x-1.x-dev
+================================
+- #1979416 by derearon | yngens: Fixed Unknown error: Function split() is deprecated in plupload_upload_page() (line 119 of plupload.module.
+- #1895328 by larowlan, slashrsm: Fixed Security exploit in plupload external library examples folder.
+- #1487558 by danylevskyi, hlykos: Fixed Fatal error in hook_requirements().
+- #1411856 by caiosba: Language files are not loaded
+- #957846 by hlykos: Plupload transliteration support

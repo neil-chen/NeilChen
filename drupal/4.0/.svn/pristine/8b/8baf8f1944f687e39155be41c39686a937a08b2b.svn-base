@@ -1,0 +1,227 @@
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  Theme,v 1 2012/08/21 06:26:03 Covidien
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2009-06-16 19:00+0200\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: template.php, template.tpl:152
+msgid "Edit - "
+msgstr ""
+
+#: template.php, template.tpl:156
+msgid "Device Info - "
+msgstr ""
+
+#: template.php, template.tpl:101
+msgid "Comments"
+msgstr ""
+
+#: template.php, template.tpl:119
+msgid "!datetime � !username"
+msgstr ""
+
+#: template.php, template.tpl:130
+msgid "!datetime � !username"
+msgstr ""
+
+#: template.php, template.tpl:231
+msgid "This is my awesome login form"
+msgstr ""
+
+#: template.php, template.tpl:236
+msgid "This is my awesome login form"
+msgstr ""
+
+#: template.php, template.tpl:553
+msgid "Edit Configuration"
+msgstr ""
+
+#: template.php, template.tpl:555
+msgid "Add a New Configuration"
+msgstr ""
+
+#: template.php, template.tpl:804
+msgid "sort by @s"
+msgstr ""
+
+#: template.tpl:152
+msgid "You are not authorized to view this page"
+msgstr ""
+
+#: template.tpl:342
+msgid "Edit Software"
+msgstr ""
+
+#: template.tpl:344
+msgid "Add New Software to Catalog"
+msgstr ""
+
+#: template.tpl:396
+msgid "Edit Document"
+msgstr ""
+
+#: template.tpl:398
+msgid "Add New Document to Catalog"
+msgstr ""
+
+#: template.tpl:612
+msgid "Edit User Information"
+msgstr ""
+
+#: template.tpl:686
+msgid "User Settings"
+msgstr ""
+
+#: template.tpl:482
+msgid "Add New Role"
+msgstr ""
+
+#: template.tpl:482
+msgid "Edit Role"
+msgstr ""
+
+#: template.tpl:533
+msgid "Add Exception"
+msgstr ""
+
+#: template.tpl:533
+msgid "Add Regulatory Exception"
+msgstr ""
+
+#: template.tpl:533
+msgid "Delete Exception"
+msgstr ""
+
+#: template.tpl:533
+msgid "Delete Regulatory Exception"
+msgstr ""
+
+#: views-data-export-csv-header--report-3--views-data-export-1.tpl.php:6
+msgid "Component Discrepancy Report"
+msgstr ""
+
+#: views-data-export-csv-header--report-4--views-data-export-1.tpl.php:6
+msgid "Service Records Report"
+msgstr ""
+
+#: views-data-export-csv-header--report-5--views-data-export-1.tpl.php:6
+msgid "Audit Trail Report"
+msgstr ""
+
+#: views-data-export-csv-header.tpl.php:37
+msgid "Covidien Report"
+msgstr ""
+
+#: views-data-export-csv-header.tpl.php:37
+#:views-data-export-csv-header--report-1--views-data-export-1.tpl.php:1
+#:views-data-export-csv-header--report-2--views-data-export-1.tpl.php
+msgid "Covidien"
+msgstr ""
+
+#: views-data-export-csv-header.tpl.php:37
+#:views-data-export-csv-header--report-1--views-data-export-1.tpl.php
+#:views-data-export-csv-header--report-2--views-data-export-1.tpl.php
+msgid "Title :"
+msgstr ""
+
+#: views-data-export-csv-header.tpl.php:37
+msgid "Date :"
+msgstr ""
+
+#: reports 
+msgid "Return"
+msgstr ""
+
+#: reports 
+msgid "Filters"
+msgstr ""
+
+#: views-view--report-4--page-1.tpl.php 
+#: views-view-field--report-4--servicetype.tpl.php
+msgid "P"
+msgstr ""
+
+#: views-view--report-4--page-1.tpl.php 
+msgid "Pass"
+msgstr ""
+
+#: views-view--report-4--page-1.tpl.php 
+msgid "F"
+msgstr ""
+
+#: views-view--report-4--page-1.tpl.php 
+msgid "Fail"
+msgstr ""
+
+#: views-view-field--config-hw-sw--default--nid-1.tpl.php
+msgid "Select"
+msgstr ""
+
+#: views-view-field--config-hw-sw--default--nid-1.tpl.php
+msgid "Required"
+msgstr ""
+
+#: views-view-field--config-hw-sw--default--nid-1.tpl.php
+msgid "Optional"
+msgstr ""
+
+#: views-view-field--device-discrepancy--page-1--previous-version.tpl.php, views-view-field--device-discrepancy--page-1--new-version.tpl.php
+msgid "There is no description"
+msgstr ""
+
+#: audit_trial_report.tpl.php:47
+msgid "Select Activity Type:"
+msgstr ""
+
+#: views-view-field--individual-configuration--default--field-device-config-hw-status-value.tpl.php
+msgid "Y"
+msgstr ""
+
+#: views-view-field--individual-configuration--default--field-device-config-hw-status-value.tpl.php
+msgid "N"
+msgstr ""
+
+#: views-view-table--Roles--page-1.tpl.php
+msgid "Are you sure you want to delete this role?"
+msgstr ""
+
+#: views-view-table--Roles--page-1.tpl.php
+msgid "Delete Selected"
+msgstr ""
+
+#: template.php:962
+msgid "Edit Installation Privilege"
+msgstr ""
+
+#: template.php:963
+msgid "Add Privilege"
+msgstr ""
+
+#: template.php:926
+msgid "Add Record"
+msgstr ""
+
+#: template.php:932
+msgid "Training Record"
+msgstr ""
+
+#: views-view-field--softwarelist--page-1--field-sw-integrity-check-value.tpl.php
+msgid "OK"
+msgstr ""
+
+#: views-view-field--report-2--SW-upgrade-status.tpl.php
+msgid "Download Only"
+msgstr ""

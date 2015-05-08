@@ -1,0 +1,297 @@
+<?php
+
+/**
+ * Implementation of hook_install().
+ */
+function covidien_user_registration_install() {
+  if (db_table_exists('registered_users') == FALSE) {
+    drupal_install_schema('covidien_user_registration');
+  } 
+
+  covidien_user_registration_update_1001();
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function covidien_user_registration_uninstall() {
+  drupal_uninstall_schema('covidien_user_registration');
+}
+
+
+function covidien_user_registration_schema() {
+
+  //Regstered_user Table
+  $schema['registrant'] = array(
+    'description' => t('The base table for registered users.'),
+    'fields' => array(
+      'id' => array(
+        'description' => t('auto increment.'),
+        'type' => 'serial', 
+        'unsigned' => TRUE,
+        'not null' => TRUE
+      ),
+      'first_name' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128, 
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'last_name' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'email' => array(
+        'description' => t('Unique, notification will be sent to this address.'),
+        'type' => 'varchar',
+        'length' => 1024,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'phone_number' => array(
+        'description' => t('Phone Number.'),
+        'type' => 'varchar',
+        'length' => 20,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'is_covidien_user' => array(
+        'description' => t('1-Covidien User; 0-Non-Covidien User.'),
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => '1'
+      ),
+      'country' => array(
+        'description' => t('references to country.'),
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'language' => array(
+        'description' => t('references to language'),
+        'type' => 'int', 
+        'not null' => TRUE,
+      ),
+      'customer_name' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => FALSE,
+        'default' => ''
+      ),
+      'account_number' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => FALSE,
+        'default' => ''
+      ),
+      'customer_exist' => array(
+        'description' => t('Customer Exist.'),
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => '0'
+      ),
+      'status' => array(
+        'description' => t('pending,approved,completed'),
+        'type' => 'varchar',
+        'length' => 10,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'approve_result' => array(
+        'description' => t('-1-waiting approve, 0 -approved failed, 1 - approved'),
+        'type' => 'varchar',
+        'length' => '32',
+        'not null' => TRUE,
+        'default' => ''
+      ), 
+      'approving_user' => array(
+        'description' => t('references to user content'),
+        'type' => 'varchar',    
+        'length' => 1024,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'approved_date' => array(
+        'type' => 'int',
+        'length' => 11,
+        'not null' => TRUE,
+      ),
+      'user_id' => array(
+        'description' => t('reference to user content'),
+        'type' => 'int', 
+        'not null' => FALSE,
+      ),
+      'active_code' => array(
+        'description' => t('for user changing the initial password'),
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => ''
+      ),  
+      'create_time' => array(
+        'description' => t('register date'),
+        'type' => 'int',
+        'length' => 11,
+        'not null' => TRUE,
+      ),
+    ), 
+    'primary key' => array('id'),
+    );
+ 
+  //Registrant_cot table
+  //
+  $schema['registrant_cot'] = array(
+    'description' => t('The base table for registrant cot and role.'),
+    'fields' => array(
+      'id' => array(
+        'description' => t('auto increment.'),
+        'type' => 'serial', 
+        'unsigned' => TRUE,
+        'not null' => TRUE
+      ),  
+      'registrant_id' => array(
+        'description' => t('register user id.'),
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'cot' => array(
+        'description' => t('references to product line'),
+        'type' => 'int',
+        'length' => 10,
+        'not null' => TRUE,
+      ),
+      'role' => array(
+        'description' => t('references to Role.'),
+        'type' => 'int',
+        'length' => 10,
+        'not null' => FALSE,
+      ),
+    ), 
+    'primary key' => array('id'),
+    );
+  
+  //Registrant Training Certificate Table
+  $schema['registrant_training'] = array(
+    'description' => t('The base table for registrant training.'),
+    'fields' => array(
+      'id' => array(
+        'description' => t('auto increment.'),
+        'type' => 'serial', 
+        'unsigned' => TRUE,
+        'not null' => TRUE
+      ),  
+      'registrant_id' => array(
+        'description' => t('register user id.'),
+        'type' => 'int',
+        'not null' => TRUE,
+      ),  
+      'registrant_cot_id' => array(
+        'description' => t('registrant cot id.'),
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'device_type' => array(
+        'description' => t('references to device type'),
+        'type' => 'int', 
+        'not null' => TRUE,
+      ),
+      'trainer_uid' => array(
+        'description' => t('references to trainer uid'),
+        'type' => 'int',
+        'length' => 10,
+        'not null' => TRUE,
+      ), 
+      'training_date' => array(
+        'description' => t('Training Date'),
+        'type' => 'int',
+        'length' => 11,
+        'not null' => TRUE,
+      ),
+      //file upload should be in file table, just need the fid for reference
+      'certificate_file' => array(
+        'description' => t('certificate files'),
+        'type' => 'int', 
+        'not null' => TRUE, 
+      ), 
+      'device_access' => array(
+        'type' => 'int',
+        'length' => 11,
+        'not null' => TRUE,
+      ), 
+    ), 
+    'primary key' => array('id'),
+    );
+  
+  
+  //Registrant Approval
+  $schema['registration_approving_manager'] = array(
+    'description' => t('The base table for registrant training.'),
+    'fields' => array(
+      'id' => array(
+        'description' => t('md5 value of email.'),
+        'type' => 'char',
+      	'length' => 32,
+        'not null' => TRUE
+      ),  
+      'user_name' => array(
+        'description' => t('register user id.'),
+        'type' => 'varchar',
+        'length' => 256,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'email' => array(
+        'description' => t('Unique, notification will be sent to this address.'),
+        'type' => 'varchar',
+        'length' => 1024,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'cot' => array(
+        'description' => t('class of trade'),
+        'type' => 'int', 
+        'not null' => TRUE, 
+      ),
+      'first_name' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128, 
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'last_name' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+    ), 
+    'primary key' => array('id'),
+    );
+ 
+  return $schema;
+}
+
+
+/**
+ * Add proxy field to {content_type_product_line} table.
+ */
+function covidien_user_registration_update_1001() {
+  $ret = array();
+  $spec = array(
+    'type' => 'varchar',
+    'description' => "approving proxy user",
+    'length' => 256,
+    'not null' => TRUE,
+  );
+  db_add_field($ret, 'content_type_product_line', 'proxy', $spec);
+  return $ret;
+}

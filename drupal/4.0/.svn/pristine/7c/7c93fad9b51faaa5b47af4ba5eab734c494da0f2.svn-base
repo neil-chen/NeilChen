@@ -1,0 +1,5 @@
+name = Software Catalog
+description = Here the Software catalog specific customization done.
+core = 6.x
+package = Covidien
+dependencies[] = covidien_ui

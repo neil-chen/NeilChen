@@ -1,0 +1,145 @@
+<?php
+
+/**
+ * Implement hook_menu
+ */
+function covidien_download_menu() {
+  $items = array();
+  // URL to access add new User
+  $items ['download/list'] = array(
+    'page callback' => 'covidien_download',
+    'access callback' => true,
+    'type' => MENU_CALLBACK
+  );
+  $items ['download/download'] = array(
+    'page callback' => 'covidien_download_action',
+    'access callback' => true,
+    'type' => MENU_CALLBACK
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_theme()
+ */
+function covidien_download_theme() {
+  return array(
+    'download_list' => array(
+      'template' => 'download_list',
+      'arguments' => array(
+        'form' => NULL,
+        'get' => NULL
+      )
+    ),
+    'download_action' => array(
+      'template' => 'download_action',
+      'arguments' => array(
+        'form' => NULL,
+        'get' => NULL
+      )
+    )
+  );
+}
+
+function covidien_download_check_access() {
+  return TRUE;
+}
+
+function covidien_download() {
+  $output = theme('download_list');
+  return $output;
+}
+
+function covidien_download_action() {
+  $output = theme('download_action');
+  return $output;
+}
+
+function covidien_theme_preprocess_download_action(&$vars) {
+  $filePath = check_plain($_GET['filePath']);
+  $deviceType = check_plain($_GET['deviceType']);
+  global $baseDir;
+  $filename = $baseDir . $deviceType . '/' . $filePath;
+
+  header("Content-Type: application/force-download");
+  header("Content-Transfer-Encoding: binary");
+  header('Content-Type: application/zip');
+  header("Content-Disposition: attachment; filename=" . basename($filename));
+  readfile($filename);
+}
+
+function covidien_theme_preprocess_download_list(&$vars) {
+  $deviceType = check_plain($_POST['sel_device_type']);
+  $vars ['deviceType'] = $deviceType;
+  global $baseDir;
+  $vars ['dirs'] = getFilesInDir($baseDir);
+  if (!isset($deviceType) && count($vars ['dirs'] > 0)) {
+    $deviceType = 'All';
+  }
+
+  if ("All" == $deviceType) {
+    $vars ['allVersions'] = getAllFilesInDir($baseDir);
+  } else {
+    $currentDir = $baseDir . $deviceType;
+    $versions = getFilesInDir($currentDir, true);
+    $vars ['versions'] = $versions;
+  }
+}
+
+function getAllFilesInDir($dir) {
+  $allDirs = array();
+  $fso = opendir($dir);
+  while ($flist = readdir($fso)) {
+    if ($flist != '.' && $flist != '..') {
+      array_push($allDirs, $flist);
+    }
+  }
+  sort($allDirs);
+  closedir($fso);
+
+  $result = array();
+  foreach ($allDirs as $flist) {
+    $dirs = getFilesInDir($dir . '/' . $flist, true);
+    array_push($result, array(
+      $flist => $dirs
+    ));
+  }
+  return $result;
+}
+
+function getFilesInDir($dir, $needDetails = false) {
+  $dirs = array();
+  $fso = opendir($dir);
+  while ($flist = readdir($fso)) {
+    if ($flist != '.' && $flist != '..' && !endsWith($flist, '.desc')) {
+      if ($needDetails) {
+        $lastModified = date("m/d/Y H:i:s", filemtime($dir . '/' . $flist));
+        $fileSize = ceil(filesize($dir . '/' . $flist) / 1000000 * 100) / 100;
+        $desc = '';
+        if (is_readable($dir . '/' . $flist . '.desc')) {
+          $desc = file_get_contents($dir . '/' . $flist . '.desc');
+        }
+
+        array_push($dirs, array(
+          'name' => $flist,
+          'fileSize' => $fileSize,
+          'lastModified' => $lastModified,
+          'description' => $desc
+        ));
+      } else {
+        array_push($dirs, $flist);
+      }
+    }
+  }
+  sort($dirs);
+  closedir($fso);
+  return $dirs;
+}
+
+function endsWith($string1, $string2) {
+  if (strlen($string1) < strlen($string2)) {
+    return false;
+  } else {
+    return !substr_compare($string1, $string2, strlen($string1) - strlen($string2), strlen($string2));
+  }
+}

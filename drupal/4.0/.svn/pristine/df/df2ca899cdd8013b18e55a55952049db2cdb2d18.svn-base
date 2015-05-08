@@ -1,0 +1,8 @@
+/* $Id: $ */
+
+div.plupload_header h3 {
+  background-color: #45494D;
+  color: #FFFFFF;
+  text-align:center;
+  padding: 1em;
+}

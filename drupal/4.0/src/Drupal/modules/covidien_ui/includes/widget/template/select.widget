@@ -1,0 +1,11 @@
+
+<select name="{#$select_name#}" id="{#$select_name#}" class="form-select" style="width:145px"> 		
+	<option value="All">All</option> 	
+  {#foreach from=$options item=option#} 
+	  {#if isset($default_value) && key($option) == $default_value #}
+  <option value={#key($option)#} selected="selected" >{#current($option)#}</option>
+    {#else#}
+  <option value={#key($option)#}>{#current($option)#}</option>
+    {#/if#}
+  {#/foreach#}
+</select>	

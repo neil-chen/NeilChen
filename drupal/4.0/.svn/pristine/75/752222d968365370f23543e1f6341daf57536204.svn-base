@@ -1,0 +1,6 @@
+name = Covidien Business
+description = Here the covidien business specific customization done.
+core = 6.x
+package = Covidien
+dependencies[] = covidien_ui
+

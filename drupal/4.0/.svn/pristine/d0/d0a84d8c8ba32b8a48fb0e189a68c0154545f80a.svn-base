@@ -1,0 +1,4 @@
+name = Covidien Reports
+description = Reports functionality customized here.
+core = 6.x
+package = Covidien

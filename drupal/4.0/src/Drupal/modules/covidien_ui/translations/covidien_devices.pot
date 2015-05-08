@@ -1,0 +1,82 @@
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  Theme,v 1 2012/08/21 06:26:03 Covidien
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2009-06-16 19:00+0200\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: covidien_devices.module:13
+msgid "Control the new user interface for uploading and managing file attachments."
+msgstr ""
+
+#: covidien_devices.module:22
+msgid "Contains device info."
+msgstr ""
+
+#: template.php, covidien_devices.module:123
+msgid "Select Device type"
+msgstr ""
+
+#: template.php, covidien_devices.module:124
+msgid "Select Region"
+msgstr ""
+
+#: template.php, covidien_devices.module:125
+msgid "Select Account Name"
+msgstr ""
+
+#: template.php, covidien_devices.module:126
+msgid "Select Facility Name"
+msgstr ""
+
+#: covidien_devices.module:292
+msgid "Go"
+msgstr ""
+
+#: covidien_devices.module:191 ,194
+msgid "Name"
+msgstr ""
+
+#: covidien_devices.module:192
+msgid "Revision"
+msgstr ""
+
+#: covidien_devices.module:193,196
+msgid "Description"
+msgstr ""
+
+#: covidien_devices.module:195
+msgid "Version"
+msgstr ""
+
+#: covidien_devices.module:197
+msgid "Update Available?"
+msgstr ""
+
+#: covidien_devices.module:287,288,289
+msgid "All"
+msgstr ""
+
+#: covidien_devices.module:195
+msgid "Part #"
+msgstr ""
+
+#: covidien_devices.module:195
+msgid "Date/Time:"
+msgstr ""
+
+#: covidien_devices.module
+msgid "Date & Time"
+msgstr ""

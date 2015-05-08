@@ -1,0 +1,5 @@
+name = Covidien Alert
+description = System changes will send alert to recipients who subscribe these changes.
+core = 6.x
+php = 5.0
+package = Covidien

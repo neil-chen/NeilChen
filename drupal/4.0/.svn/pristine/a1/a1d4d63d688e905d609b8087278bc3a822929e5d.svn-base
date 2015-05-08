@@ -1,0 +1,2138 @@
+<?php
+
+/**
+ * @file
+ * Used for seed data creation.
+ */
+
+/**
+ * Implementation of hook_install().
+ * The covidien sample seed data created using this module
+ */
+function covidien_seeddata_install() {
+  if (!module_exists('covidien_sampledata')) {
+    module_load_include('php', 'covidien_ui', 'includes/helper_function');
+    module_load_include('php', 'covidien_seeddata', 'data/seeddata_helper');
+    default_data();
+    $party_type_val = array();
+    $finaldata = array();
+    $party_type = array('Administrative', 'Person', 'Unknown');
+    foreach ($party_type as $val) {
+      $field_party_type_rec = db_fetch_object(db_query("select nid from {node} where title='%s'", $val));
+      $field_party_typenid = $field_party_type_rec->nid;
+      $node = new stdClass();
+      $node->type = 'party';
+      $node->uid = 1;
+      $node->format = 0;
+      if ($val == "Unknown") {
+        $field_party_type_rec = db_fetch_object(db_query("select nid from {node} where title='%s'", 'Customer'));
+        $field_party_typenid = $field_party_type_rec->nid;
+        $node->title = $val;
+      } elseif ($val == "Administrative") {
+        $field_party_type_rec = db_fetch_object(db_query("select nid from {node} where title='%s'", 'Business Unit'));
+        $field_party_typenid = $field_party_type_rec->nid;
+        $node->title = $val;
+      } elseif ($val == "Person") {
+        $node->title = "Admin";
+      }
+      $node->field_party_type[0]['nid'] = $field_party_typenid;
+      node_save($node);
+      $party_type_val[$val] = $node->nid;
+    }
+    $tmpnode_1 = new stdClass();
+    $tmpnode_1->type = 'bu_customer';
+    $tmpnode_1->uid = 1;
+    $tmpnode_1->format = 0;
+    $tmpnode_1->title = 'Unknown';
+    $tmpnode_1->field_bu_customer_account_number[0]['value'] = "Unknown";
+    $tmpnode_1->field_customer_party_pk[0]['nid'] = $party_type_val['Unknown'];
+    $tmpnode_1->field_bu_party_pk[0]['nid'] = $party_type_val['Administrative'];
+    node_save($tmpnode_1);
+    $serial_number_regex = serialnumber_regex();
+    $devicetype[1] = array('PB980_Ventilator', 'VTS Client');
+    $devicetype[2] = array('Valleylab LS10', 'VLEX Client');
+    $devicetype[3] = array('SCD 700', 'SCD Client');
+    $devicetype[4] = array('Administrative_Agent');
+    $product_line = array();
+    $plnid_title = array();
+    $product_line_title = array('Ventilation', 'Vessel Sealing', 'Compression', 'Infrastructure', 'Ablation', 'Patient Monitoring', 'Stapling');
+    for ($i = 1; $i <= count($product_line_title); $i++) {
+      $tmpnode_1 = new stdClass();
+      $tmpnode_1->type = 'product_line';
+      $tmpnode_1->uid = 1;
+      $tmpnode_1->format = 0;
+      $tmpnode_1->title = $product_line_title[$i - 1];
+      if ($product_line_title[$i - 1] == 'Infrastructure') {
+        $tmpnode_1->field_product_line_bu_party[0]['nid'] = $party_type_val['Administrative'];
+      }
+      node_save($tmpnode_1);
+      $product_line[] = $tmpnode_1->nid;
+      $plnid_title[$tmpnode_1->title] = $tmpnode_1->nid;
+    }
+    foreach ($devicetype[1] as $val) {
+      $node = new stdClass();
+      $node->type = 'devicetype';
+      $node->uid = 1;
+      $node->format = 0;
+      $node->title = $val;
+      $node->field_device_product_line[0]['nid'] = $product_line[0];
+      $node->field_max_download_level[0]['value'] = 2; //All production versions
+      $node->field_serial_number_regex[0]['value'] = $serial_number_regex[$val]; //regex
+      node_save($node);
+      $finaldata[$node->type][$node->field_device_product_line[0]['nid']][] = array($val => $node->nid);
+    }
+    foreach ($devicetype[2] as $val) {
+      $node = new stdClass();
+      $node->type = 'devicetype';
+      $node->uid = 1;
+      $node->format = 0;
+      $node->title = $val;
+      $node->field_device_product_line[0]['nid'] = $product_line[1];
+      $node->field_max_download_level[0]['value'] = 2; //All production versions
+      $node->field_serial_number_regex[0]['value'] = $serial_number_regex[$val]; //regex
+      node_save($node);
+      $finaldata[$node->type][$node->field_device_product_line[0]['nid']][] = array($val => $node->nid);
+    }
+    foreach ($devicetype[3] as $val) {
+      $node = new stdClass();
+      $node->type = 'devicetype';
+      $node->uid = 1;
+      $node->format = 0;
+      $node->title = $val;
+      $node->field_device_product_line[0]['nid'] = $product_line[2];
+      $node->field_max_download_level[0]['value'] = 2; //All production versions
+      $node->field_serial_number_regex[0]['value'] = $serial_number_regex[$val]; //regex
+      node_save($node);
+      $finaldata[$node->type][$node->field_device_product_line[0]['nid']][] = array($val => $node->nid);
+    }
+    foreach ($devicetype[4] as $val) {
+      $node = new stdClass();
+      $node->type = 'devicetype';
+      $node->uid = 1;
+      $node->format = 0;
+      $node->title = $val;
+      $node->field_device_product_line[0]['nid'] = $product_line[3];
+      $node->field_max_download_level[0]['value'] = 2; //All production versions
+      $node->field_serial_number_regex[0]['value'] = $serial_number_regex[$val]; //regex
+      node_save($node);
+      $finaldata[$node->type][$node->field_device_product_line[0]['nid']][] = array($val => $node->nid);
+    }
+    $data = array(
+      'access_option' => array('No', 'Yes', 'View Only', 'View & Edit'),
+    );
+    foreach ($data as $type => $value) {
+      $i = 1;
+      foreach ($value as $val) {
+        $node = new stdClass();
+        $node->type = $type;
+        $node->uid = 1;
+        $node->format = 0;
+        $node->title = $val;
+        $node->field_access_option_name[0]['value'] = $val;
+        $node->field_acc_option_sort_sequence[0]['value'] = $i;
+        node_save($node);
+        $finaldata[$type][$val] = $node->nid;
+        $i++;
+      }
+    }
+    $data = array(
+      'app_section' => array(
+        'Devices Section',
+        'Reports Section',
+        'Catalog Management Section',
+        'User management Tab',
+        'Trainer',
+        'Limited Release Software'
+      ),
+    );
+    $app_section_desc = array('Limited Release Software' => 'This permission allows the download of software versions in limited release. This software is not ready for distribution and is for testing purposes only. It is illegal to use software in limited release on medical devices for human use.');
+    $ipermit_class = array('Trainer' => 1);
+    $app_section = array(
+      'Hardware catalog Tab',
+      'Software catalog Tab',
+      'Document Catalog Tab',
+      'Configuration Management Tab'
+    );
+    foreach ($data as $type => $value) {
+      $i = 0;
+      foreach ($value as $val) {
+        $node = new stdClass();
+        $node->type = $type;
+        $node->uid = 1;
+        $node->format = 0;
+        $node->title = $val;
+        $node->field_section_name[0]['value'] = $val;
+        if (isset($ipermit_class[$val])) {
+          $field_ipermit_class = $ipermit_class[$val];
+        } else {
+          $field_ipermit_class = 0;
+        }
+        $node->field_ipermit_class[0]['value'] = $field_ipermit_class;
+        if (isset($app_section_desc[$val])) {
+          $node->field_app_section_description[0]['value'] = $app_section_desc[$val];
+        }
+        $node->field_app_section_sort_sequence[0]['value'] = $i;
+        node_save($node);
+        $finaldata[$type][$val] = $node->nid;
+        $i++;
+      }
+    }
+    foreach ($app_section as $value) {
+      $node = new stdClass();
+      $node->type = 'app_section';
+      $node->uid = 1;
+      $node->format = 0;
+      $node->title = $value;
+      $node->field_section_name[0]['value'] = $value;
+      $node->field_app_section_sort_sequence[0]['value'] = $i;
+      $node->field_parent_access_section[]['nid'] = $finaldata['app_section']['Catalog Management Section'];
+      node_save($node);
+      $finaldata[$type][$value] = $node->nid;
+      $i++;
+    }
+    module_load_include('php', 'covidien_seeddata', 'data/seeddata_helper');
+    $section_access = role_section_access();
+    $section_access_permissions = array();
+    foreach ($section_access as $key => $val) {
+      foreach ($val as $val1) {
+        $node = new stdClass();
+        $node->type = 'section_access_option';
+        $node->uid = 1;
+        $node->format = 0;
+        $node->title = 'auto section_access_option ' . $key . '-' . $val1;
+        $node->field_app_section[]['nid'] = $finaldata['app_section'][$key];
+        $node->field_access_option[]['nid'] = $finaldata['access_option'][$val1];
+        node_save($node);
+        $section_access_permissions[$key][$val1] = $node->nid;
+      }
+    }
+    $rolespermission = permissiondata();
+    $roles_nid_rid = array();
+    $sys_admin_role = array();
+    foreach ($product_line as $plk => $pl) {
+      foreach ($rolespermission as $val => $sectionpermission) {
+        $type = 'roles';
+        $node = new stdClass();
+        $node->type = $type;
+        $node->uid = 1;
+        $node->format = 0;
+        $node->title = $val;
+        $node->field_roles_description[0]['value'] = $val;
+        $node->field_role_product_line[0]['nid'] = $pl;
+        node_save($node);
+        $roles_nid_rid[$pl][$val]['nid'] = $node->nid;
+        db_query("Insert into {role} (name) VALUES ('%s')", $pl . "__" . $node->title);
+        $rid = db_last_insert_id('role', 'rid');
+        $roles_nid_rid[$pl][$val]['rid'] = $rid;
+        $prem = 'access content, administer nodes, create device_type_config content, create document content, create hardware content, create software content, create user_settings content, edit any device_type_config content, edit any document content, edit any hardware content, edit any software content, edit any user_settings content, administer permissions, administer users';
+        db_query("INSERT INTO {permission} (rid,perm) VALUES ('%s','%s')", $rid, $prem);
+        $field_app_roldnid = $node->nid;
+        foreach ($sectionpermission as $k => $v) {
+          $node = new stdClass();
+          $node->type = 'app_role_access_policy';
+          $node->uid = 1;
+          $node->format = 0;
+          $node->title = 'Roles Access';
+          $node->field_app_role[] = array('nid' => $field_app_roldnid);
+          $node->field_section_access_option[] = array('nid' => $section_access_permissions[$k][$v]);
+          node_save($node);
+        }
+      }
+    }
+    $data = array(
+      'contact_type' => array('Primary', 'Billing'),
+      'country' => array('CHINA', 'United States'),
+      'device_service_type' => array(
+        'Configuration Update',
+        'De-install',
+        'Inspection',
+        'Repair',
+        'Log Retrieval',
+        'Preventative Maintenance',
+        'Upgrade',
+        'Device Discovery',
+        'Device Connection',
+        'Device Registration',
+        'Device Country Update'),
+    );
+    foreach ($data as $type => $value) {
+      $i = 1;
+      foreach ($value as $val) {
+        $node = new stdClass();
+        $node->type = $type;
+        $node->uid = 1;
+        $node->format = 0;
+        $node->title = $val;
+        node_save($node);
+        $finaldata[$type][$val] = $node->nid;
+        $i++;
+      }
+    }
+    //useradmin permission in all the four productlines.
+    create_globaluser($product_line_title, $roles_nid_rid);
+    $device_notification_type = array(
+      'Software version discrepancy',
+      'Country code violation',
+      'Attempt to update software without upgrade privileges',
+      'Failure to upgrade device',
+      'New device registration',
+      'Device update',
+      'Change Password',
+    );
+    $i = 0;
+    foreach ($device_notification_type as $value) {
+      $node = new stdClass();
+      $node->type = 'device_notification_type';
+      $node->uid = 1;
+      $node->format = 0;
+      $node->title = $value;
+      $node->field_sort_sequence[0]['value'] = $i;
+      node_save($node);
+      $finaldata['device_notification_type'][$value] = $node->nid;
+      $i++;
+    }
+    $report = array(
+      'Device Current Configuration Report',
+      'Software Upgrade Report',
+      'Component Discrepancy Report',
+      'Service Records Report',
+      'Audit Trail Report',
+      'Training Report'
+    );
+    $pl_arr = array('Ventilation', 'Compression', 'Vessel Sealing');
+    foreach ($pl_arr as $pltitle) {
+      $pl = db_result(db_query("select nid from {node} where title = '%s' and type='product_line'", $pltitle));
+      foreach ($report as $val) {
+        $val2 = new stdClass();
+        $val2->title = "Product Line Report";
+        $val2->type = "product_line_report";
+        $val2->uid = 1;
+        $val2->language = "en";
+        $val2->field_report_product_line[0]['nid'] = $pl;
+        $val2->field_report_name[0]['value'] = $val;
+        node_save($val2);
+      }
+    }
+    create_total_devices_report();
+    upgradescript();
+    nodesample_data();
+    update_iso_countrycode();
+  }
+}
+
+// Uninstall Instruction
+function covidien_seeddata_uninstall() {
+  
+}
+
+/**
+ * Helper function
+ */
+function upgradescript() {
+  $ret = array();
+  global $drupal_password_expiration_day;
+  $date = time() + ($drupal_password_expiration_day * (24 * 3600));
+  $dateSQL = format_date($date, 'custom', 'Y-m-d H:i:s', 0);
+  db_query("Update {content_type_person} set field_password_expiration_date_value = '%s' where field_password_expiration_date_value IS NULL", $dateSQL);
+  global $drupal_password_expiration_day;
+  variable_set('password_day', $drupal_password_expiration_day);
+  return $ret;
+}
+
+/**
+ * Helper function node data
+ */
+function nodesample_data() {
+  $nodedata = array(
+    'softwaretype' => array('Software Bundle', 'Software', 'Business Rules', 'Boot Code'),
+  );
+  foreach ($nodedata as $type => $value) {
+    foreach ($value as $val) {
+      $node = new stdClass();
+      $node->type = $type;
+      $node->uid = 1;
+      $node->format = 0;
+      $node->title = $val;
+      node_save($node);
+    }
+  }
+  /**
+   * sample Hardware
+   */
+  $field_hw_type = db_result(db_query("select nid from {node} where title = '%s' and type='hardwaretype'", 'MOTHERBOARD'));
+  $field_device_type = db_result(db_query("select nid from {node} where title = '%s' and type='devicetype'", 'SCD 700'));
+  create_hardware($field_device_type, $field_hw_type);
+  ////
+  /**
+   * sample Hardware
+   */
+  $field_hw_type = db_result(db_query("select nid from {node} where title = '%s' and type='hardwaretype'", 'MOTHERBOARD'));
+  $field_device_type = db_result(db_query("select nid from {node} where title = '%s' and type='devicetype'", 'Administrative_Agent'));
+  create_hardware($field_device_type, $field_hw_type);
+  /////
+  //$devicetype['Ventilation'] = 'VTS Client';
+  //$devicetype['Vessel Sealing'] = 'VLEX Client';
+  //$devicetype['Compression'] = 'SCD Client';
+  /**
+   * sample Hardware
+   */
+  $field_hw_type = db_result(db_query("select nid from {node} where title = '%s' and type='hardwaretype'", 'MOTHERBOARD'));
+  $field_device_type = db_result(db_query("select nid from {node} where title = '%s' and type='devicetype'", 'VTS Client'));
+  create_hardware($field_device_type, $field_hw_type);
+  /////
+  /**
+   * sample Hardware
+   */
+  $field_hw_type = db_result(db_query("select nid from {node} where title = '%s' and type='hardwaretype'", 'MOTHERBOARD'));
+  $field_device_type = db_result(db_query("select nid from {node} where title = '%s' and type='devicetype'", 'VLEX Client'));
+  create_hardware($field_device_type, $field_hw_type);
+  /////
+  /**
+   * sample Hardware
+   */
+  $field_hw_type = db_result(db_query("select nid from {node} where title = '%s' and type='hardwaretype'", 'MOTHERBOARD'));
+  $field_device_type = db_result(db_query("select nid from {node} where title = '%s' and type='devicetype'", 'SCD Client'));
+  create_hardware($field_device_type, $field_hw_type);
+  /////
+  return TRUE;
+}
+
+/**
+ * Helper function to create Product Line Report
+ */
+function create_plreport($pltitle, $report) {
+  $pl = db_result(db_query("select nid from {node} where type='product_line' and title = '%s' ", $pltitle));
+  foreach ($report as $val) {
+    $val2 = new stdClass();
+    $val2->title = "Product Line Report";
+    $val2->type = "product_line_report";
+    $val2->uid = 1;
+    $val2->language = "en";
+    $val2->field_report_product_line[0]['nid'] = $pl;
+    $val2->field_report_name[0]['value'] = $val;
+    node_save($val2);
+  }
+  return true;
+}
+
+/**
+ * Implements function to save node.
+ */
+function default_data() {
+  $data = array(
+    'hardwaretype' => array('MOTHERBOARD', 'PCB'),
+    'softwarestatus' => array('Limited Release', 'In Production', 'Archived'),
+    'language' => array('English'),
+    'document_type' => array('User Guide', 'Release Notes', 'Service Manual', 'Other'),
+    'party_type' => array('Customer', 'Business Unit', 'Facility', 'Person'),
+  );
+  foreach ($data as $type => $value) {
+    foreach ($value as $val) {
+      $node = new stdClass();
+      $node->type = $type;
+      $node->uid = 1;
+      $node->format = 0;
+      $node->title = $val;
+      node_save($node);
+    }
+  }
+}
+
+/**
+ * Helper function to create global user both on install and update.
+ */
+function create_globaluser($product_line_title, $roles_nid_rid) {
+  $section_access_permissions = array();
+  $section_access = role_section_access();
+  foreach ($section_access as $key => $val) {
+    foreach ($val as $val1) {
+      $title = 'auto section_access_option ' . $key . '-' . $val1;
+      $section_access_permissions[$key][$val1] = db_result(db_query("select nid from {node} where type='section_access_option' AND title like '" . $title . "'"));
+    }
+  }
+  // Query the values from previously submitted
+  $party_type_val['Administrative'] = db_result(db_query("select nid from {node} where title like 'Administrative' and type='party'"));
+  $party_type_val['Person'] = db_result(db_query("select nid from {node} where title like 'Person' and type='party_type'"));
+  $country_nid = db_result(db_query("select nid from {node} where type='country' and title='United States'"));
+  $plnid_title = array();
+  $pdevicetype = array();
+  foreach ($product_line_title as $key) {
+    $plnid_title[$key] = db_result(db_query("select nid from {node} where title = '%s' and type='product_line'", $key));
+    $qry = db_query("select node.nid,node.title from {node} inner join {content_field_device_product_line} on content_field_device_product_line.vid=node.vid where content_field_device_product_line.field_device_product_line_nid=%d", $plnid_title[$key]);
+    while ($rec = db_fetch_object($qry)) {
+      $pdevicetype[$plnid_title[$key]][] = array($rec->title => $rec->nid);
+    }
+  }
+  //'Ventilation', 'Vessel Sealing', 'Compression', 'Infrastructure', 'Ablation', 'Patient Monitoring', 'Stapling'
+  $user_array = array(
+    '1' => array(
+      'name' => 'GWagent.admin@covidien.com',
+      'pass' => 'GWadmin@123',
+      'mail' => 'GWagent.admin@covidien.com',
+      'first_name' => 'agent',
+      'last_name' => 'admin',
+      'business_unit' => $party_type_val['Administrative'],
+      'covidien_employee' => 'Yes',
+      'role_nid' => array(
+        array('nid' => $roles_nid_rid[$plnid_title['Ventilation']]['CoT Admin']['nid']),
+        array('nid' => $roles_nid_rid[$plnid_title['Vessel Sealing']]['CoT Admin']['nid']),
+        array('nid' => $roles_nid_rid[$plnid_title['Compression']]['CoT Admin']['nid']),
+        array('nid' => $roles_nid_rid[$plnid_title['Infrastructure']]['CoT Admin']['nid']),
+        array('nid' => $roles_nid_rid[$plnid_title['Ablation']]['CoT Admin']['nid']),
+        array('nid' => $roles_nid_rid[$plnid_title['Patient Monitoring']]['CoT Admin']['nid']),
+        array('nid' => $roles_nid_rid[$plnid_title['Stapling']]['CoT Admin']['nid']),
+      ),
+      'rid_role' => array(
+        array('rid' => $roles_nid_rid[$plnid_title['Ventilation']]['CoT Admin']['rid']),
+        array('rid' => $roles_nid_rid[$plnid_title['Vessel Sealing']]['CoT Admin']['rid']),
+        array('rid' => $roles_nid_rid[$plnid_title['Compression']]['CoT Admin']['rid']),
+        array('rid' => $roles_nid_rid[$plnid_title['Infrastructure']]['CoT Admin']['rid']),
+        array('rid' => $roles_nid_rid[$plnid_title['Ablation']]['CoT Admin']['rid']),
+        array('rid' => $roles_nid_rid[$plnid_title['Patient Monitoring']]['CoT Admin']['rid']),
+        array('rid' => $roles_nid_rid[$plnid_title['Stapling']]['CoT Admin']['rid']),
+      ),
+      'download_level' => 2,
+      'trainee' => 'yes',
+      'default_role' => $roles_nid_rid[$plnid_title['Infrastructure']]['CoT Admin']['nid'],
+    ),
+    '2' => array(
+      'name' => 'etl.admin@covidien.com',
+      'pass' => 'ETLadmin@covidien.com',
+      'mail' => 'etl.admin@covidien.com',
+      'first_name' => 'etl',
+      'last_name' => 'admin',
+      'business_unit' => $party_type_val['Administrative'],
+      'covidien_employee' => 'Yes',
+      'role_nid' => array(
+        array('nid' => $roles_nid_rid[$plnid_title['Ventilation']]['CoT Admin']['nid']),
+        array('nid' => $roles_nid_rid[$plnid_title['Vessel Sealing']]['CoT Admin']['nid']),
+        array('nid' => $roles_nid_rid[$plnid_title['Compression']]['CoT Admin']['nid']),
+        array('nid' => $roles_nid_rid[$plnid_title['Infrastructure']]['CoT Admin']['nid']),
+        array('nid' => $roles_nid_rid[$plnid_title['Ablation']]['CoT Admin']['nid']),
+        array('nid' => $roles_nid_rid[$plnid_title['Patient Monitoring']]['CoT Admin']['nid']),
+        array('nid' => $roles_nid_rid[$plnid_title['Stapling']]['CoT Admin']['nid']),
+      ),
+      'rid_role' => array(
+        array('rid' => $roles_nid_rid[$plnid_title['Ventilation']]['CoT Admin']['rid']),
+        array('rid' => $roles_nid_rid[$plnid_title['Vessel Sealing']]['CoT Admin']['rid']),
+        array('rid' => $roles_nid_rid[$plnid_title['Compression']]['CoT Admin']['rid']),
+        array('rid' => $roles_nid_rid[$plnid_title['Infrastructure']]['CoT Admin']['rid']),
+        array('rid' => $roles_nid_rid[$plnid_title['Ablation']]['CoT Admin']['rid']),
+        array('rid' => $roles_nid_rid[$plnid_title['Patient Monitoring']]['CoT Admin']['rid']),
+        array('rid' => $roles_nid_rid[$plnid_title['Stapling']]['CoT Admin']['rid']),
+      ),
+      'download_level' => 0,
+      'trainee' => 'yes',
+      'default_role' => $roles_nid_rid[$plnid_title['Infrastructure']]['CoT Admin']['nid'],
+    ),
+  );
+  foreach ($user_array as $p => $pval) {
+    $user_cnt = db_result(db_query("select count(mail) from {users} where mail='%s'", $pval['mail']));
+    if ($user_cnt != 0) {
+      continue;
+    }
+    db_query("Insert into {users} (name, pass, mail, created, init, status) values ('%s','%s','%s','%s','%s', '%s')", $pval['mail'], md5($pval['pass']), $pval['mail'], time(), $pval['mail'], '1');
+    $uid = db_last_insert_id('users', 'uid');
+    $language = db_result(db_query("select nid from {node} where type='language' and title='English'"));
+    foreach ($pval['rid_role'] as $rid_role) {
+      db_query("Insert into {users_roles} (uid,rid) VALUES ('%s','%s')", $uid, $rid_role['rid']);
+    }
+    $node = new stdClass();
+    $node->uid = $uid;
+    $node->type = 'party';
+    $node->title = $pval['name'];
+    $node->field_party_type[0]['nid'] = $party_type_val['Person'];
+    node_save($node);
+    $person_party_id = $node->nid;
+    $node = new stdClass();
+    $node->type = "person";
+    $node->title = $pval['name'];
+    $node->uid = $uid;
+    $node->field_last_name[0]['value'] = $pval['last_name'];
+    $node->field_first_name[0]['value'] = $pval['first_name'];
+    $node->field_business_unit[0]['nid'] = $pval['business_unit'];
+    $node->field_user_language[0]['nid'] = $language;
+    $node->field_covidien_employee[0]['value'] = $pval['covidien_employee'];
+    $node->field_person_party[0]['nid'] = $person_party_id;
+    $node->field_person_username[0]['value'] = $pval['name'];
+    $node->field_expiration_datetime[0]['value'] = "0000-00-00 00:00:00";
+    $node->field_device_avail_country[] = array('nid' => $country_nid);
+    node_save($node);
+    $person_node_id = $node->nid;
+    $node = new stdClass();
+    $node->type = 'party_email_address';
+    $node->uid = $uid;
+    $node->title = $pval['name'];
+    $node->field_email_address[0]['value'] = $pval['mail'];
+    $node->field_party_email[0]['nid'] = $person_party_id;
+    node_save($node);
+    $defaultrole = false;
+    foreach ($pval['role_nid'] as $role_nid) {
+      $node = new stdClass();
+      $node->type = 'person_application_role';
+      $node->uid = $uid;
+      $node->title = $pval['name'];
+      $node->field_person_pk[0]['nid'] = $person_node_id;
+      $node->field_app_role_pk[0]['nid'] = $role_nid;
+      $node->field_max_download_level[0]['value'] = $pval['download_level'];
+      if ($pval['default_role'] == '') {
+        if (!$defaultrole) {
+          $defaultrole = true;
+          $node->field_person_role_default[0]['value'] = 1;
+        } else {
+          $node->field_person_role_default[0]['value'] = 0;
+        }
+      } else {
+        if ($pval['default_role'] == $role_nid['nid']) {
+          $defaultrole = true;
+          $node->field_person_role_default[0]['value'] = 1;
+        } else {
+          $node->field_person_role_default[0]['value'] = 0;
+        }
+      }
+      node_save($node);
+    }
+    $val2 = new stdClass();
+    $val2->title = $pval['name'];
+    $val2->type = "user_settings";
+    $val2->uid = $uid;
+    $val2->language = "en";
+    $val2->field_email_notifications[0]['nid'] = '';
+    $val2->field_user_language[0]['nid'] = '';
+    node_save($val2);
+    $val2 = new stdClass();
+    $val2->title = 'device_notification_subscription_' . $person_node_id;
+    $val2->type = "device_notification_subscription";
+    $val2->uid = $uid;
+    $val2->language = "en";
+    $val2->field_person[] = array('nid' => $person_node_id);
+    $val2->field_device_notification_type[0]['nid'] = '';
+    node_save($val2);
+    if ($pval['trainee'] == 'yes') {
+      $trainer_array = array(
+        'Ventilation' => 'GWagent.admin@covidien.com',
+        'Vessel Sealing' => 'GWagent.admin@covidien.com',
+        'Compression' => 'GWagent.admin@covidien.com',
+        'Infrastructure' => 'GWagent.admin@covidien.com',
+        'Ablation' => 'GWagent.admin@covidien.com',
+        'Patient Monitoring' => 'GWagent.admin@covidien.com',
+        'Stapling' => 'GWagent.admin@covidien.com',
+      );
+      foreach ($plnid_title as $cottitle => $cotnid) {
+        foreach ($pdevicetype[$cotnid] as $devicetype) {
+          $devicetype_arr = array_values($devicetype);
+          $dtitle_nid = $devicetype_arr[0];
+          create_user_privilege($dtitle_nid, $pval['mail'], $section_access_permissions);
+          $trainer_id = db_result(db_query("select nid,title from {node} where type='person' and title='%s'", $trainer_array[$cottitle]));
+          sample_training_record($dtitle_nid, $pval['mail'], $trainer_id);
+        }
+      }
+    }
+  }
+  return true;
+}
+
+/**
+ * helper function to update the 2 letter country code.
+ * Ref:http://en.wikipedia.org/wiki/ISO_3166-1
+ */
+function update_iso_countrycode() {
+  module_load_include('php', 'covidien_seeddata', 'data/iso_3166_1');
+  $iso_country = iso_country_list();
+  update_country_node($iso_country);
+}
+
+function update_country_node($iso_country) {
+  if (count($iso_country) > 0) {
+    foreach ($iso_country as $country) {
+      $nid = db_result(db_query("select nid from {node} where type='country' and title='%s'", $country['name']));
+      if ($nid > 0) {
+        $node = node_load($nid);
+        $node->title = $country['name'];
+        $node->field_iso_3166_2lcode[0]['value'] = $country['code'];
+        $node->field_country_description[0]['value'] = $country['name'];
+        node_save($node);
+      } else {
+        if (trim($country['name']) != '' && isset($country['name'])) {
+          $node = new stdClass();
+          $node->type = 'country';
+          $node->uid = 1;
+          $node->format = 0;
+          $node->title = $country['name'];
+          $node->field_country_description[0]['value'] = $country['name'];
+          $node->field_iso_3166_2lcode[0]['value'] = $country['code'];
+          node_save($node);
+        }
+      }
+    }
+  }
+}
+
+function update_language_iso2_node() {
+  module_load_include('php', 'covidien_seeddata', 'data/iso_3166_2');
+  $iso_lang = iso2_country_list();
+  $langs = array_values($iso_lang);
+  //delete not in list
+  $result = db_query("SELECT nid FROM {node} WHERE type='language' AND title NOT IN (" . db_placeholders($langs, 'varchar') . ")", $langs);
+  while ($row = db_fetch_object($result)) {
+    node_delete($row->nid);
+  }
+  //add and update list
+  foreach ($iso_lang as $code => $lang) {
+    $node = node_load(array('type' => 'language', 'title' => $lang));
+    if ($node) {
+      $node->field_language_description[0]['value'] = $lang;
+      $node->field_lang_is_active[0]['value'] = 1;
+      $node->field_lang_iso_639_2lcode[0]['value'] = $code;
+    } else {
+      $node->title = $lang;
+      $node->type = 'language';
+      $node->uid = 1;
+      $node->format = 0;
+      $node->title = $lang;
+      $node->field_language_description[0]['value'] = $lang;
+      $node->field_lang_is_active[0]['value'] = 1;
+      $node->field_lang_iso_639_2lcode[0]['value'] = $code;
+    }
+    node_save($node);
+  }
+}
+
+/**
+ * Helper function for serailnumber.
+ */
+function serialnumber_regex() {
+  global $hw_sw_config_url;
+  return array(
+    'PB980_Ventilator' => (strpos($hw_sw_config_url, 'test') !== FALSE) ? '35[Bb]((\\d{2}[Pp]\\d{4})|\\d{7})' : '35[Bb]((\\d{2}\\d{4})|\\d{7})',
+    'SCD 700' => 'V(\d{7})(S|SX|A|AX|BX|CX)',
+    'Cool-tip E Series' => 'P(\d{7})(T|TX|J|JX)',
+  );
+}
+
+function update_product_line_report_access($pl_arr, $report_arr) {
+  //get Product Line Report
+  $old_result = db_query("SELECT nid, field_report_product_line_nid, field_report_name_value FROM {content_type_product_line_report}");
+  $rows = array();
+  while ($row = db_fetch_object($old_result)) {
+    $rows[$row->field_report_product_line_nid][$row->field_report_name_value] = $row->nid;
+  }
+
+  foreach ($pl_arr as $ptitle) {
+    //get product line title
+    $pnid = db_result(db_query("select nid from {node} where title = '%s' and type='product_line'", $ptitle));
+    //set product line report access
+    if (!$pnid) {
+      $pnid = create_product_line($ptitle);
+    }
+    foreach ($report_arr as $report) {
+      //check this row 
+      if (!$rows[$pnid][$report]) {
+        $node = new stdClass();
+        $node->title = "Product Line Report";
+        $node->type = "product_line_report";
+        $node->uid = 1;
+        $node->field_report_product_line[0]['nid'] = $pnid;
+        $node->field_report_name[0]['value'] = $report;
+        node_save($node);
+      }
+    }
+  }
+}
+
+/**
+ * For Emerald update Valleylab LS10
+ */
+function covidien_seeddata_update_6112() {
+  //Emerald
+  $valleylab = array(
+    'title' => 'Valleylab LS10',
+    'product_line' => 'Vessel Sealing',
+  );
+  $dtype_nid = db_result(db_query("SELECT nid FROM {node} WHERE (title = '%s' OR title = '%s') AND type='devicetype'", 'Emerald', $valleylab['title']));
+  $product_line = db_result(db_query("SELECT nid FROM {node} WHERE title = '%s' AND type='product_line'", $valleylab['product_line']));
+  if ($dtype_nid != '') {
+    $node = node_load($dtype_nid);
+    $node->title = $valleylab['title'];
+    node_save($node);
+  } else {
+    $node = new stdClass();
+    $node->type = 'devicetype';
+    $node->uid = 1;
+    $node->format = 0;
+    $node->title = $valleylab['title'];
+    $node->field_device_product_line[0]['nid'] = $product_line;
+    $node->field_max_download_level[0]['value'] = 2; //All production versions
+    $node->field_serial_number_regex[0]['value'] = ''; //regex
+    node_save($node);
+  }
+
+  $pl_arr = array('Vessel Sealing');
+  $report_arr = array(
+    'Device Current Configuration Report',
+    'Software Upgrade Report',
+    'Component Discrepancy Report',
+    'Service Records Report',
+    'Audit Trail Report',
+    'Training Report'
+  );
+  update_product_line_report_access($pl_arr, $report_arr);
+
+  update_sw_configuration_report();
+  return array(array('success' => true, 'query' => 'Update product line report'));
+}
+
+/**
+ * hook_update()
+ * P2.3
+ */
+function covidien_seeddata_update_6101() {
+  db_query("update {content_type_product_line_report} set field_report_name_value='Device Current Configuration Report' where field_report_name_value='Device Configuration Report'");
+  $devicetype['Ventilation'] = 'VTS Client';
+  $devicetype['Vessel Sealing'] = 'VLEX Client';
+  $devicetype['Compression'] = 'SCD Client';
+  /**
+   * sample Hardware
+   */
+  $field_hw_type = db_result(db_query("select nid from {node} where title = '%s' and type='hardwaretype'", 'MOTHERBOARD'));
+  //
+  foreach ($devicetype as $key => $val) {
+    $product_line = db_result(db_query("select nid from {node} where title = '%s' and type='product_line'", $key));
+    if (node_load(array('title' => $val, 'type' => 'devicetype'))) {
+      continue;
+    }
+    $node = new stdClass();
+    $node->type = 'devicetype';
+    $node->uid = 1;
+    $node->format = 0;
+    $node->title = $val;
+    $node->field_device_product_line[0]['nid'] = $product_line;
+    $node->field_max_download_level[0]['value'] = 2; //All production versions
+    $node->field_serial_number_regex[0]['value'] = ''; //regex
+    node_save($node);
+    create_hardware($node->nid, $field_hw_type);
+  }
+
+  create_total_devices_report();
+  return array(array('success' => true, 'query' => 'Add device type: VTS Client, VLEX Client, SCD Client'));
+}
+
+function covidien_seeddata_update_6102() {
+  //update VLLS8 VLLS10 to Valleylab LS10
+  db_query("UPDATE {activity_log} SET device='Valleylab LS10' WHERE device='VLLS8' OR device='VLLS10'");
+  db_query("UPDATE {node} SET title='Valleylab LS10' WHERE title='VLLS8' OR title='VLLS10'");
+  db_query("UPDATE {node} SET title='Valleylab LS10 Admin' WHERE title='VLL8Admin' OR title='VLLS10Admin'");
+  db_query("UPDATE {role} SET name = REPLACE(name, 'VLL8', 'Valleylab LS10 ') WHERE name LIKE '%VLL8%'");
+  db_query("UPDATE {role} SET NAME = REPLACE(name, 'VLLS10', 'Valleylab LS10 ') WHERE NAME LIKE '%VLLS10%'");
+  return array(array('success' => true, 'query' => 'Update device type VLLS10 to Valleylab LS10'));
+}
+
+function covidien_seeddata_update_6103() {
+  //Add Change Password to device_notification_type
+  $title = 'Change Password';
+  if (node_load(array('title' => $title, 'type' => 'device_notification_type'))) {
+    return array(array('success' => true, 'query' => 'Add Change Password to User Email Notification'));
+  }
+  $node = new stdClass();
+  $node->type = 'device_notification_type';
+  $node->uid = 1;
+  $node->format = 0;
+  $node->title = $title;
+  $node->field_sort_sequence[0]['value'] = 7;
+  node_save($node);
+  return array(array('success' => true, 'query' => 'Add Change Password to User Email Notification'));
+}
+
+function covidien_seeddata_update_6104() {
+  $country = array(
+    array('name' => 'None', 'code' => 'ZZ'),
+    array('name' => 'Covidien', 'code' => 'XA'),
+  );
+  update_country_node($country);
+  return array(array('success' => true, 'query' => 'Add Country: None, Covidien'));
+}
+
+//add new serial number regex value for device type, update device type sku
+function covidien_seeddata_update_6111() {
+  global $hw_sw_config_url;
+  $device_type_regex = array(
+    array(
+      'device_type' => 'PB980_Ventilator',
+      'sn_regex' => (strpos($hw_sw_config_url, 'test') !== FALSE) ? '35[Bb]((\\d{2}[Pp]\\d{4})|\\d{7})' : '35[Bb]((\\d{2}\\d{4})|\\d{7})',
+      'product_line' => 'Ventilation',
+    //'guid' => '7a85f0c9-531e-4754-ad68-04c77ed63657',
+    ),
+    array(
+      'device_type' => 'SCD 700',
+      'sn_regex' => '[Vv](\\d{7})([Ss]|[Aa]|(([AaBbCcSs])[Xx]))',
+      'product_line' => 'Compression',
+    //'guid' => '61e08b77-df3c-4735-9f3b-0b42efb7bdcf',
+    ),
+    //GATEWAY-1769 ForceTriad update to Valleylab LS10
+    array(
+      'device_type' => 'Valleylab LS10',
+      'sn_regex' => '',
+      'product_line' => 'Vessel Sealing',
+    //'guid' => 'DACD7FA1-9D67-4057-9952-C55F8EA6227B',
+    ),
+    array(
+      'device_type' => 'CoolTip',
+      'sn_regex' => '[Pp]\\d[A-La-l](\\d{4})([Tt]|[Jj]|([JjTt][Xx]))',
+      'product_line' => 'Ablation',
+    //'guid' => 'BD5CE934-26AE-484A-8395-EB0FD29F6838',
+    ),
+    array(
+      'device_type' => 'CoolTip Japan',
+      'sn_regex' => '[Pp]\\d[A-La-l](\\d{4})([Tt]|[Jj]|([JjTt][Xx]))',
+      'product_line' => 'Ablation',
+    //'guid' => 'C1FF0EB8-1CD7-4448-BD06-406B2F93E725',
+    ),
+  );
+  update_device_type_regex($device_type_regex);
+
+  $device_type_sku = array(
+    //PB980_Ventilator
+    array(
+      'device_type' => 'PB980_Ventilator',
+      'skus' => array(
+        array('source' => 'E1', 'sku' => '980X1ENDIUU'),
+        array('source' => 'E1', 'sku' => '980X2ENDIUU'),
+        array('source' => 'E1', 'sku' => '980X3ENDIUU'),
+        array('source' => 'E1', 'sku' => '980S1ENDIUU'),
+        array('source' => 'E1', 'sku' => '980S1ENDIUUS'),
+        array('source' => 'E1', 'sku' => '980S2ENDIUU'),
+        array('source' => 'E1', 'sku' => '980S2ENDIUUS'),
+        array('source' => 'E1', 'sku' => '980S3ENDIUU'),
+        array('source' => 'E1', 'sku' => '980S3ENDIUUS'),
+        array('source' => 'E1', 'sku' => '980U1ENDIUU'),
+        array('source' => 'E1', 'sku' => '980U1ENDIUUS'),
+        array('source' => 'E1', 'sku' => '980U2ENDIUU'),
+        array('source' => 'E1', 'sku' => '980U2ENDIUUS'),
+        array('source' => 'E1', 'sku' => '980U3ENDIUU'),
+        array('source' => 'E1', 'sku' => '980U3ENDIUUS'),
+        array('source' => 'E1', 'sku' => '980N1ENDIUU'),
+        array('source' => 'E1', 'sku' => '980N1ENDIUUS'),
+        array('source' => 'E1', 'sku' => '980N2ENDIUU'),
+        array('source' => 'E1', 'sku' => '980N2ENDIUUS'),
+        array('source' => 'E1', 'sku' => '980N3ENDIUU'),
+        array('source' => 'E1', 'sku' => '980N3ENDIUUS'),
+      ),
+    ),
+    //SCD 700
+    array(
+      'device_type' => 'SCD 700',
+      'skus' => array(
+        array('source' => 'E1', 'sku' => '29525'),
+        array('source' => 'E1', 'sku' => '295250'),
+        array('source' => 'E1', 'sku' => '295251'),
+        array('source' => 'E1', 'sku' => '295254'),
+        array('source' => 'E1', 'sku' => '295255'),
+        array('source' => 'E1', 'sku' => '295257'),
+        array('source' => 'E1', 'sku' => '295258'),
+        array('source' => 'E1', 'sku' => '295259'),
+        array('source' => 'E1', 'sku' => '29525B'),
+        array('source' => 'E1', 'sku' => 'U29525'),
+        array('source' => 'E1', 'sku' => 'H29525'),
+        array('source' => 'E1', 'sku' => 'H29525B'),
+        array('source' => 'E1', 'sku' => 'UH29525'),
+        array('source' => 'E1', 'sku' => 'UH29525B'),
+        array('source' => 'E1', 'sku' => 'U29525B'),
+      ),
+    ),
+    //ForceTriad GATEWAY-1769 update to Valleylab LS10
+    array(
+      'device_type' => 'Valleylab LS10',
+      'skus' => array(
+        array('source' => 'E1', 'sku' => 'FORCETRIAD'),
+        array('source' => 'E1', 'sku' => 'FORCETRIADZD'),
+        array('source' => 'E1', 'sku' => 'FORCETRIADZE'),
+      ),
+    ),
+    //CoolTip
+    array(
+      'device_type' => 'CoolTip',
+      'skus' => array(
+        array('source' => 'E1', 'sku' => 'RFAGEN'),
+        array('source' => 'E1', 'sku' => 'RFAGENJ'),
+        array('source' => 'E1', 'sku' => 'RFAGENZD'),
+        array('source' => 'E1', 'sku' => 'RFAGENZE'),
+      ),
+    ),
+  );
+  update_device_type_sku($device_type_sku);
+  return array(array('success' => true, 'query' => 'Update device type sku'));
+}
+
+function update_sw_configuration_report() {
+  $pl_arr = array('Vessel Sealing', 'Ventilation', 'Compression');
+  $report_arr = array('SW Configuration Report');
+  update_product_line_report_access($pl_arr, $report_arr);
+  return array(array('success' => true, 'query' => 'Update product line access'));
+}
+
+//update all product line report access
+function covidien_seeddata_update_6107() {
+  $pl_arr = array('Ventilation', 'Vessel Sealing', 'Compression', 'Infrastructure', 'Patient Monitoring', 'Ablation');
+  $report_arr = array(
+    'Device Current Configuration Report',
+    'Software Upgrade Report',
+    'Component Discrepancy Report',
+    'Service Records Report',
+    'Audit Trail Report',
+    'Training Report',
+    'SW Configuration Report'
+  );
+  update_product_line_report_access($pl_arr, $report_arr);
+  return array(array('success' => true, 'query' => 'Update product line access'));
+}
+
+//update all device type download access 
+function covidien_seeddata_update_6108() {
+  //get all device type nid 
+  $query = "SELECT nid FROM node WHERE type = 'devicetype'";
+  $result = db_query($query);
+  while ($row = db_fetch_object($result)) {
+    $device_types[$row->nid] = $row->nid;
+  }
+  //set all device type max download level is 2 //All production versions
+  $sql = "REPLACE INTO {content_field_max_download_level} (vid, nid, field_max_download_level_value) VALUES (%d, %d, %d)";
+  foreach ($device_types as $nid) {
+    db_query($sql, $nid, $nid, 2);
+  }
+  return array(array('success' => true, 'query' => 'Update device type max download level'));
+}
+
+//clear have not device type
+function covidien_seeddata_update_6109() {
+  //delete device type not in node
+  db_query("DELETE FROM {content_field_device_type} WHERE field_device_type_nid NOT IN (SELECT nid FROM {node})");
+  //delete training record not in device type
+  db_query("DELETE FROM {node} WHERE (nid NOT IN (SELECT nid FROM {content_field_device_type})) AND (node.type = 'person_training_record')");
+  return array(array('success' => true, 'query' => 'Delete device type not in node'));
+}
+
+function covidien_seeddata_update_6110() {
+  //delete product line 
+  $product_arr = array('Patient Monitoring', 'Ablation');
+  foreach ($product_arr as $p_title) {
+    $p_nid = db_result(db_query("SELECT nid FROM {node} WHERE type = 'product_line' AND title = '%s'", $p_title));
+    node_delete($p_nid);
+  }
+  //update device type regex
+  $device_type_regex = array(
+    array(
+      'device_type' => 'PB980_Ventilator',
+      'sn_regex' => '35[Bb]((\d{2}[Pp]\d{4})|\d{7})',
+      'product_line' => 'Ventilation',
+    ),
+  );
+  update_device_type_regex($device_type_regex);
+  return array(array('success' => true, 'query' => 'Update device type serial number regex'));
+}
+
+function covidien_seeddata_update_6118() {
+  $product_line = 'Vessel Sealing';
+  module_load_include('php', 'covidien_seeddata', 'data/seeddata_helper');
+  $rolespermission = vlex_permissiondata();
+  update_product_line_role($product_line, $rolespermission);
+
+  $pl_arr = array('Ventilation', 'Vessel Sealing', 'Compression', 'Infrastructure');
+  $report_arr = array(
+    'Alert Event by Device Serial Number & Date Range',
+    'User & Device Serial Number Association',
+    'SW Configuration by Serial Number',
+    'Device Historical Infromation by Date Range',
+    'All System Configurations by Device Type',
+    'All SW Catalog Data by Device Type'
+  );
+  update_product_line_report_access($pl_arr, $report_arr);
+  return array(array('success' => true, 'query' => 'Update roles'));
+}
+
+/**
+ * Update content_type_devicetype add field device_type_gateway_version
+ * @return array
+ */
+function covidien_seeddata_update_6119() {
+  $alter_sql = "ALTER TABLE `content_type_devicetype` ADD COLUMN `device_type_gateway_version` varchar(10) NOT NULL DEFAULT 0 AFTER `device_type_guid`;";
+  db_query($alter_sql);
+  return array(array('success' => true, 'query' => 'Update content_type_devicetype add field device_type_gateway_version'));
+}
+
+function update_device_type_sku($device_type_sku) {
+  foreach ($device_type_sku as $item) {
+    $device_type_nid = db_result(db_query("SELECT nid FROM {node} WHERE type = 'devicetype' AND title = '%s'", $item['device_type']));
+    if ($device_type_nid) {
+      foreach ($item['skus'] as $sku) {
+        $node = new stdClass();
+        $node->type = 'sku';
+        $node->uid = 1;
+        $node->format = 0;
+        $node->title = $sku['sku']; //device type title
+        $node->field_sku_id[0]['value'] = $sku['sku'];
+        $node->field_source_system[0]['value'] = $sku['source'];
+        $node->field_device_type_pk[0]['nid'] = $device_type_nid; //regex
+        node_save($node);
+      }
+    }
+  }
+}
+
+//$product_line is product line title
+function create_product_line($product_line) {
+  //save product_line node
+  $node = new stdClass();
+  $node->type = 'product_line';
+  $node->uid = 1;
+  $node->format = 0;
+  $node->title = $product_line;
+  node_save($node);
+  $pl_nid = $node->nid;
+
+  //insert product line roles
+  module_load_include('php', 'covidien_seeddata', 'data/seeddata_helper');
+  $rolespermission = permissiondata();
+  foreach ($rolespermission as $title => $sectionpermission) {
+    $node_roles = new stdClass();
+    $node_roles->type = 'roles';
+    $node_roles->uid = 1;
+    $node_roles->format = 0;
+    $node_roles->title = $title;
+    $node_roles->field_roles_description[0]['value'] = $title;
+    $node_roles->field_role_product_line[0]['nid'] = $pl_nid;
+    node_save($node_roles);
+    $roles_nid_rid[$pl_nid][$title]['nid'] = $node_roles->nid;
+
+    db_query("Insert into {role} (name) VALUES ('%s')", $pl_nid . '__' . $title);
+  }
+
+  return $pl_nid;
+}
+
+function update_device_type_regex($device_type_regex) {
+  module_load_include('module', 'covidien_device');
+  $ret = array();
+  $field = array('type' => 'varchar', 'length' => 255, 'description' => 'Guid.');
+  db_add_field($ret, 'content_type_devicetype', 'device_type_guid', $field);
+
+  foreach ($device_type_regex as $item) {
+    $device_type_nid = db_result(db_query("SELECT nid FROM {node} WHERE type = 'devicetype' AND title = '%s'", $item['device_type']));
+    $product_line = db_result(db_query("SELECT nid FROM {node} WHERE TYPE='product_line' AND title='%s'", $item['product_line']));
+    $node = $device_type_nid ? node_load($device_type_nid) : new stdClass();
+    $node->nid = $device_type_nid;
+    $node->type = 'devicetype';
+    $node->uid = 1;
+    $node->format = 0;
+    $node->title = $item['device_type']; //device type title
+    $node->field_device_product_line[0]['nid'] = $product_line;
+    $node->field_max_download_level[0]['value'] = 2; //All production versions
+    $node->field_serial_number_regex[0]['value'] = $item['sn_regex']; //regex
+    $node->device_type_guid = $item['guid'];
+    node_save($node);
+  }
+  return $ret;
+}
+
+/**
+ * Create Hardware
+ */
+function create_hardware($field_device_type = '', $field_hw_type = '') {
+  if ($field_device_type > 0) {
+    $node = new stdClass();
+    $node->type = 'hardware';
+    $node->uid = 1;
+    $node->sampledata = 1;
+    $node->status = 1;
+    $node->format = 0;
+    $node->title = 'WINTEL';
+    $node->field_device_type[0]['nid'] = $field_device_type;
+    $node->field_hw_part[0]['value'] = 'ABC';
+    $node->field_hw_version[0]['value'] = '1.0';
+    $node->field_hw_type[0]['nid'] = $field_hw_type;
+    $node->field_expiration_datetime[0]['value'] = '';
+    node_save($node);
+    return $node->nid;
+  } else {
+    return false;
+  }
+}
+
+/**
+ * Create Total Devices Report for the COT Infrastructure
+ */
+function create_total_devices_report() {
+  $pl = db_result(db_query("select nid from {node} where title = '%s' and type='product_line'", 'Infrastructure'));
+  $val2 = new stdClass();
+  $val2->title = "Product Line Report";
+  $val2->type = "product_line_report";
+  $val2->uid = 1;
+  $val2->language = "en";
+  $val2->field_report_product_line[0]['nid'] = $pl;
+  $val2->field_report_name[0]['value'] = 'Total Devices Report';
+  node_save($val2);
+}
+
+function covidien_seeddata_update_6105() {
+  $ret = array();
+  $pl_arr = array('Vessel Sealing', 'Ventilation', 'Compression');
+  $report = 'SW Configuration Report';
+  foreach ($pl_arr as $pltitle) {
+    $pl = db_result(db_query("select nid from {node} where title = '%s' and type='product_line'", $pltitle));
+    $val2 = array();
+    $val2 = (object) $val2;
+    $val2->title = "Product Line Report";
+    $val2->type = "product_line_report";
+    $val2->uid = 1;
+    $val2->language = "en";
+    $val2->field_report_product_line[0]['nid'] = $pl;
+    $val2->field_report_name[0]['value'] = $report;
+    node_save($val2);
+  }
+  return $ret;
+}
+
+function covidien_seeddata_update_6106() {
+  $ret = array();
+  $title = 'Named System Configuration Update';
+  if (node_load(array('title' => $title))) {
+    return $ret;
+  }
+  $node = new stdClass();
+  $node->title = $title;
+  $node->type = "device_service_type";
+  $node->uid = 1;
+  $node->field_service_description[0]['value'] = "Named System Configuration Update";
+  node_save($node);
+  return $ret;
+}
+
+//add new software type.
+function add_software_type_bundle_subcomponent() {
+  $node = new stdClass();
+  $node->type = 'softwaretype';
+  $node->uid = 1;
+  $node->format = 0;
+  $node->language = "en";
+  $node->title = "Bundle Subcomponent";
+  node_save($node);
+}
+
+//add new device service type
+function covidien_seeddata_update_6116() {
+  $title = 'Feature Entitlement';
+  if (!node_load(array('title' => $title))) {
+    $node = new stdClass();
+    $node->title = $title;
+    $node->type = "device_service_type";
+    $node->uid = 1;
+    $node->field_service_description[0]['value'] = "Feature License Entitlement";
+    node_save($node);
+  }
+
+  $title = 'SN Reprogramming';
+  if (!node_load(array('title' => $title))) {
+    $node = new stdClass();
+    $node->title = $title;
+    $node->type = "device_service_type";
+    $node->uid = 1;
+    $node->field_service_description[0]['value'] = "Serial Number Reprogramming";
+    node_save($node);
+  }
+
+  //update_language_iso2_node();
+  return array(array('success' => true, 'query' => 'Add device type, Update language code'));
+}
+
+/**
+ * update all role and premission
+ * product line permission permissiondata();
+ * Vessel Sealing vlex_permissiondata();
+ * Ablation vlex_permissiondata();
+ */
+function update_product_line_role($product_line, $rolespermission) {
+  module_load_include('php', 'covidien_seeddata', 'data/seeddata_helper');
+  $roles = array_keys($rolespermission);
+
+  $pl_nid = db_result(db_query("SELECT nid FROM {node} WHERE type = 'product_line' AND title = '%s'", $product_line));
+  //get old roles 
+  $role_result = db_query("SELECT n.nid, n.title 
+      FROM {node} n 
+      JOIN {content_type_roles} r ON n.nid = r.nid 
+      WHERE n.type = 'roles' AND r.field_role_product_line_nid = %d", $pl_nid);
+  $has_roles = array();
+  while ($row = db_fetch_object($role_result)) {
+    if (!in_array($row->title, $roles)) {
+      //now in new role , delete it
+      node_delete($row->nid);
+      db_query("DELETE FROM {role} WHERE name = '%s'", $pl_nid . '__' . $row->title);
+      $access_result = db_query("SELECT nid FROM {content_type_app_role_access_policy} WHERE field_app_role_nid = %d", $row->nid);
+      while ($access_row = db_fetch_object($access_result)) {
+        node_delete($access_row->nid);
+      }
+    } else {
+      //have it roles
+      $has_roles[$row->nid] = $row->title;
+    }
+  }
+
+  foreach ($rolespermission as $role => $sectionpermission) {
+    $role_nid = db_result(db_query("SELECT n.nid 
+        FROM {node} n 
+        JOIN {content_type_roles} r ON n.nid = r.nid 
+        WHERE n.type = 'roles' 
+        AND r.field_role_product_line_nid = %d
+        AND  n.title = '%s'", $pl_nid, $role));
+
+    if (!$role_nid) {
+      //add new roles node 
+      $node = new stdClass();
+      $node->type = 'roles';
+      $node->uid = 1;
+      $node->format = 0;
+      $node->title = $role;
+      $node->field_roles_description[0]['value'] = $role;
+      $node->field_role_product_line[0]['nid'] = $pl_nid;
+      node_save($node);
+      $role_nid = $node->nid;
+      //add new user role
+      db_query("REPLACE INTO {role} (name) VALUES ('%s')", $pl_nid . "__" . $role);
+    }
+    //update access
+    module_load_include('inc', 'covidien_users', 'include/covidien_users_query');
+    $query = getAccessPolicyQuery($role_nid);
+    while ($row = db_fetch_object($query)) {
+      $node = node_load($row->nid);
+      $dateSQL = format_date(time(), 'custom', 'Y-m-d H:i:s', 0);
+      $node->field_expiration_datetime[0]['value'] = $dateSQL;
+      node_save($node);
+    }
+    //add app_role_access_policy
+    foreach ($sectionpermission as $name => $val) {
+      $node = new stdClass();
+      $node->type = 'app_role_access_policy';
+      $node->uid = 1;
+      $node->format = 0;
+      $node->title = 'Roles Access';
+      $node->field_app_role[] = array('nid' => $role_nid);
+      $section_access_nid = get_section_access_permissions_nid($name . '-' . $val);
+      $node->field_section_access_option[] = array('nid' => $section_access_nid);
+      node_save($node);
+    }
+  }
+  //update permission 
+  update_role_prem();
+  cache_clear_all();
+}
+
+//update all roles premission
+function update_role_prem() {
+  //update permission on drupal
+  $result = db_query("SELECT rid FROM {role}");
+  while ($row = db_fetch_object($result)) {
+    db_query('DELETE FROM {permission} WHERE rid = %d', $row->rid);
+    $prem = 'access content, administer nodes, create device_type_config content, create document content, create hardware content, create software content, create user_settings content, edit any device_type_config content, edit any document content, edit any hardware content, edit any software content, edit any user_settings content, administer permissions, administer users';
+    db_query("INSERT INTO {permission} (rid,perm) VALUES ('%s','%s')", $row->rid, $prem);
+  }
+}
+
+/**
+ * get all user roles
+ */
+function covidien_get_user_all_roles() {
+  $result = db_query("SELECT ur.uid, r.rid, r.name FROM {users_roles} ur JOIN {role} r ON ur.rid = r.rid");
+  $rows = array();
+  while ($row = db_fetch_object($result)) {
+    $rows[$row->name][$row->uid] = $row->uid;
+  }
+  return $rows;
+}
+
+/**
+ * get all user person roles
+ */
+function covidien_get_user_all_person_roles() {
+  //content_field_app_role_pk
+  $result = db_query("SELECT rp.nid, rp.vid, rn.title, cr.field_role_product_line_nid
+    FROM {content_field_app_role_pk} rp
+    join {node} un on rp.nid = un.nid
+    join {node} rn on rp.field_app_role_pk_nid = rn.nid
+    join {content_type_roles} cr on rn.vid = cr.vid");
+  $rows = array();
+  while ($row = db_fetch_object($result)) {
+    $rows[$row->field_role_product_line_nid][$row->title][$row->nid] = $row->vid;
+  }
+  return $rows;
+}
+
+/**
+ * update user role
+ */
+function covidien_update_user_role($user_role) {
+  $rid_sql = "SELECT rid FROM {role} where name = '%s'";
+  $up_sql = "REPLACE INTO {users_roles} (uid, rid) VALUES (%d, %d)";
+  //delete empty role 
+  db_query("DELETE FROM users_roles WHERE rid NOT IN (SELECT rid FROM role)");
+  foreach ($user_role AS $role_name => $uids) {
+    $rid = db_result(db_query($rid_sql, $role_name));
+    foreach ($uids as $uid) {
+      db_query($up_sql, $uid, $rid);
+    }
+  }
+}
+
+/**
+ * update user person role
+ */
+function covidien_update_user_person_role($user_person) {
+  $rnid_sql = "SELECT n.nid FROM {content_type_roles} r JOIN {node} n on r.nid = n.nid WHERE r.field_role_product_line_nid = %d AND n.title = '%s'";
+  $up_sql = "UPDATE {content_field_app_role_pk} SET field_app_role_pk_nid = %d WHERE vid = %d";
+  foreach ($user_person as $pl_nid => $roles) {
+    foreach ($roles as $title => $uids) {
+      $rid = db_result(db_query($rnid_sql, $pl_nid, $title));
+      foreach ($uids as $nid => $vid) {
+        db_query($up_sql, $rid, $vid);
+      }
+    }
+  }
+}
+
+function get_section_access_permissions_nid($title) {
+  $nid = db_result(db_query("SELECT nid FROM {node} WHERE title LIKE '%%%s%%' AND type='section_access_option'", $title));
+  return $nid;
+}
+
+function update_language_node() {
+  module_load_include('php', 'covidien_seeddata', 'data/iso_3166_1');
+  $iso_country = iso_country_list();
+}
+
+/**
+ * update script change software in SCD Client and type is Business Rules to SCD 700
+ */
+function covidien_seeddata_update_6114() {
+  $sw_type = 'Business Rules';
+  //old device
+  $device_type = 'SCD Client';
+  //new device
+  $new_device_type = 'SCD 700';
+  $new_product_line = 'Compression';
+  //get old nid
+  $sql = " SELECT s.nid 
+      FROM {content_type_software} s 
+      JOIN {content_field_device_type} dt ON dt.nid = s.nid 
+      JOIN {node} n ON n.nid = dt.field_device_type_nid AND n.title = '%s' 
+      JOIN {node} stn ON s.field_sw_type_nid = stn.nid AND stn.title = '%s' 
+      GROUP BY s.nid";
+  $result = db_query($sql, $device_type, $sw_type);
+  $rows = array();
+  while ($row = db_fetch_object($result)) {
+    $rows[$row->nid] = $row->nid;
+  }
+  //get new nid  
+  $device_type_nid = db_result(db_query("SELECT nid FROM {node} WHERE type = 'devicetype' AND title = '%s'", $new_device_type));
+  if (!$device_type_nid) {
+    $product_line = db_result(db_query("SELECT nid FROM {node} WHERE title = '%s' and type = 'product_line'", $new_product_line));
+    $node = new stdClass();
+    $node->type = 'devicetype';
+    $node->uid = 1;
+    $node->format = 0;
+    $node->title = $new_device_type;
+    $node->field_device_product_line[0]['nid'] = $product_line;
+    $node->field_max_download_level[0]['value'] = 2; //All production versions
+    $node->field_serial_number_regex[0]['value'] = ''; //regex
+    node_save($node);
+    $device_type_nid = $node->nid;
+  }
+  //update sw device type
+  if (count($rows)) {
+    $placeholders = db_placeholders($rows, 'int');
+    $update = "UPDATE {content_field_device_type} SET field_device_type_nid = %d WHERE nid IN ($placeholders)";
+    $args = array_merge(array($device_type_nid), $rows);
+    db_query($update, $args);
+  }
+
+  add_software_type_bundle_subcomponent();
+  return array(array('success' => true, 'query' => 'Update device type'));
+}
+
+function covidien_seeddata_update_6113() {
+  db_query("ALTER TABLE `content_type_device_installation` ADD COLUMN `modified_privilege` INT(2) NULL DEFAULT -1 AFTER `field_usr_provided_dev_address_value`");
+  $result = db_query("select 
+                      field_device_installation_pk_nid,
+                      c.field_covidien_employee_value,
+                      max(field_service_datetime_value)
+                  from
+                      content_type_device_installation a,
+                      content_type_device_service_history b,
+                      content_type_person c
+                  where
+                      a.nid = b.field_device_installation_pk_nid
+                  and b.field_service_person_pk_nid = c.nid
+                  group by field_device_installation_pk_nid");
+  while ($row = db_fetch_object($result)) {
+    $device_installation[$row->field_device_installation_pk_nid] = $row->field_service_person_pk_nid;
+  }
+
+  //set the modified privilege for device_installation
+  $sql = "update content_type_device_installation set modified_privilege = %d where nid = %d";
+  foreach ($device_installation as $key => $value) {
+    if ($value == "No") {
+      $previlege_value = 4;
+    } else {
+      $previlege_value = 2;
+    }
+    db_query($sql, $previlege_value, $key);
+  }
+
+  return array(array('success' => true, 'query' => 'Update content_type_device_installation'));
+}
+
+/**
+ * update database views device_scd700_software_version_view
+ */
+function covidien_seeddata_update_6115() {
+  //device_scd700_software_version_view
+  module_load_include('install', 'covidien_reports');
+  device_scd700_software_version_view();
+  return array(array('success' => true, 'query' => 'Update view device_scd700_software_version_view'));
+}
+
+/**
+ * Add compoents version table to resolve issue 22.
+ */
+function covidien_seeddata_update_6117() {
+  $create_sql = "CREATE TABLE IF NOT EXISTS `components_version` (
+				  `version_id` int(11) NOT NULL DEFAULT '0'
+				) ENGINE=InnoDB DEFAULT CHARSET=utf8";
+  db_query($create_sql);
+  $insert_sql = "insert into components_version values (0)";
+  db_query($insert_sql);
+  return array(array('success' => true, 'query' => 'Add version'));
+}
+
+/**
+ * add device type ForceTraid and CoolTip 
+ * add product line Ablation
+ */
+function covidien_seeddata_update_6120() {
+  $product_line = 'Ablation';
+  $device_type_regex = array(
+    array(
+      'device_type' => 'ForceTriad',
+      'sn_regex' => '[Tt]\\d[A-La-l]((\\d{4})[Ee]|(\\d{5})([Ee]|[Ee][Xx]))',
+      'product_line' => 'Vessel Sealing',
+    //'guid' => 'DACD7FA1-9D67-4057-9952-C55F8EA6227B',
+    ),
+    array(
+      'device_type' => 'CoolTip',
+      'sn_regex' => '[Pp]\\d[A-La-l](\\d{4})([Tt]|[Jj]|([JjTt][Xx]))',
+      'product_line' => $product_line,
+    //'guid' => 'BD5CE934-26AE-484A-8395-EB0FD29F6838',
+    ),
+    array(
+      'device_type' => 'CoolTip Japan',
+      'sn_regex' => '[Pp]\\d[A-La-l](\\d{4})([Tt]|[Jj]|([JjTt][Xx]))',
+      'product_line' => $product_line,
+    //'guid' => 'C1FF0EB8-1CD7-4448-BD06-406B2F93E725',
+    ),
+  );
+  $pl_arr = array($product_line);
+  $pnid = db_result(db_query("SELECT nid FROM {node} WHERE title = '%s' AND type = 'product_line'", $product_line));
+  if (!$pnid) {
+    create_product_line($product_line);
+  }
+  $report_arr = array(
+    'Device Current Configuration Report',
+    'Software Upgrade Report',
+    'Component Discrepancy Report',
+    'Service Records Report',
+    'Audit Trail Report',
+    'Training Report'
+  );
+  //check product line
+  module_load_include('php', 'covidien_seeddata', 'data/seeddata_helper');
+  $rolespermission = vlex_permissiondata();
+  update_product_line_role($product_line, $rolespermission);
+  update_product_line_report_access($pl_arr, $report_arr);
+  //update device type
+  update_device_type_regex($device_type_regex);
+
+  return array(array('success' => true, 'query' => 'Add product line and device type'));
+}
+
+/**
+ * update privilege of updating device country. 
+ */
+function covidien_seeddata_update_6121() {
+  $device_installation = array();
+  $result = db_query("select distinct
+                      field_device_installation_pk_nid
+                  from
+                      content_type_device_installation a,
+                      content_type_device_service_history b,
+                      content_type_person c,
+					  content_type_person d
+                  where
+                      a.nid = b.field_device_installation_pk_nid
+                  and b.field_service_person_pk_nid = c.nid
+				  and c.nid != d.nid and c.vid != d.vid
+				  and d.field_first_name_value = 'etl'
+				  and d.field_last_name_value = 'admin'");
+  while ($row = db_fetch_object($result)) {
+    $device_installation[] = $row->field_device_installation_pk_nid;
+  }
+
+  //set the modified privilege for device_installation
+  $sql = "update content_type_device_installation set modified_privilege = %d where nid = %d";
+  foreach ($device_installation as $value) {
+    db_query($sql, 3, $value);
+  }
+
+  return array(array('success' => true, 'query' => 'Update content_type_device_installation'));
+}
+
+/**
+ * update privilege of updating device owner. set modified_owner_privilege as 2 which device docked by non-cov.
+ */
+function covidien_seeddata_update_6122() {
+  $device_pk = array();
+  db_query("ALTER TABLE `content_type_device` ADD COLUMN `modified_owner_privilege` INT(2) NULL DEFAULT 1 AFTER `field_device_owner_nid`");
+  $result = db_query("select distinct a.field_device_pk_nid from content_field_device_pk a, 
+                content_type_device_service_history b , content_type_person c 
+                where a.nid = b.nid and a.vid = b.vid
+                and b.field_service_person_pk_nid = c.nid 
+                and c.field_comp_account_no_nid != 0 
+                and c.field_comp_account_no_nid is not null");
+  while ($row = db_fetch_object($result)) {
+    $device_pk[] = $row->field_device_pk_nid;
+  }
+
+  //set the modified privilege for device owner
+  $sql = "update content_type_device set modified_owner_privilege = %d where nid = %d";
+  foreach ($device_pk as $value) {
+    db_query($sql, 2, $value);
+  }
+
+  return array(array('success' => true, 'query' => 'Update content_type_device'));
+}
+
+/** V3.0 * */
+
+/**
+ * update language iso2 code 
+ * @return array
+ */
+function covidien_seeddata_update_6323() {
+  update_language_iso2_node();
+  return array(array('success' => true, 'query' => 'Update language'));
+}
+
+/**
+ * Update product line Ablation roles
+ * @return array
+ */
+function covidien_seeddata_update_6324() {
+  $product_line = 'Ablation';
+  module_load_include('php', 'covidien_seeddata', 'data/seeddata_helper');
+  $rolespermission = vlex_permissiondata();
+  update_product_line_role($product_line, $rolespermission);
+  return array(array('success' => true, 'query' => 'Update product line Ablation roles'));
+}
+
+function covidien_seeddata_update_6325() {
+  module_load_include('module', 'covidien_ui');
+  covidien_update_log('Run ' . __FUNCTION__);
+
+  $pl_arr = array('Ventilation', 'Vessel Sealing', 'Compression', 'Infrastructure');
+  $report_arr = array(
+    'Device Historical Configuration',
+    'Named Configurations Report'
+  );
+  update_product_line_report_access($pl_arr, $report_arr);
+
+  module_load_include('module', 'covidien_ui');
+  covidien_update_log('Finished ' . __FUNCTION__);
+
+  return array(array('success' => true, 'query' => 'Add Report Device Historical Configuration and Named Configurations Report'));
+}
+
+/**
+ * Added new device type
+ * @return array
+ */
+function covidien_seeddata_update_6326() {
+  module_load_include('php', 'covidien_seeddata', 'data/device_type');
+  module_load_include('php', 'covidien_seeddata', 'data/seeddata_helper');
+  $device_types = device_type_info();
+  $pl_arr = array();
+  foreach ($device_types as $item) {
+    $pl_arr[] = $item['product_line'];
+  }
+  //create product line 
+  $pl_arr = array_filter(array_unique($pl_arr));
+  //check product line
+  $pl_roles_fun = product_line_roles_fun();
+  foreach ($pl_arr as $product_line) {
+    $pnid = db_result(db_query("SELECT nid FROM {node} WHERE title = '%s' AND type = 'product_line'", $product_line));
+    if (!$pnid) {
+      create_product_line($product_line);
+      //update product line roles
+      $rolespermission = $pl_roles_fun[$product_line](); //run name roles function 
+      update_product_line_role($product_line, $rolespermission);
+    }
+  }
+  $report_arr = array(
+    'Device Current Configuration Report',
+    'Software Upgrade Report',
+    'Component Discrepancy Report',
+    'Service Records Report',
+    'Audit Trail Report',
+    'Device Historical Configuration',
+    'Training Report',
+  );
+  update_product_line_report_access($pl_arr, $report_arr);
+
+  //update device type
+  update_device_type_regex($device_types);
+
+  return array(array('success' => true, 'query' => 'Added device type'));
+}
+
+/**
+ * Remove software type Drivers
+ * @return array
+ */
+function covidien_seeddata_update_6327() {
+  $node = node_load(array('title' => 'Drivers', 'type' => 'softwaretype'));
+  node_delete($node->nid);
+  return array(array('success' => true, 'query' => 'Remove software type Drivers'));
+}
+
+/**
+ * Remove device type Valleylab LS10 regex
+ * @return array
+ */
+function covidien_seeddata_update_6328() {
+  $device_type_regex = array(
+    array(
+      'device_type' => 'Valleylab LS10',
+      'sn_regex' => '',
+      'product_line' => 'Vessel Sealing',
+    //'guid' => 'DACD7FA1-9D67-4057-9952-C55F8EA6227B',
+    ),
+  );
+  update_device_type_regex($device_type_regex);
+  return array(array('success' => true, 'query' => 'Remove device type Valleylab LS10 regex'));
+}
+
+/**
+ * update device type reversion
+ * @return array
+ */
+function covidien_seeddata_update_6329() {
+  //get SCD and PB device type
+  $sql = "select d.nid from content_type_devicetype d , node n where d.nid = n.nid
+  and ( n.title like 'SCD%' or  n.title like 'PB%' )";
+  $result = db_query($sql);
+  $nid_array = array();
+  while ($row = db_fetch_array($result)) {
+    array_push($nid_array, $row['nid']);
+  }
+  //update all device type to 3.0
+  $update_sql = "update {content_type_devicetype} set device_type_gateway_version = 3.0 ";
+  db_query($update_sql);
+  //update SCD and PB to 2.0
+  if (count($nid_array)) {
+    $update_sql = "update {content_type_devicetype} set device_type_gateway_version = 2.0 where nid in (" . implode(',', $nid_array) . ");";
+  }
+  db_query($update_sql);
+  return array(array('success' => true, 'query' => 'Update device type version'));
+}
+
+/**
+ * Update language English to US English, Remove old US English
+ * @return array
+ */
+function covidien_seeddata_update_6330() {
+  $english_node = node_load(array('title' => 'English', 'type' => 'language'));
+  $us_english_node = node_load(array('title' => 'US English', 'type' => 'language'));
+  if (!$english_node) {
+    return array(array('success' => true, 'query' => 'Have not English Language'));
+  }
+  //Update US English nid to English nid
+  //content_field_user_language field_user_language_nid
+  db_query("UPDATE {content_field_user_language} SET field_user_language_nid=%d WHERE field_user_language_nid=%d", $english_node->nid, $us_english_node->nid);
+  //content_type_device_language_availability field_language_device_type_nid
+  db_query("UPDATE {content_type_device_language_availability} SET field_language_device_type_nid=%d WHERE field_language_device_type_nid=%d", $english_node->nid, $us_english_node->nid);
+  //content_type_device_language_availability field_device_language_nid
+  db_query("UPDATE {content_type_device_language_availability} SET field_device_language_nid=%d WHERE field_device_language_nid=%d", $english_node->nid, $us_english_node->nid);
+  //content_type_document field_document_language_nid
+  db_query("UPDATE {content_type_document} SET field_document_language_nid=%d WHERE field_document_language_nid=%d", $english_node->nid, $us_english_node->nid);
+  //content_type_software field_sw_language_nid
+  db_query("UPDATE {content_type_software} SET field_sw_language_nid=%d WHERE field_sw_language_nid=%d", $english_node->nid, $us_english_node->nid);
+
+  //Update English to US English
+  $english_node->title = 'US English';
+  node_save($english_node);
+  //Delete old US English
+  if ($us_english_node) {
+    node_delete($us_english_node->nid);
+  }
+  return array(array('success' => true, 'query' => 'Update language English to US English'));
+}
+
+function covidien_seeddata_update_6331() {
+  $language_count = db_result(db_query("SELECT COUNT(*) AS langth FROM {node} WHERE title = 'US English' AND type = 'language'"));
+  if ($language_count > 1) {
+    $last_nid = db_result(db_query("SELECT MAX(nid) AS langth FROM {node} WHERE title = 'US English' AND type = 'language'"));
+    node_delete($last_nid);
+    return array(array('success' => true, 'query' => 'Delete duplicate US English ' . $last_nid));
+  }
+  return array(array('success' => true, 'query' => 'No duplicate US English'));
+}
+
+// Add new device service type for country change
+function covidien_seeddata_update_6332() {
+  $nodeType = 'device_service_type';
+  $title = 'Device Country Update';
+  if (!node_load(array('type' => $nodeType, 'title' => $title))) {
+    $node = new stdClass();
+    $node->title = $title;
+    $node->type = $nodeType;
+    $node->uid = 1;
+    $node->field_service_description[0]['value'] = $title;
+    node_save($node);
+  }
+
+  update_language_iso2_node();
+  return array(array('success' => true, 'query' => 'Add device service type: Device Country Update'));
+}
+
+//filter product line and device type
+function covidien_seeddata_update_6333() {
+  //unpublish product line name
+  $pl_args = array('Patient Monitoring', 'Stapling');
+  //unpublish device type name
+  $dt_args = array('PB840_Ventilator', 'PM1000N', 'PM10N', 'CV1', 'iDrive', 'PM100N');
+  //update product line 
+  db_query("UPDATE node SET status=0 WHERE type='product_line' AND title IN (" . db_placeholders($pl_args, 'varchar') . ") ", $pl_args);
+  db_query("UPDATE content_field_expiration_datetime SET field_expiration_datetime_value = NOW() WHERE nid IN (SELECT nid FROM node WHERE type='product_line' AND title IN (" . db_placeholders($pl_args, 'varchar') . ")) ", $pl_args);
+  //update device type
+  db_query("UPDATE node SET status=0 WHERE type='devicetype' AND title IN (" . db_placeholders($dt_args, 'varchar') . ") ", $dt_args);
+  db_query("UPDATE content_field_expiration_datetime SET field_expiration_datetime_value = NOW() WHERE nid IN (SELECT nid FROM node WHERE type='devicetype' AND title IN (" . db_placeholders($dt_args, 'varchar') . ")) ", $dt_args);
+  return array(array('success' => true, 'query' => 'Update Prodoct Line and Device Type status'));
+}
+
+//GATEWAY-1700 Update device service type
+function covidien_seeddata_update_6334() {
+  $service_type_arr = array(
+    'Log Retrieval',
+    'Upgrade',
+    'Device Discovery',
+    'Device Registration',
+    'Device Connection',
+    'Configuration Update',
+    'Device Country Update',
+    'Customer Information Changed');
+  //add new service type
+  foreach ($service_type_arr as $service_type) {
+    $nid = db_result(db_query("SELECT nid FROM node WHERE type='device_service_type' AND title='%s'", $service_type));
+    if (!$nid) {
+      $node = new stdClass();
+      $node->title = $service_type;
+      $node->type = "device_service_type";
+      $node->uid = 1;
+      //$node->field_service_description[0]['value'] = '';
+      node_save($node);
+    }
+  }
+  //delete not in list
+  $result = db_query("SELECT nid FROM node WHERE type='device_service_type' AND title NOT IN (" . db_placeholders($service_type_arr, 'varchar') . ")", $service_type_arr);
+  while ($row = db_fetch_object($result)) {
+    node_delete($row->nid);
+  }
+  /*
+    Device_service_type De-install has been deleted.
+    Device_service_type Inspection has been deleted.
+    Device_service_type Repair has been deleted.
+    Device_service_type Preventative Maintenance has been deleted.
+    Device_service_type Named System Configuration Update has been deleted.
+    Device_service_type Feature Entitlement has been deleted.
+    Device_service_type SN Reprogramming has been deleted.
+   */
+  return array(array('success' => true, 'query' => 'Update device service type'));
+}
+
+//GATEWAY-1718 remove notification type Change Password
+function covidien_seeddata_update_6335() {
+  $result = db_query("SELECT nid FROM {node} WHERE title='%s'", 'Change Password');
+  while ($row = db_fetch_object($result)) {
+    node_delete($row->nid);
+  }
+  return array(array('success' => true, 'query' => 'Delete notification type Change Password'));
+}
+
+/**
+ * GATEWAY-2628 add user GWagent permission
+ */
+function covidien_seeddata_update_6336() {
+  $user_name = 'GWagent.admin@covidien.com';
+  $result = db_query("SELECT rid FROM {role} WHERE name LIKE '%CoT Admin%'");
+  $rows = array();
+  while ($row = db_fetch_object($result)) {
+    $rows[$row->rid] = $row->rid;
+  }
+  $nresult = db_query("SELECT n.nid FROM {node} n JOIN {content_type_roles} r ON n.vid=r.vid WHERE n.title = 'CoT Admin'");
+  $nrows = array();
+  while ($nrow = db_fetch_object($nresult)) {
+    $nrows[$nrow->nid] = $nrow->nid;
+  }
+  $user = db_fetch_object(db_query("SELECT uid, name FROM {users} WHERE name = '%s'", $user_name));
+  if (!$user) {
+    return array(array('success' => true, 'query' => 'Have not GWagent user'));
+  }
+  $person_nid = db_result(db_query("SELECT nid FROM {node} WHERE title='%s' AND type='person'", $user_name));
+  //delete old person role
+  $sql = "SELECT n.nid
+    FROM {node} n 
+    JOIN {content_field_person_pk} pp ON n.vid = pp.vid 
+    JOIN {content_field_app_role_pk} arp ON n.vid = arp.vid
+    WHERE pp.field_person_pk_nid = %d";
+  $dresult = db_query($sql, $person_nid);
+  while ($drow = db_fetch_object($dresult)) {
+    node_delete($drow->nid);
+  }
+  //add person role
+  $i = 0;
+  foreach ($nrows as $role_nid) {
+    $node = new stdClass();
+    $node->type = 'person_application_role';
+    $node->uid = $user->uid;
+    $node->title = $user->name;
+    $node->field_person_pk[0]['nid'] = $person_nid;
+    $node->field_app_role_pk[0]['nid'] = $role_nid;
+    $node->field_max_download_level[0]['value'] = 2;
+    $i++; //first is default role
+    $node->field_person_role_default[0]['value'] = ($i == 1 ) ? 1 : 0;
+    node_save($node);
+  }
+  foreach ($rows as $rid) {
+    db_query("REPLACE INTO {users_roles} (uid, rid) VALUES (%d, %d)", $user->uid, $rid);
+  }
+  return array(array('success' => true, 'query' => 'Update GWagent user to Cot Admin for all product line'));
+}
+
+/**
+ * GATEWAY-2630 change device type version.
+ */
+function covidien_seeddata_update_6337() {
+  $result = db_query("select nid from node where title in ('Administrative_Agent','VTS Client') and type='devicetype'");
+  while ($row = db_fetch_object($result)) {
+    db_query("update content_type_devicetype set device_type_gateway_version = '2.0' where nid = %d", $row->nid);
+  }
+  return array(array('success' => true, 'query' => 'Update device type version'));
+}
+
+/**
+ * Run covidien_seeddata_update_6116
+ */
+function covidien_seeddata_update_6338() {
+  //add new device service type
+  covidien_seeddata_update_6116();
+  return array(array('success' => true, 'query' => 'Run covidien_seeddata_update_6116'));
+}
+
+/**
+ * Add GWagent.admin@covidien.com to all device type trainer
+ */
+function covidien_seeddata_update_6339() {
+  $trainer_email = 'GWagent.admin@covidien.com';
+  //access Trainer is yes 
+  $trainer_access_nid = db_result(db_query("SELECT nid FROM {node} WHERE type='section_access_option' AND title = 'auto section_access_option Trainer-Yes'"));
+  //Trainer person nid
+  $field_person_pk = db_result(db_query("SELECT nid FROM {node} WHERE type='person' AND title='%s'", $trainer_email));
+
+  //get all device type 
+  $result = db_query("SELECT n.nid, n.title FROM {node} n
+    LEFT JOIN {content_field_expiration_datetime} ed ON n.vid = ed.vid 
+    WHERE n.type='devicetype' AND ed.field_expiration_datetime_value IS NULL");
+  $device_types = array();
+  while ($row = db_fetch_object($result)) {
+    $device_types[$row->nid] = $row->title;
+  }
+
+  //validate and add Trainer
+  module_load_include('php', 'covidien_ui', 'includes/helper_function');
+  foreach ($device_types as $device_type_nid => $device_type_name) {
+    //validate 
+    $validate_nid = db_result(db_query("SELECT n.nid FROM node n  
+    JOIN content_type_device_user_privileges dup ON n.vid = dup.vid
+    JOIN content_field_device_type fdt ON n.vid = fdt.vid 
+    JOIN content_field_person_pk fpp ON n.vid = fpp.vid
+    LEFT JOIN content_field_expiration_datetime ed ON n.vid = ed.vid 
+    WHERE ed.field_expiration_datetime_value IS NULL 
+    AND n.type='device_user_privileges'
+    AND dup.field_user_section_access_nid = %d
+    AND fdt.field_device_type_nid = %d
+    AND fpp.field_person_pk_nid = %d
+    AND n.title='%s'", $trainer_access_nid, $device_type_nid, $field_person_pk, $trainer_email));
+    //add 
+    if (!$validate_nid) {
+      $node = new stdClass();
+      $node->type = 'device_user_privileges';
+      $node->uid = 1;
+      $node->format = 0;
+      $node->title = $trainer_email;
+      $node->field_person_pk[0]['nid'] = $field_person_pk;
+      $node->field_device_type[0]['nid'] = $device_type_nid;
+      $node->field_user_section_access[0]['nid'] = $trainer_access_nid;
+      node_save($node);
+    }
+    //create sample training 
+    $has_training_record = db_result(db_query("SELECT n.nid FROM {node} n 
+      JOIN {content_type_person_training_record} ptr ON n.vid = ptr.vid
+      JOIN {content_field_device_type} fdt ON n.vid = fdt.vid
+      WHERE fdt.field_device_type_nid = %d AND ptr.field_trainee_id_nid = %d", $device_type_nid, $field_person_pk));
+    if (!$has_training_record) {
+      sample_training_record($device_type_nid, $trainer_email, $field_person_pk);
+    }
+  }
+
+  return array(array('success' => true, 'query' => 'Add GWagent.admin@covidien.com to all device type trainer'));
+}
+
+/**
+ * Consolidate GWagent permission 
+ */
+function covidien_seeddata_update_6340() {
+
+  //add user GWagent permission
+  covidien_seeddata_update_6336();
+  //create Trainer and sample training
+  covidien_seeddata_update_6339();
+
+  return array(array('success' => true, 'query' => 'Add GWagent.admin@covidien.com to all device type trainer. Create GWagent.admin@covidien.com training record'));
+}
+
+/**
+ * Initial alert event by device type
+ * @return type
+ */
+function covidien_seeddata_update_6341() {
+  $event_result = db_query("SELECT id FROM alert_event");
+  while ($event_row = db_fetch_object($event_result)) {
+    $event_rows[$event_row->id] = $event_row->id;
+  }
+  $dt_result = db_query("SELECT nid FROM node WHERE type='devicetype'");
+  while ($dt_row = db_fetch_object($dt_result)) {
+    $dt_rows[$dt_row->nid] = $dt_row->nid;
+  }
+
+  $query = "SELECT id FROM device_type_alert_event_relation WHERE alert_event_id = %d AND device_type_nid = %d";
+  if (count($dt_rows) && count($event_rows)) {
+    foreach ($event_rows as $event_id) {
+      foreach ($dt_rows as $dt_nid) {
+        $id = db_result(db_query($query, $event_id, $dt_nid));
+        if (!$id) {
+          db_query("INSERT INTO device_type_alert_event_relation (alert_event_id, enable_flag, device_type_nid) VALUES (%d, '%s', '%d')", $event_id, 'N', $dt_nid);
+        }
+      }
+    }
+  }
+  return array(array('success' => true, 'query' => 'Initial alert event by device type'));
+}
+
+/**
+ * GATEWAY-3039 delete duplicate region 
+ * @return type
+ */
+function covidien_seeddata_update_6342() {
+  //get duplicate region nid
+  $sql = "SELECT nid FROM node
+    WHERE TYPE='region' AND title IN (SELECT title FROM node WHERE TYPE='region' GROUP BY title HAVING COUNT(*) > 1)
+    AND nid NOT IN (SELECT MIN(nid) FROM node WHERE TYPE='region' GROUP BY title HAVING COUNT(nid) > 1)";
+  $result = db_query($sql);
+  while ($row = db_fetch_object($result)) {
+    //delete duplicate region
+    node_delete($row->nid);
+  }
+  return array(array('success' => true, 'query' => 'Delete duplicate region'));
+}
+
+/**
+ * filter product line and device type
+ * GATEWAY-3063 Unpublish in Drupal all unsupported device types 
+ * @return type
+ */
+function covidien_seeddata_update_6343() {
+  //unpublish product line name
+  $pl_args = array('Patient Monitoring', 'Stapling');
+  //unpublish device type name
+  $dt_args = array(' PB840', 'PB840_Ventilator', 'ForceTriad', 'CoolTip', 'CoolTip Japan');
+  //update product line 
+  db_query("UPDATE node SET status=0 WHERE type='product_line' AND title IN (" . db_placeholders($pl_args, 'varchar') . ") ", $pl_args);
+  db_query("UPDATE content_field_expiration_datetime SET field_expiration_datetime_value = NOW() WHERE nid IN (SELECT nid FROM node WHERE type='product_line' AND title IN (" . db_placeholders($pl_args, 'varchar') . ")) ", $pl_args);
+  //update device type
+  db_query("UPDATE node SET status=0 WHERE type='devicetype' AND title IN (" . db_placeholders($dt_args, 'varchar') . ") ", $dt_args);
+  db_query("UPDATE content_field_expiration_datetime SET field_expiration_datetime_value = NOW() WHERE nid IN (SELECT nid FROM node WHERE type='devicetype' AND title IN (" . db_placeholders($dt_args, 'varchar') . ")) ", $dt_args);
+  return array(array('success' => true, 'query' => 'Update Prodoct Line and Device Type status'));
+}
+
+/**
+ * create_device_current_configuration_table
+ */
+function create_device_current_configuration_table() {
+  $sql = "CREATE TABLE device_current_configuration_table (
+    productline VARCHAR(255) NOT NULL DEFAULT '',
+    productline_nid INT(11) NOT NULL DEFAULT '0',
+    devicetype VARCHAR(255) NOT NULL DEFAULT '',
+    devicetype_nid INT(11) NOT NULL DEFAULT '0',
+    device_nid INT(11) NOT NULL DEFAULT '0',
+    deviceserial VARCHAR(255) DEFAULT NULL,
+    accountnumber VARCHAR(255) DEFAULT NULL,
+    customername VARCHAR(128) NOT NULL DEFAULT '',
+    customer_nid INT(11) NOT NULL DEFAULT '0',
+    hardware_nid INT(11) NOT NULL DEFAULT '0',
+    hardware_part INT(11) DEFAULT NULL,
+    hardware_name VARCHAR(128) NOT NULL DEFAULT '',
+    hardware_version VARCHAR(128) DEFAULT NULL,
+    software_nid INT(11) NOT NULL DEFAULT '0',
+    software_name VARCHAR(128) NOT NULL DEFAULT '',
+    software_part INT(11) DEFAULT NULL,
+    software_version VARCHAR(128) DEFAULT NULL,
+    software_component INT(11) DEFAULT NULL,
+    lastest_sw_update DATETIME DEFAULT NULL,
+    service_person VARCHAR(128) DEFAULT NULL,
+    country_nid INT(11) DEFAULT '0',
+    country_name VARCHAR(128) DEFAULT ''
+  ) ENGINE=INNODB DEFAULT CHARSET=utf8";
+  db_query($sql);
+}
+
+/**
+ * Update device_current_configuration_report to table
+ */
+function covidien_seeddata_update_6344() {
+  create_device_current_configuration_table();
+  module_load_include('inc', 'covidien_reports', 'includes/covidien_reports.module.device_current');
+  update_device_current_configuration_report_to_table();
+  return array(array('success' => true, 'query' => 'Update device_current_configuration_table'));
+}
+
+/**
+ * GATEWAY-3111 Add plupload permession 
+ * @return type
+ */
+function covidien_seeddata_update_6345() {
+  db_query("UPDATE permission SET perm = CONCAT(perm, ' ,bulk upload files with plupload')");
+  return array(array('success' => true, 'query' => 'Add plupload permession'));
+}
+
+/**
+ * Update plupload file directory temp
+ * @return type
+ */
+function covidien_seeddata_update_6346() {
+  variable_set('file_directory_temp', 'sites/default/files/tmp');
+  return array(array('success' => true, 'query' => 'Update file directory temp'));
+}

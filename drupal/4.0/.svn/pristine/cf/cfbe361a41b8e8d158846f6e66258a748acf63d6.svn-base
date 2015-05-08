@@ -1,0 +1,6 @@
+name = Covidien Download By Picture
+description = Download clients filter by picture and name.
+core = 6.x
+php = 5.0
+package = Covidien
+dependencies[] = covidien_ui

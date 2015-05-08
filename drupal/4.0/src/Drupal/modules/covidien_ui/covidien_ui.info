@@ -1,0 +1,12 @@
+name = CovidienUI
+description = User interface customized here.
+dependencies[] = content
+dependencies[] = content_copy
+dependencies[] = ctools
+dependencies[] = panels
+dependencies[] = views
+dependencies[] = date
+version = "6.x-2.0.3-i12"
+package = Covidien
+core = 6.x
+php = 5.0

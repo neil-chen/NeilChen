@@ -1,0 +1,18 @@
+<?php
+
+/**
+ * @file
+ *   Installation file
+ *
+ *
+ * @developers:
+ *    Rafal Wieczorek <kenorb@gmail.com>
+ */
+/**
+ * Implementation of hook_uninstall().
+ */
+function account_profile_uninstall() {
+  variable_del('account_profile_main_profile') ;
+  variable_del('account_profile_redirect') ;
+  variable_del('account_profile_edit_tab') ; 
+}

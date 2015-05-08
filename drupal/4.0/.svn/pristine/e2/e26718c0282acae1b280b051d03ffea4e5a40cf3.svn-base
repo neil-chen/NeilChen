@@ -1,0 +1,1292 @@
+<?php
+
+/**
+ * @file
+ * Report module mysql view create/modify .
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+
+//Generate the Device_VW
+function covidien_reports_install() {
+  db_query("CREATE OR REPLACE VIEW Device_VW as select node.title as productline,node.nid as
+    productline_nid,node1.title as devicetype,content_type_devicetype.nid as devicetype_nid,content_type_device.nid as device_nid,content_type_device.field_device_owner_nid as device_owner,content_type_device.field_device_serial_number_value as
+    deviceserial from node
+    join content_field_device_product_line on content_field_device_product_line.field_device_product_line_nid=node.nid
+    join content_type_devicetype on content_type_devicetype.nid=content_field_device_product_line.nid and
+    content_field_device_product_line.vid=content_type_devicetype.vid
+    join node as node1 on node1.nid=content_type_devicetype.nid  and node1.vid=content_type_devicetype.vid
+    join content_field_device_type on content_field_device_type.field_device_type_nid=content_type_devicetype.nid
+    join content_type_device on content_type_device.nid=content_field_device_type.nid");
+
+  //create Customer_VW
+  Customer_VW();
+
+  deviceconfig_report_update();
+
+  $files = file_scan_directory(drupal_get_path('module', 'covidien_reports') . '/content_type', '.cck_import.inc');
+  foreach ($files as $absolute => $file) {
+    $form_state = array();
+    $form_state['values']['type_name'] = '<create>';
+    $fh = fopen($file->filename, 'r');
+    $theData = fread($fh, filesize($file->filename));
+    fclose($fh);
+    $form_state['values']['macro'] = "$theData";
+    drupal_execute('content_copy_import_form', $form_state);
+  }
+  software_view_query();
+  device_service_history_view_query();
+  service_history_vw1_qry();
+  service_record_qry();
+  training_record_view_query();
+  device_component_discrepancy_view_query();
+  reportqry_update();
+  emerald_report_update();
+  vent_report_update();
+  scd_report_update();
+}
+
+function service_history_vw1_qry() {
+  db_query("DROP VIEW IF EXISTS select_service_history_VW1");
+  db_query("CREATE OR REPLACE VIEW select_service_history_VW1 as SELECT content_field_device_pk.field_device_pk_nid as service_device_nid,
+content_type_device_service_history.field_upgrade_status_value as SW_upgrade_status,
+count(content_type_device_service_history.field_upgrade_status_value) as Attempts,
+content_type_device_service_history.field_from_device_component_nid,
+content_type_device_service_history.field_to_device_component_nid,
+content_type_device_service_history.field_service_datetime_value as Event_datetime,
+concat(content_type_person.field_last_name_value,'.',
+content_type_person.field_first_name_value) as service_person 
+FROM content_type_device_service_history
+JOIN content_type_device_installation on content_type_device_installation.nid=content_type_device_service_history.field_device_installation_pk_nid
+JOIN content_field_device_pk on content_field_device_pk.nid=content_type_device_installation.nid and
+content_field_device_pk.vid=content_type_device_installation.vid 
+JOIN content_type_person on content_type_device_service_history.field_service_person_pk_nid=content_type_person.nid
+LEFT JOIN content_field_device_pk as content_field_device_pk1 on content_field_device_pk1.nid=content_type_device_service_history.nid and content_field_device_pk1.field_device_pk_nid=content_field_device_pk.field_device_pk_nid
+where content_type_device_service_history.field_upgrade_status_value='installed' or content_type_device_service_history.field_upgrade_status_value='failed' or 
+content_type_device_service_history.field_upgrade_status_value='not attempted' or content_type_device_service_history.field_upgrade_status_value LIKE '%Download%'
+GROUP BY  content_field_device_pk.field_device_pk_nid,content_type_device_service_history.field_upgrade_status_value,
+content_type_device_service_history.field_to_device_component_nid");
+}
+
+/**
+ * sprint 7
+ * Device component discrepency list enhancement included
+ * Service Records
+ */
+function service_record_qry() {
+  device_service_history_view();
+}
+
+/**
+ * Service Records
+ * Views device_service_history_view
+ * change field field_device_owner_nid is customer nid to account number nid
+ */
+function device_service_history_view() {
+  db_query("DROP VIEW IF EXISTS device_service_history_view");
+  db_query("CREATE OR REPLACE VIEW device_service_history_view AS
+    SELECT
+      content_type_device_service_history.nid AS servicehistory_nid,
+      node6.nid AS productline_nid,
+      node6.title AS productline,
+      content_field_device_type.field_device_type_nid AS devicetype_nid,
+      node3.title AS devicetype,
+      content_type_device.field_device_serial_number_value AS deviceserial,
+      node2.nid AS customer_nid,
+      node2.title AS customername,
+      content_type_bu_customer.field_bu_customer_account_number_value AS accountnumber,
+      content_type_person.field_person_username_value AS technician_email,
+      content_type_device_service_history.field_service_datetime_value AS service_date,
+      node.nid AS servicetype_nid,
+      node.title AS servicetype,
+      content_type_device_service_history.field_upgrade_status_value AS servicetype_status,
+      content_type_device_service_history.field_from_device_component_nid AS from_component_nid,
+      content_type_device_service_history.field_to_device_component_nid AS to_component_nid,
+      node7.nid AS country_nid,
+      node7.title AS country_name
+    FROM
+      content_type_device_service_history
+      JOIN content_type_device_service_type
+        ON content_type_device_service_type.nid = content_type_device_service_history.field_device_service_type_nid
+      JOIN node
+        ON node.nid = content_type_device_service_type.nid
+        AND content_type_device_service_type.vid = node.vid
+      JOIN content_type_person
+        ON content_type_person.nid = content_type_device_service_history.field_service_person_pk_nid
+      JOIN content_field_device_pk
+        ON content_field_device_pk.nid = content_type_device_service_history.nid
+        AND content_field_device_pk.vid = content_type_device_service_history.vid
+      JOIN content_type_device
+        ON content_type_device.nid = content_field_device_pk.field_device_pk_nid
+      JOIN content_field_expiration_datetime AS content_field_expiration_datetime2
+        ON content_field_expiration_datetime2.nid = content_type_device.nid
+        AND content_field_expiration_datetime2.vid = content_type_device.vid
+      LEFT JOIN content_type_device_installation
+        ON content_type_device_installation.nid = content_type_device_service_history.field_device_installation_pk_nid
+      LEFT JOIN content_type_country
+        ON content_type_device_installation.field_device_country_nid = content_type_country.nid
+      JOIN node AS node7
+        ON node7.vid = content_type_country.vid
+      JOIN content_type_bu_customer
+        ON content_type_device.field_device_owner_nid = content_type_bu_customer.nid
+      JOIN content_type_party
+        ON content_type_bu_customer.field_customer_party_pk_nid = content_type_party.nid
+      JOIN node AS node2
+        ON node2.nid = content_type_party.nid
+        AND node2.vid = content_type_party.vid
+      JOIN content_field_device_type
+        ON content_field_device_type.nid = content_type_device.nid
+        AND content_field_device_type.vid = content_type_device.vid
+      JOIN content_type_devicetype
+        ON content_type_devicetype.nid = content_field_device_type.field_device_type_nid
+      JOIN node AS node3
+        ON node3.nid = content_type_devicetype.nid
+        AND node3.vid = content_type_devicetype.vid
+      JOIN content_field_device_product_line
+        ON content_field_device_product_line.nid = content_type_devicetype.nid
+        AND content_field_device_product_line.vid = content_type_devicetype.vid
+      JOIN content_type_product_line
+        ON content_type_product_line.nid = content_field_device_product_line.field_device_product_line_nid
+      JOIN node AS node6
+        ON node6.nid = content_type_product_line.nid
+        AND node6.vid = content_type_product_line.vid
+    WHERE content_type_device_service_history.nid NOT IN
+      (SELECT
+        content_type_device_service_history.nid
+      FROM
+        content_type_device_service_history
+        JOIN content_type_hardware
+          ON content_type_hardware.nid = content_type_device_service_history.field_to_device_component_nid
+          OR (
+            content_type_hardware.nid = content_type_device_service_history.field_device_service_type_nid
+            AND content_type_hardware.nid = content_type_device_service_history.field_from_device_component_nid
+          )
+        JOIN node
+          ON node.nid = content_type_hardware.nid
+          AND node.vid = content_type_hardware.vid)");
+}
+
+/**
+ * Update view device_service_history_view, discrepancy_list_VW
+ */
+function covidien_reports_update_6103() {
+  Customer_VW();
+  discrepancy_list_VW();
+  device_service_history_view();
+  view_device_sw_configuration_query();
+  return array(array('success' => true, 'query' => 'Update view device_service_history_view, discrepancy_list_VW'));
+}
+
+/**
+ * March 2013
+ * Training Records
+ */
+function covidien_reports_update_6006() {
+  Customer_VW();
+  training_record_view_query();
+  return array(array('success' => true, 'query' => 'Update view training_record_view'));
+}
+
+/**
+ * Helper function to create a view for training report
+ */
+function training_record_view_query() {
+  db_query("DROP VIEW IF EXISTS training_record_view");
+  db_query("CREATE OR REPLACE VIEW training_record_view AS 
+    SELECT node4.title AS customername, node4.nid AS customer_nid,
+    content_type_bu_customer.field_bu_customer_account_number_value AS accountnumber,
+    node5.nid AS productline_nid, node5.title AS productline,
+    content_type_person.nid AS trainee_nid, node.title AS trainee_name,
+    content_type_person1.nid AS trainer_nid, node1.title AS trainer_name,
+    content_type_devicetype.nid AS devicetype_nid, node3.title AS devicetype,
+    content_type_person_training_record.field_training_completion_date_value AS training_completion_date,
+    content_type_person_training_record.field_active_flag_value AS training_status 
+    FROM content_type_person_training_record 
+    JOIN content_type_person ON content_type_person_training_record.field_trainee_id_nid = content_type_person.nid 
+    JOIN node ON node.nid = content_type_person.nid AND node.vid = content_type_person.vid 
+    JOIN content_type_person AS content_type_person1 ON content_type_person_training_record.field_trainer_id_nid = content_type_person1.nid 
+    JOIN node AS node1 ON node1.nid = content_type_person1.nid AND node1.vid = content_type_person1.vid 
+    JOIN content_type_party ON content_type_party.nid = content_type_person.field_person_party_nid 
+    JOIN node AS node2 ON node2.nid = content_type_party.nid AND node2.vid = content_type_party.vid 
+    LEFT JOIN content_type_bu_customer ON content_type_bu_customer.field_customer_party_pk_nid = content_type_person.field_company_name_nid 
+    LEFT JOIN node AS node4 ON node4.nid = content_type_bu_customer.field_customer_party_pk_nid 
+    JOIN content_field_device_type ON content_field_device_type.nid = content_type_person_training_record.nid AND content_field_device_type.vid = content_type_person_training_record.vid 
+    JOIN content_type_devicetype ON content_type_devicetype.nid = content_field_device_type.field_device_type_nid 
+    JOIN node AS node3 ON node3.nid = content_type_devicetype.nid AND node3.vid = content_type_devicetype.vid 
+    JOIN content_field_device_product_line ON content_field_device_product_line.nid = content_type_devicetype.nid AND content_field_device_product_line.vid = content_type_devicetype.vid 
+    JOIN content_type_product_line ON content_type_product_line.nid = content_field_device_product_line.field_device_product_line_nid 
+    JOIN node AS node5 ON node5.nid = content_type_product_line.nid AND node5.vid = content_type_product_line.vid");
+  return true;
+}
+
+/**
+ * Helper function to create a view for report1
+ */
+function device_service_history_view_query() {
+  db_query("DROP VIEW IF EXISTS device_service_history_VW");
+  db_query("CREATE OR REPLACE VIEW device_service_history_VW as
+select concat(content_type_person.field_first_name_value,'.',content_type_person.field_last_name_value) as service_person,
+content_field_device_pk.field_device_pk_nid as service_device_nid,
+content_type_device_service_history.field_to_device_component_nid,
+content_type_device_service_history.field_service_datetime_value from content_type_person join content_type_device_service_history  on content_type_device_service_history.field_service_person_pk_nid=content_type_person.nid join content_field_device_pk on content_field_device_pk.nid=content_type_device_service_history.nid join content_type_device_service_type on content_type_device_service_type.nid=content_type_device_service_history.field_device_service_type_nid join node on node.vid=content_type_device_service_type.vid where content_type_device_service_history.field_upgrade_status_value in('installed') OR node.title in ('Configuration Update')");
+  return true;
+}
+
+/**
+ * Helper function to create a view for training report
+ */
+function software_view_query() {
+  db_query("DROP VIEW IF EXISTS Software_VW");
+  db_query("CREATE OR REPLACE VIEW Software_VW as select content_type_software.nid as software_nid,content_type_software.field_sw_part_value as
+software_part,content_type_software.field_sw_version_value as software_version, content_type_device_component_history.field_device_component_nid as software_component, content_type_device_component_history.field_component_device_nid as component_device, max(content_type_device_service_history.field_service_datetime_value) AS lastest_sw_update,node.title as software_name  from content_type_software  join content_type_device_component_history on content_type_device_component_history.field_device_component_nid=content_type_software.nid join node on node.nid=content_type_software.nid and node.vid=content_type_software.vid join content_type_device_service_history on content_type_device_service_history.field_to_device_component_nid=content_type_device_component_history.field_device_component_nid join content_field_expiration_datetime on content_field_expiration_datetime.nid=content_type_device_component_history.nid and content_field_expiration_datetime.vid=content_type_device_component_history.vid and content_field_expiration_datetime.field_expiration_datetime_value IS NULL join content_field_device_pk on content_field_device_pk.nid=content_type_device_service_history.nid and content_field_device_pk.vid=content_type_device_service_history.vid and content_type_device_component_history.field_component_device_nid=content_field_device_pk.field_device_pk_nid join content_type_device_service_type on content_type_device_service_type.nid=content_type_device_service_history.field_device_service_type_nid join node as node1 on node1.vid=content_type_device_service_type.vid where content_type_device_service_history.field_upgrade_status_value='installed' OR node1.title = 'Configuration Update' group by content_type_device_component_history.field_component_device_nid");
+  return true;
+}
+
+/**
+ * Helper function to create a view for component discrepancy list and report.
+ */
+function device_component_discrepancy_view_query() {
+  discrepancy_list_VW();
+  db_query("DROP VIEW IF EXISTS hw_discrepancy_list_VW");
+  db_query("CREATE OR REPLACE VIEW hw_discrepancy_list_VW AS select content_type_device_discrepancy.nid as discrepancy_nid1, node.title as component_name,node.type as component_type, content_type_hardware.field_hw_part_value as part_value, content_type_hardware.field_hw_version_value as previous_version, content_type_hardware.field_hw_description_value as old_component_description, content_type_hardware1.field_hw_version_value as new_version, content_type_hardware1.field_hw_description_value as new_component_description from content_type_device_discrepancy JOIN content_type_hardware on content_type_hardware.nid=content_type_device_discrepancy.field_discrepancy_component_nid JOIN content_field_expiration_datetime on content_field_expiration_datetime.vid=content_type_hardware.vid and content_field_expiration_datetime.field_expiration_datetime_value IS NULL JOIN node on node.vid=content_type_hardware.vid JOIN content_type_hardware as content_type_hardware1 on content_type_hardware1.nid=content_type_device_discrepancy.field_discrepancy_old_component_nid JOIN content_field_expiration_datetime as content_field_expiration_datetime1 on content_field_expiration_datetime1.vid=content_type_hardware1.vid and content_field_expiration_datetime1.field_expiration_datetime_value IS NULL JOIN node as node1 on node1.vid=content_type_hardware1.vid");
+  db_query("DROP VIEW IF EXISTS sw_discrepancy_list_VW");
+  db_query("CREATE OR REPLACE VIEW sw_discrepancy_list_VW AS select content_type_device_discrepancy.nid as discrepancy_nid1, node.title as component_name,node.type as component_type, content_type_software.field_sw_part_value as part_value, content_type_software.field_sw_version_value as previous_version, content_type_software.field_sw_description_value as old_component_description, content_type_software1.field_sw_version_value as new_version, content_type_software1.field_sw_description_value as new_component_description from content_type_device_discrepancy JOIN content_type_software on content_type_software.nid=content_type_device_discrepancy.field_discrepancy_component_nid JOIN content_field_expiration_datetime on content_field_expiration_datetime.nid = content_type_software.nid and content_field_expiration_datetime.vid=content_type_software.vid JOIN node on node.nid=content_type_software.nid and node.vid=content_type_software.vid JOIN content_type_software as content_type_software1 on content_type_software1.nid=content_type_device_discrepancy.field_discrepancy_old_component_nid JOIN content_field_expiration_datetime as content_field_expiration_datetime1 on content_field_expiration_datetime1.nid = content_type_software1.nid and content_field_expiration_datetime1.vid=content_type_software1.vid JOIN node as node1 on node1.nid=content_type_software1.nid and node1.vid=content_type_software1.vid");
+  db_query("DROP VIEW IF EXISTS device_component_discrepancy_view");
+  db_query("CREATE OR REPLACE VIEW device_component_discrepancy_view AS select discrepancy_list_VW.*,hw_discrepancy_list_VW.* from hw_discrepancy_list_VW LEFT join discrepancy_list_VW on hw_discrepancy_list_VW.discrepancy_nid1=discrepancy_list_VW.discrepancy_nid union all select discrepancy_list_VW.*,sw_discrepancy_list_VW.* from sw_discrepancy_list_VW LEFT join discrepancy_list_VW on sw_discrepancy_list_VW.discrepancy_nid1=discrepancy_list_VW.discrepancy_nid");
+}
+
+/**
+ * component discrepancy list
+ * change field field_device_owner_nid is customer nid to account number nid
+ */
+function discrepancy_list_VW() {
+  db_query("DROP VIEW IF EXISTS discrepancy_list_VW");
+  db_query("CREATE OR REPLACE VIEW discrepancy_list_VW AS
+    SELECT
+      content_type_device_discrepancy.nid AS discrepancy_nid,
+      node6.nid AS productline_nid,
+      node6.title AS productline,
+      content_field_device_type.field_device_type_nid AS devicetype_nid,
+      node3.title AS devicetype,
+      content_type_device.field_device_serial_number_value AS deviceserial,
+      node2.nid AS customer_nid,
+      node2.title AS customername,
+      content_type_bu_customer.field_bu_customer_account_number_value AS accountnumber,
+      node7.nid AS country_nid,
+      node7.title AS country_name
+    FROM
+      content_type_device_discrepancy
+      JOIN content_type_device
+        ON content_type_device.nid = content_type_device_discrepancy.field_discrepancy_device_nid
+      JOIN content_field_expiration_datetime content_field_expiration_datetime2
+        ON content_field_expiration_datetime2.vid = content_type_device.vid
+        AND content_field_expiration_datetime2.field_expiration_datetime_value IS NULL
+      JOIN content_field_device_pk
+        ON content_field_device_pk.field_device_pk_nid = content_type_device.nid
+      JOIN content_type_device_installation
+        ON content_type_device_installation.nid = content_field_device_pk.nid
+        AND content_type_device_installation.vid = content_field_device_pk.vid
+      JOIN content_type_country
+        ON content_type_device_installation.field_device_country_nid = content_type_country.nid
+      JOIN node node7
+        ON node7.vid = content_type_country.vid
+      LEFT JOIN content_type_bu_customer
+        ON content_type_device.field_device_owner_nid = content_type_bu_customer.nid
+      LEFT JOIN content_type_party
+        ON content_type_bu_customer.field_customer_party_pk_nid = content_type_party.nid
+      LEFT JOIN node node2
+        ON node2.vid = content_type_party.vid
+      LEFT JOIN node node4
+        ON node4.nid = content_type_bu_customer.nid
+        AND node4.vid = content_type_bu_customer.vid
+      JOIN content_field_device_type
+        ON content_field_device_type.vid = content_type_device.vid
+      JOIN content_type_devicetype
+        ON content_type_devicetype.nid = content_field_device_type.field_device_type_nid
+      JOIN node node3
+        ON node3.vid = content_type_devicetype.vid
+      JOIN content_field_device_product_line
+        ON content_field_device_product_line.vid = content_type_devicetype.vid
+      JOIN node node6
+        ON node6.nid = content_field_device_product_line.field_device_product_line_nid");
+}
+
+/**
+ * Helper function
+ */
+function reportqry_update() {
+  Customer_VW();
+  device_software_upgrade_view();
+}
+
+function device_software_upgrade_view() {
+  db_query("DROP VIEW IF EXISTS device_software_upgrade_view");
+  db_query("CREATE OR REPLACE VIEW device_software_upgrade_view AS
+    SELECT Customer_VW.customername,Customer_VW.accountnumber,Customer_VW.customer_nid,Device_VW.*,select_service_history_VW1.*,
+    content_type_software.field_sw_version_value as Prior_SW_Version,content_type_software1.field_sw_version_value as New_SW_Version,
+    Country_VW.country_nid,Country_VW.country_name
+    FROM Device_VW
+    JOIN Customer_VW on Device_VW.device_owner = Customer_VW.account_nid
+    JOIN select_service_history_VW1 on select_service_history_VW1.service_device_nid=Device_VW.device_nid
+    JOIN content_type_software on content_type_software.nid=select_service_history_VW1.field_from_device_component_nid
+    JOIN node as node1 on node1.nid=content_type_software.nid and node1.vid=content_type_software.vid
+    JOIN content_type_software as content_type_software1 on content_type_software1.nid=select_service_history_VW1.field_to_device_component_nid
+    JOIN node on node.nid=content_type_software1.nid and node.vid=content_type_software1.vid
+    LEFT JOIN Country_VW on Country_VW.device_nid=Device_VW.device_nid
+    ORDER BY Device_VW.deviceserial,select_service_history_VW1.Event_datetime DESC");
+}
+
+/**
+ * hook update
+ * Jul 2013
+ * Sprint 9.10
+ * Sprint 9.17
+ */
+function covidien_reports_update_6013() {
+  Customer_VW();
+  service_history_vw1_qry();
+  service_record_qry();
+  device_service_history_view_query();
+  device_component_discrepancy_view_query();
+  reportqry_update();
+  return array(array('success' => true, 'query' => 'Update view Customer_VW, select_service_history_VW1, device_service_history_view, device_service_history_VW, discrepancy_list_VW, Country_VW'));
+}
+
+/**
+ * hook update
+ * Aug 2013
+ * Sprint 9.18
+ */
+function covidien_reports_update_6014() {
+  Customer_VW();
+  software_view_query();
+  device_service_history_view_query();
+  reportqry_update();
+  return array(array('success' => true, 'query' => 'Update view Software_VW, device_service_history_VW, Country_VW'));
+}
+
+/**
+ * hook update
+ * Nov 2013
+ */
+function covidien_reports_update_6101() {
+  Customer_VW();
+  deviceconfig_report_update();
+  device_software_version_view();
+  device_emerald_software_version_view();
+  device_scd700_software_version_view();
+  return array(array('success' => true, 'query' => 'Update view Configuration_update_VW, device_software_version_view, device_emerald_software_version_view, device_scd700_software_version_view'));
+}
+
+function covidien_reports_update_6102() {
+  //update view
+  Customer_VW();
+  service_history_vw1_qry();
+  return array(array('success' => true, 'query' => 'Update view select_service_history_VW1'));
+}
+
+/**
+ * Phase 2 sprint 2
+ */
+function emerald_report_update() {
+  device_emerald_software_version_view();
+}
+
+function device_emerald_software_version_view() {
+  db_query("DROP VIEW IF EXISTS device_emerald_software_version_view");
+  db_query("CREATE OR REPLACE VIEW `device_emerald_software_version_view` AS
+      SELECT Device_VW.productline AS productline, Device_VW.productline_nid AS productline_nid, Device_VW.devicetype AS devicetype,
+      Device_VW.devicetype_nid AS devicetype_nid, Device_VW.device_nid AS device_nid, Device_VW.deviceserial AS deviceserial,
+      Customer_VW.accountnumber AS accountnumber, Customer_VW.customername AS customername, Customer_VW.customer_nid AS customer_nid,
+      Hardware_VW.hardware_nid AS hardware_nid, Hardware_VW.hardware_part AS hardware_part, Hardware_VW.hardware_name AS hardware_name,
+      Hardware_VW.hardware_version AS hardware_version,
+      Hardware_VW1.hardware_nid AS hardware1_nid,
+      Hardware_VW1.hardware_part AS hardware1_part,
+      Hardware_VW1.hardware_name AS hardware1_name,
+      Hardware_VW1.hardware_version AS hardware1_version,
+      Software_VW.software_nid AS software_nid,
+      Software_VW.software_name AS software_name,
+      Software_VW.software_part AS software_part,
+      Software_VW.software_version AS software_version,
+      Software_VW.software_component AS software_component,
+      Software_VW.lastest_sw_update AS lastest_sw_update,
+      device_service_history_VW.service_person AS service_person,
+      Country_VW.country_nid AS country_nid,
+      Country_VW.country_name AS country_name
+      FROM Device_VW
+      LEFT JOIN Country_VW ON Country_VW.device_nid = Device_VW.device_nid
+      JOIN Customer_VW ON Device_VW.device_owner = Customer_VW.account_nid
+      JOIN Hardware_VW ON Hardware_VW.component_device = Device_VW.device_nid AND Hardware_VW.hardware_name = 'Main PCBA'
+      JOIN Hardware_VW Hardware_VW1 ON Hardware_VW1.component_device = Device_VW.device_nid AND Hardware_VW1.hardware_name = 'VIBE'
+      JOIN Software_VW ON Software_VW.component_device = Device_VW.device_nid
+      JOIN device_service_history_VW ON device_service_history_VW.field_to_device_component_nid = Software_VW.software_component
+        AND device_service_history_VW.service_device_nid = Device_VW.device_nid
+        AND device_service_history_VW.field_service_datetime_value = Software_VW.lastest_sw_update
+      ORDER BY Device_VW.deviceserial, Software_VW.lastest_sw_update DESC");
+}
+
+function vent_report_update() {
+  device_software_version_view();
+}
+
+
+//Generate the report for Device Configuration 
+function device_software_version_view() {
+  db_query("CREATE OR REPLACE VIEW device_software_version_view AS
+      SELECT Device_VW.productline AS productline, Device_VW.productline_nid AS productline_nid,
+      Device_VW.devicetype AS devicetype,
+      Device_VW.devicetype_nid AS devicetype_nid,
+      Device_VW.device_nid AS device_nid,
+      Device_VW.deviceserial AS deviceserial,
+      Customer_VW.accountnumber AS accountnumber,
+      Customer_VW.customername AS customername,
+      Customer_VW.customer_nid AS customer_nid,
+      Hardware_VW.hardware_nid AS hardware_nid,
+      Hardware_VW.hardware_part AS hardware_part,
+      Hardware_VW.hardware_name AS hardware_name,
+      Hardware_VW.hardware_version AS hardware_version,
+      Hardware_VW1.hardware_nid AS hardware1_nid,
+      Hardware_VW1.hardware_part AS hardware1_part,
+      Hardware_VW1.hardware_name AS hardware1_name,
+      Hardware_VW1.hardware_version AS hardware1_version,
+      Software_VW.software_nid AS software_nid,
+      Software_VW.software_name AS software_name,
+      Software_VW.software_part AS software_part,
+      Software_VW.software_version AS software_version,
+      Software_VW.software_component AS software_component,
+      Software_VW.lastest_sw_update AS lastest_sw_update,
+      device_service_history_VW.service_person AS service_person,
+      Country_VW.country_nid AS country_nid,
+      Country_VW.country_name AS country_name
+      FROM Device_VW
+      LEFT JOIN Country_VW ON Country_VW.device_nid = Device_VW.device_nid
+      JOIN Customer_VW ON Device_VW.device_owner = Customer_VW.account_nid
+      JOIN Hardware_VW ON Hardware_VW.component_device = Device_VW.device_nid AND Hardware_VW.hardware_name = 'BdPcba'
+      JOIN Hardware_VW Hardware_VW1 ON Hardware_VW1.component_device = Device_VW.device_nid AND Hardware_VW1.hardware_name = 'GuiPcba'
+      JOIN Software_VW ON Software_VW.component_device = Device_VW.device_nid AND Software_VW.software_name = 'BdSoftware'
+      JOIN device_service_history_VW ON device_service_history_VW.field_to_device_component_nid = Software_VW.software_component
+        AND device_service_history_VW.service_device_nid = Device_VW.device_nid
+        AND device_service_history_VW.field_service_datetime_value = Software_VW.lastest_sw_update
+    ORDER BY Device_VW.deviceserial, Software_VW.lastest_sw_update DESC ");
+}
+
+function scd_report_update() {
+  device_scd700_software_version_view();
+}
+
+function deviceconfig_report_update() {
+  db_query("DROP VIEW IF EXISTS Configuration_update_VW");
+  db_query("CREATE OR REPLACE VIEW `Configuration_update_VW` AS select max(`content_type_device_service_history`.`field_service_datetime_value`) AS `lastest_date`,`content_field_device_pk`.`field_device_pk_nid` AS `component_device` from ((`content_type_device_service_history` join `content_field_device_pk` on(((`content_type_device_service_history`.`vid` = `content_field_device_pk`.`vid`) and (`content_type_device_service_history`.`nid` = `content_field_device_pk`.`nid`)))) join `node` on((`content_type_device_service_history`.`field_device_service_type_nid` = `node`.`nid`))) where ((`content_type_device_service_history`.`field_upgrade_status_value` = 'installed') or (`node`.`title` = 'Configuration Update')) group by `content_field_device_pk`.`field_device_pk_nid`");
+
+  db_query("DROP VIEW IF EXISTS Hardware_VW");
+  db_query("CREATE OR REPLACE VIEW Hardware_VW as select content_type_hardware.nid AS hardware_nid,content_type_hardware.field_hw_part_value AS hardware_part,content_type_hardware.field_hw_version_value AS hardware_version,content_type_device_component_history.field_device_component_nid AS hardware_component,content_type_device_component_history.field_component_device_nid AS component_device,node.title AS hardware_name from ((content_type_hardware join content_type_device_component_history on((content_type_device_component_history.field_device_component_nid = content_type_hardware.nid))) join node on(((node.nid = content_type_hardware.nid) and (node.vid = content_type_hardware.vid)))) join content_field_expiration_datetime on(((content_field_expiration_datetime.nid = content_type_device_component_history.nid) and (content_field_expiration_datetime.vid = content_type_device_component_history.vid) and isnull(content_field_expiration_datetime.field_expiration_datetime_value)))");
+}
+
+/**
+ * update database views device_scd700_software_version_view
+ * change the content_type_device.field_device_owner_nid from customer name to account number
+ */
+function covidien_reports_update_6104() {
+  Customer_VW();
+  discrepancy_list_VW();
+  device_emerald_software_version_view();
+  device_scd700_software_version_view();
+  device_service_history_view();
+  device_software_version_view();
+  device_software_upgrade_view();
+  return array(array('success' => true, 'query' => 'Update view Customer_VW, discrepancy_list_VW, emerald_report_update, device_scd700_software_version_view, device_software_version_view();'));
+}
+
+/**
+ * update database views device_scd700_software_version_view
+ * @return array
+ */
+function covidien_reports_update_6105() {
+  Customer_VW();
+  device_component_discrepancy_view_query();
+  device_scd700_software_version_view();
+  return array(array('success' => true, 'query' => 'Update view device_scd700_software_version_view, device_component_discrepancy_view'));
+}
+
+/**
+ * update database views device_scd700_software_version_view
+ */
+function device_scd700_software_version_view() {
+  //device_scd700_software_version_view
+  $sql = "CREATE OR REPLACE VIEW `device_scd700_software_version_view` AS
+      SELECT Device_VW.productline AS productline,Device_VW.productline_nid AS productline_nid,
+      Device_VW.devicetype AS devicetype,Device_VW.devicetype_nid AS devicetype_nid,
+      Device_VW.device_nid AS device_nid,Device_VW.deviceserial AS deviceserial,
+      Customer_VW.accountnumber AS accountnumber,Customer_VW.customername AS customername,
+      Customer_VW.customer_nid AS customer_nid,Hardware_VW.hardware_nid AS hardware_nid,
+      Hardware_VW.hardware_part AS hardware_part,Hardware_VW.hardware_name AS hardware_name,
+      Hardware_VW.hardware_version AS hardware_version,Software_VW.software_nid AS software_nid,
+      Software_VW.software_name AS software_name,Software_VW.software_part AS software_part,
+      Software_VW.software_version AS software_version,Software_VW.software_component AS software_component,
+      Software_VW.lastest_sw_update AS lastest_sw_update,device_service_history_VW.service_person AS service_person,
+      Country_VW.country_nid AS country_nid,Country_VW.country_name AS country_name
+      FROM Device_VW
+      LEFT JOIN Country_VW ON Country_VW.device_nid = Device_VW.device_nid
+      JOIN Customer_VW ON Device_VW.device_owner = Customer_VW.account_nid
+      JOIN Hardware_VW ON Hardware_VW.component_device = Device_VW.device_nid AND Hardware_VW.hardware_name = 'Control Board'
+      JOIN Software_VW ON Software_VW.component_device = Device_VW.device_nid AND Software_VW.software_name = 'Control'
+      JOIN device_service_history_VW ON device_service_history_VW.field_to_device_component_nid = Software_VW.software_component
+      AND device_service_history_VW.service_device_nid = Device_VW.device_nid
+      AND device_service_history_VW.field_service_datetime_value = Software_VW.lastest_sw_update
+      ORDER BY Device_VW.deviceserial,Software_VW.lastest_sw_update DESC";
+  db_query($sql);
+}
+
+/**
+ * update view Customer_VW
+ */
+function Customer_VW() {
+  db_query("DROP VIEW IF EXISTS Customer_VW");
+  $sql = "CREATE OR REPLACE VIEW Customer_VW AS
+    SELECT content_type_bu_customer.field_bu_customer_account_number_value AS accountnumber, node3.title AS customername,
+    node3.nid AS customer_nid,content_type_bu_customer.nid AS account_nid
+    FROM content_type_party
+    JOIN content_type_bu_customer ON content_type_bu_customer.field_customer_party_pk_nid = content_type_party.nid
+    JOIN node node3 ON node3.nid = content_type_bu_customer.field_customer_party_pk_nid";
+  db_query($sql);
+}
+
+/**
+ * SW Configuration Report view
+ */
+function view_device_sw_configuration_query() {
+  db_query("DROP VIEW IF EXISTS view_device_sw_configuration");
+  db_query("create or replace view view_device_sw_configuration as select node_country_name.title as country_name,node_country_name.nid as country_nid,node_product_line.title as productline,node_product_line.nid as productline_nid,node_customer_name.nid as customer_nid,node_customer_name.title as customername,d.field_bu_customer_account_number_value as accountnumber,CONCAT(k.field_postal_address_line2_value ,' ',k.field_postal_address_line1_value) as customer_address,k.field_postal_address_city_value as customer_city ,k.field_state_province_value as customer_state,j.field_email_address_value as customer_email,node_device_type.title as devicetype,node_device_type.nid as devicetype_nid,c.nid as device_nid,c.field_device_serial_number_value as deviceserial,a.software_nid,a.software_name,a.software_part,a.software_version,a.software_component,a.lastest_sw_update from Software_VW a,content_field_device_type b,node node_device_type,content_type_device c,node node_customer_name,content_type_bu_customer d left join content_type_party_postal_address i on d.field_customer_party_pk_nid = i.field_party_postal_address_nid left join content_type_postal_address k on i.field_party_postal_address_ref_nid = k.nid left join content_type_party_email_address j on d.field_customer_party_pk_nid = j.field_party_email_nid,content_field_device_product_line e,node node_product_line,content_field_device_pk f,content_type_device_installation g,node node_country_name where a.component_device = c.nid and b.field_device_type_nid = node_device_type.nid and c.nid= b.nid and node_customer_name.nid = d.field_customer_party_pk_nid and node_customer_name.nid = c.field_device_owner_nid and e.nid = b.field_device_type_nid and e.field_device_product_line_nid = node_product_line.nid and f.field_device_pk_nid = c.nid and f.nid = g.nid and g.field_device_country_nid = node_country_name.nid");
+}
+
+/**
+ * update database activity_log logtime index
+ * @return array
+ */
+function covidien_reports_update_6015() {
+  db_add_index($ret, 'activity_log', 'logtime', array('logtime'));
+  return array(array('success' => true, 'query' => 'Update activity_log'));
+}
+
+/** V3.0 * */
+
+/**
+ * Add 'Device Country Change Report'
+ *
+ * @return array
+ */
+function covidien_reports_update_6106() {
+  $report_menu_nid = db_result(db_query("SELECT nid FROM {content_type_product_line_report} WHERE field_report_name_value='Device Country Change Report'"));
+  if ($report_menu_nid) {
+    return array(array('success' => true, 'query' => 'Report menu have Device Country Change Report'));
+  }
+  //get not in status
+  $result = db_query("select distinct(nid) from content_type_product_line");
+  while ($row = db_fetch_object($result)) {
+    $node = new stdClass();
+    $node->type = 'product_line_report';
+    $node->status = 1;
+    $node->uid = 1;
+    $node->title = 'Product Line Report';
+    $node->field_report_product_line[0]['nid'] = $row->nid;
+    $node->field_report_name[0]['value'] = 'Device Country Change Report';
+    $node->name = 'admin';
+    node_save($node);
+  }
+  return array(array('success' => true, 'query' => 'Add Device Country Change Report'));
+}
+
+function covidien_reports_update_6107() {
+  $report_menu_nid = db_result(db_query("SELECT nid FROM {content_type_product_line_report} WHERE field_report_name_value='Software Audit Report'"));
+  if ($report_menu_nid) {
+    return array(array('success' => true, 'query' => 'Report menu have Software Audit Report'));
+  }
+  //get not in status
+  $result = db_query("SELECT distinct(nid) FROM {content_type_product_line}");
+  while ($row = db_fetch_object($result)) {
+    $node = new stdClass();
+    $node->type = 'product_line_report';
+    $node->status = 1;
+    $node->uid = 1;
+    $node->title = 'Product Line Report';
+    $node->field_report_product_line[0]['nid'] = $row->nid;
+    $node->field_report_name[0]['value'] = 'Software Audit Report';
+    $node->name = 'admin';
+    node_save($node);
+  }
+  return array(array('success' => true, 'query' => 'Add Software Audit Report'));
+}
+
+function covidien_reports_update_6108() {
+  $report_menu_nid = db_result(db_query("SELECT nid FROM {content_type_product_line_report} WHERE field_report_name_value='Software Versions Report'"));
+  if ($report_menu_nid) {
+    return array(array('success' => true, 'query' => 'Report menu have Software Versions Report'));
+  }
+  //get not in status
+  $result = db_query("SELECT distinct(nid) FROM {content_type_product_line}");
+  while ($row = db_fetch_object($result)) {
+    $node = new stdClass();
+    $node->type = 'product_line_report';
+    $node->status = 1;
+    $node->uid = 1;
+    $node->title = 'Product Line Report';
+    $node->field_report_product_line[0]['nid'] = $row->nid;
+    $node->field_report_name[0]['value'] = 'Software Versions Report';
+    $node->name = 'admin';
+    node_save($node);
+  }
+  return array(array('success' => true, 'query' => 'Add Software Versions Report'));
+}
+
+function covidien_reports_update_6110() {
+  $report_menu_nid = db_result(db_query("SELECT nid FROM {content_type_product_line_report} WHERE field_report_name_value='Device Country Change Report'"));
+  if ($report_menu_nid) {
+    return array(array('success' => true, 'query' => 'Report menu have Device Country Change Report'));
+  }
+  //get not in status
+  $result = db_query("SELECT distinct(nid) FROM {content_type_product_line}");
+  while ($row = db_fetch_object($result)) {
+    $node = new stdClass();
+    $node->type = 'product_line_report';
+    $node->status = 1;
+    $node->uid = 1;
+    $node->title = 'Product Line Report';
+    $node->field_report_product_line[0]['nid'] = $row->nid;
+    $node->field_report_name[0]['value'] = 'Device Country Change Report';
+    $node->name = 'admin';
+    node_save($node);
+  }
+  return array(array('success' => true, 'query' => 'Add Device Country Change Report'));
+}
+
+/**
+ * Add product_line_nid field to {activity_log} table and index the needed fields.
+ */
+function covidien_reports_update_6111() {
+  $ret = array();
+  $spec = array(
+    'type' => 'int',
+    'description' => "store cot nid",
+    'length' => 11,
+    'not null' => TRUE,
+    'default' => '0'
+  );
+  db_add_field($ret, 'activity_log', 'product_line_nid', $spec);
+
+  db_add_index($ret, 'activity_log', 'product_line_nid', array('product_line_nid'));
+  db_add_index($ret, 'activity_log', 'nid', array('nid'));
+  db_add_index($ret, 'activity_log', 'device', array('device'));
+  db_add_index($ret, 'activity_log', 'device_serial', array('device_serial'));
+  db_add_index($ret, 'activity_log', 'activity_type', array('activity_type'));
+
+  return array(array('success' => true, 'query' => 'Update activity_log'));
+}
+
+/**
+ * create new table to hold the device software version that use in the Device Current Config report page
+ */ 
+function covidien_reports_update_6112() { 
+  $schema['device_software_version_table'] = array(
+    'description' => t('The base table for device_software_version_table.'),
+    'fields' => array(
+      'productline' => array(
+        'description' => t('product line.'),
+        'type' => 'varchar',
+      	'length' => 64,
+        'not null' => TRUE,
+        'default' => ''
+      ),  
+      'productline_nid' => array(
+        'description' => t(''),
+        'type' => 'int',
+        'length' => 256,
+        'not null' => TRUE,
+        'default' => '0'
+      ),
+      'devicetype' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 256,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'devicetype_nid' => array(
+        'description' => t('device type nid'),
+        'type' => 'int', 
+        'not null' => TRUE, 
+        'default' => '0'
+      ), 
+      'device_nid' => array(
+        'description' => t('device nid'),
+        'type' => 'int', 
+        'not null' => TRUE, 
+        'default' => '0'
+      ),
+      'deviceserial' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128, 
+        'not null' => FALSE, 
+      ),
+      'accountnumber' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => FALSE, 
+      ),
+      'customername' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'customer_nid' => array(
+        'description' => t('customer nid'),
+        'type' => 'int', 
+        'not null' => TRUE, 
+        'default' => '0'
+      ),
+      'hardware_nid' => array(
+        'description' => t('hardware nid'),
+        'type' => 'int', 
+        'not null' => TRUE,
+        'default' => '0'
+      ),
+      'hardware_part' => array(
+        'description' => t('hardware part'),
+        'type' => 'int', 
+        'not null' => FALSE, 
+      ),
+      'hardware_name' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'hardware_version' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => FALSE,
+      ),
+      'hardware1_nid' => array(
+        'description' => t('hardware nid'),
+        'type' => 'int', 
+        'not null' => TRUE, 
+        'default' => '0'
+      ),
+      'hardware1_part' => array(
+        'description' => t('hardware part'),
+        'type' => 'int', 
+        'not null' => FALSE, 
+      ),
+      'hardware1_name' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'hardware1_version' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => FALSE,
+      ),
+      'software_nid' => array(
+        'description' => t(''),
+        'type' => 'int', 
+        'not null' => TRUE, 
+        'default' => '0'
+      ),
+      'software_name' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'software_part' => array(
+        'description' => t(''),
+        'type' => 'int', 
+        'not null' => FALSE, 
+      ),
+      'software_version' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => FALSE, 
+      ),
+      'software_component' => array(
+        'description' => t(''),
+        'type' => 'int', 
+        'not null' => FALSE, 
+      ),
+      'lastest_sw_update' => array(
+        'type' => 'datetime',
+        'not null' => false,
+      ),
+      'service_person' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => FALSE, 
+      ),
+      'country_nid' => array(
+        'description' => t(''),
+        'type' => 'int', 
+        'not null' => FALSE, 
+        'default' => '0'
+      ),
+      'country_name' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => FALSE,
+        'default' => ''
+      ),
+    ),  
+    );
+  
+  if (!db_table_exists('device_software_version_table')) {
+    db_create_table($ret, 'device_software_version_table', $schema['device_software_version_table']);
+  }
+
+  //insert data into table afterward
+  $truncate_query = "truncate device_software_version_table";
+  $truncate_result = db_query($truncate_query);
+  
+  //Insert Back to table 
+  $insert_query = "INSERT INTO device_software_version_table SELECT Device_VW.productline AS productline, Device_VW.productline_nid AS productline_nid,
+                    Device_VW.devicetype AS devicetype,
+                    Device_VW.devicetype_nid AS devicetype_nid,
+                    Device_VW.device_nid AS device_nid,
+                    Device_VW.deviceserial AS deviceserial,
+                    Customer_VW.accountnumber AS accountnumber,
+                    Customer_VW.customername AS customername,
+                    Customer_VW.customer_nid AS customer_nid,
+                    Hardware_VW.hardware_nid AS hardware_nid,
+                    Hardware_VW.hardware_part AS hardware_part,
+                    Hardware_VW.hardware_name AS hardware_name,
+                    Hardware_VW.hardware_version AS hardware_version,
+                    Hardware_VW1.hardware_nid AS hardware1_nid,
+                    Hardware_VW1.hardware_part AS hardware1_part,
+                    Hardware_VW1.hardware_name AS hardware1_name,
+                    Hardware_VW1.hardware_version AS hardware1_version,
+                    Software_VW.software_nid AS software_nid,
+                    Software_VW.software_name AS software_name,
+                    Software_VW.software_part AS software_part,
+                    Software_VW.software_version AS software_version,
+                    Software_VW.software_component AS software_component,
+                    Software_VW.lastest_sw_update AS lastest_sw_update,
+                    device_service_history_VW.service_person AS service_person,
+                    Country_VW.country_nid AS country_nid,
+                    Country_VW.country_name AS country_name
+                    FROM Device_VW
+                    LEFT JOIN Country_VW ON Country_VW.device_nid = Device_VW.device_nid
+                    JOIN Customer_VW ON Device_VW.device_owner = Customer_VW.account_nid
+                    JOIN Hardware_VW ON Hardware_VW.component_device = Device_VW.device_nid AND Hardware_VW.hardware_name = 'BdPcba'
+                    JOIN Hardware_VW Hardware_VW1 ON Hardware_VW1.component_device = Device_VW.device_nid AND Hardware_VW1.hardware_name = 'GuiPcba'
+                    JOIN Software_VW ON Software_VW.component_device = Device_VW.device_nid AND Software_VW.software_name = 'BdSoftware'
+                    JOIN device_service_history_VW ON device_service_history_VW.field_to_device_component_nid = Software_VW.software_component
+                      AND device_service_history_VW.service_device_nid = Device_VW.device_nid
+                      AND device_service_history_VW.field_service_datetime_value = Software_VW.lastest_sw_update
+                  ORDER BY Device_VW.deviceserial, Software_VW.lastest_sw_update DESC";
+  $insert_result = db_query($insert_query);
+  
+  return $ret;
+}
+
+/**
+ * create new table to hold the device software version for Compresison COT which is being use on Device Current Config report page
+ */ 
+function covidien_reports_update_6115() { 
+  $schema['device_scd700_software_version_table'] = array(
+    'description' => t('The base table for device_scd700_software_version_table.'),
+    'fields' => array(
+      'productline' => array(
+        'description' => t('product line.'),
+        'type' => 'varchar',
+      	'length' => 64,
+        'not null' => TRUE,
+        'default' => ''
+      ),  
+      'productline_nid' => array(
+        'description' => t(''),
+        'type' => 'int',
+        'length' => 256,
+        'not null' => TRUE,
+        'default' => '0'
+      ),
+      'devicetype' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 256,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'devicetype_nid' => array(
+        'description' => t('device type nid'),
+        'type' => 'int', 
+        'not null' => TRUE, 
+        'default' => '0'
+      ), 
+      'device_nid' => array(
+        'description' => t('device nid'),
+        'type' => 'int', 
+        'not null' => TRUE, 
+        'default' => '0'
+      ),
+      'deviceserial' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128, 
+        'not null' => FALSE, 
+      ),
+      'accountnumber' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => FALSE, 
+      ),
+      'customername' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'customer_nid' => array(
+        'description' => t('customer nid'),
+        'type' => 'int', 
+        'not null' => TRUE, 
+        'default' => '0'
+      ),
+      'hardware_nid' => array(
+        'description' => t('hardware nid'),
+        'type' => 'int', 
+        'not null' => TRUE,
+        'default' => '0'
+      ),
+      'hardware_part' => array(
+        'description' => t('hardware part'),
+        'type' => 'int', 
+        'not null' => FALSE, 
+      ),
+      'hardware_name' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'hardware_version' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => FALSE,
+      ),
+      'software_nid' => array(
+        'description' => t(''),
+        'type' => 'int', 
+        'not null' => TRUE, 
+        'default' => '0'
+      ),
+      'software_name' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'software_part' => array(
+        'description' => t(''),
+        'type' => 'int', 
+        'not null' => FALSE, 
+      ),
+      'software_version' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => FALSE, 
+      ),
+      'software_component' => array(
+        'description' => t(''),
+        'type' => 'int', 
+        'not null' => FALSE, 
+      ),
+      'lastest_sw_update' => array(
+        'type' => 'datetime',
+        'not null' => false,
+      ),
+      'service_person' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => FALSE, 
+      ),
+      'country_nid' => array(
+        'description' => t(''),
+        'type' => 'int', 
+        'not null' => FALSE, 
+        'default' => '0'
+      ),
+      'country_name' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => FALSE,
+        'default' => ''
+      ),
+    ),  
+    );
+  
+  if (!db_table_exists('device_scd700_software_version_table')) {
+    db_create_table($ret, 'device_scd700_software_version_table', $schema['device_scd700_software_version_table']);
+  }
+
+  //insert data into table afterward
+  $truncate_query = "truncate device_scd700_software_version_table";
+  $truncate_result = db_query($truncate_query);
+  
+  //Insert Back to table 
+  $insert_query = "INSERT INTO device_scd700_software_version_table 
+                  SELECT Device_VW.productline AS productline,Device_VW.productline_nid AS productline_nid,
+                  Device_VW.devicetype AS devicetype,Device_VW.devicetype_nid AS devicetype_nid,
+                  Device_VW.device_nid AS device_nid,Device_VW.deviceserial AS deviceserial,
+                  Customer_VW.accountnumber AS accountnumber,Customer_VW.customername AS customername,
+                  Customer_VW.customer_nid AS customer_nid,Hardware_VW.hardware_nid AS hardware_nid,
+                  Hardware_VW.hardware_part AS hardware_part,Hardware_VW.hardware_name AS hardware_name,
+                  Hardware_VW.hardware_version AS hardware_version,Software_VW.software_nid AS software_nid,
+                  Software_VW.software_name AS software_name,Software_VW.software_part AS software_part,
+                  Software_VW.software_version AS software_version,Software_VW.software_component AS software_component,
+                  Software_VW.lastest_sw_update AS lastest_sw_update,device_service_history_VW.service_person AS service_person,
+                  Country_VW.country_nid AS country_nid,Country_VW.country_name AS country_name
+                  FROM Device_VW
+                  LEFT JOIN Country_VW ON Country_VW.device_nid = Device_VW.device_nid
+                  JOIN Customer_VW ON Device_VW.device_owner = Customer_VW.account_nid
+                  JOIN Hardware_VW ON Hardware_VW.component_device = Device_VW.device_nid AND Hardware_VW.hardware_name = 'Control Board'
+                  JOIN Software_VW ON Software_VW.component_device = Device_VW.device_nid AND Software_VW.software_name = 'Control'
+                  JOIN device_service_history_VW ON device_service_history_VW.field_to_device_component_nid = Software_VW.software_component
+                  AND device_service_history_VW.service_device_nid = Device_VW.device_nid
+                  AND device_service_history_VW.field_service_datetime_value = Software_VW.lastest_sw_update
+                  ORDER BY Device_VW.deviceserial,Software_VW.lastest_sw_update DESC";
+  $insert_result = db_query($insert_query);
+  
+  return $ret;
+}
+
+/**
+ * create new table to hold the device software version for Vessel Sealing COT which is being use on Device Current Config report page
+ */ 
+function covidien_reports_update_6116() { 
+  $schema['device_emerald_software_version_table'] = array(
+    'description' => t('The base table for device_emerald_software_version_table.'),
+    'fields' => array(
+      'productline' => array(
+        'description' => t('product line.'),
+        'type' => 'varchar',
+      	'length' => 64,
+        'not null' => TRUE,
+        'default' => ''
+      ),  
+      'productline_nid' => array(
+        'description' => t(''),
+        'type' => 'int',
+        'length' => 256,
+        'not null' => TRUE,
+        'default' => '0'
+      ),
+      'devicetype' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 256,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'devicetype_nid' => array(
+        'description' => t('device type nid'),
+        'type' => 'int', 
+        'not null' => TRUE, 
+        'default' => '0'
+      ), 
+      'device_nid' => array(
+        'description' => t('device nid'),
+        'type' => 'int', 
+        'not null' => TRUE, 
+        'default' => '0'
+      ),
+      'deviceserial' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128, 
+        'not null' => FALSE, 
+      ),
+      'accountnumber' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => FALSE, 
+      ),
+      'customername' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'customer_nid' => array(
+        'description' => t('customer nid'),
+        'type' => 'int', 
+        'not null' => TRUE, 
+        'default' => '0'
+      ),
+      'hardware_nid' => array(
+        'description' => t('hardware nid'),
+        'type' => 'int', 
+        'not null' => TRUE,
+        'default' => '0'
+      ),
+      'hardware_part' => array(
+        'description' => t('hardware part'),
+        'type' => 'int', 
+        'not null' => FALSE, 
+      ),
+      'hardware_name' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'hardware_version' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => FALSE,
+      ),
+      'hardware1_nid' => array(
+        'description' => t('hardware nid'),
+        'type' => 'int', 
+        'not null' => TRUE, 
+        'default' => '0'
+      ),
+      'hardware1_part' => array(
+        'description' => t('hardware part'),
+        'type' => 'int', 
+        'not null' => FALSE, 
+      ),
+      'hardware1_name' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'hardware1_version' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => FALSE,
+      ),
+      'software_nid' => array(
+        'description' => t(''),
+        'type' => 'int', 
+        'not null' => TRUE, 
+        'default' => '0'
+      ),
+      'software_name' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'software_part' => array(
+        'description' => t(''),
+        'type' => 'int', 
+        'not null' => FALSE, 
+      ),
+      'software_version' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => FALSE, 
+      ),
+      'software_component' => array(
+        'description' => t(''),
+        'type' => 'int', 
+        'not null' => FALSE, 
+      ),
+      'lastest_sw_update' => array(
+        'type' => 'datetime',
+        'not null' => false,
+      ),
+      'service_person' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => FALSE, 
+      ),
+      'country_nid' => array(
+        'description' => t(''),
+        'type' => 'int', 
+        'not null' => FALSE, 
+        'default' => '0'
+      ),
+      'country_name' => array(
+        'description' => t(''),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => FALSE,
+        'default' => ''
+      ),
+    ),  
+    );
+  
+  if (!db_table_exists('device_emerald_software_version_table')) {
+    db_create_table($ret, 'device_emerald_software_version_table', $schema['device_emerald_software_version_table']);
+  }
+
+  //insert data into table afterward
+  $truncate_query = "truncate device_emerald_software_version_table";
+  $truncate_result = db_query($truncate_query);
+  
+  //Insert Back to table 
+  $insert_query = "INSERT INTO device_emerald_software_version_table 
+                  SELECT Device_VW.productline AS productline, Device_VW.productline_nid AS productline_nid, Device_VW.devicetype AS devicetype,
+                  Device_VW.devicetype_nid AS devicetype_nid, Device_VW.device_nid AS device_nid, Device_VW.deviceserial AS deviceserial,
+                  Customer_VW.accountnumber AS accountnumber, Customer_VW.customername AS customername, Customer_VW.customer_nid AS customer_nid,
+                  Hardware_VW.hardware_nid AS hardware_nid, Hardware_VW.hardware_part AS hardware_part, Hardware_VW.hardware_name AS hardware_name,
+                  Hardware_VW.hardware_version AS hardware_version,
+                  Hardware_VW1.hardware_nid AS hardware1_nid,
+                  Hardware_VW1.hardware_part AS hardware1_part,
+                  Hardware_VW1.hardware_name AS hardware1_name,
+                  Hardware_VW1.hardware_version AS hardware1_version,
+                  Software_VW.software_nid AS software_nid,
+                  Software_VW.software_name AS software_name,
+                  Software_VW.software_part AS software_part,
+                  Software_VW.software_version AS software_version,
+                  Software_VW.software_component AS software_component,
+                  Software_VW.lastest_sw_update AS lastest_sw_update,
+                  device_service_history_VW.service_person AS service_person,
+                  Country_VW.country_nid AS country_nid,
+                  Country_VW.country_name AS country_name
+                  FROM Device_VW
+                  LEFT JOIN Country_VW ON Country_VW.device_nid = Device_VW.device_nid
+                  JOIN Customer_VW ON Device_VW.device_owner = Customer_VW.account_nid
+                  JOIN Hardware_VW ON Hardware_VW.component_device = Device_VW.device_nid AND Hardware_VW.hardware_name = 'Main PCBA'
+                  JOIN Hardware_VW Hardware_VW1 ON Hardware_VW1.component_device = Device_VW.device_nid AND Hardware_VW1.hardware_name = 'VIBE'
+                  JOIN Software_VW ON Software_VW.component_device = Device_VW.device_nid
+                  JOIN device_service_history_VW ON device_service_history_VW.field_to_device_component_nid = Software_VW.software_component
+                    AND device_service_history_VW.service_device_nid = Device_VW.device_nid
+                    AND device_service_history_VW.field_service_datetime_value = Software_VW.lastest_sw_update
+                  ORDER BY Device_VW.deviceserial, Software_VW.lastest_sw_update DESC";
+  $insert_result = db_query($insert_query);
+  
+  return $ret;
+}

@@ -1,0 +1,99 @@
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  Theme,v 1 2012/08/21 06:26:03 Covidien
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2009-06-16 19:00+0200\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#:document-node-form.tpl:17
+msgid "1. Select Device Type"
+msgstr ""
+
+#: template.php, document-node-form.tpl:28
+msgid "2. Enter Information above the new Document"
+msgstr ""
+
+#: document-node-form.tpl:35,156
+msgid "Document Title:"
+msgstr ""
+
+#: document-node-form.tpl:41,164
+msgid "Document Part #:"
+msgstr ""
+
+#: document-node-form.tpl:54,189
+msgid "Document Type:"
+msgstr ""
+
+
+#: document-node-form.tpl:48,171
+msgid "Document Version:"
+msgstr ""
+
+#: document-node-form.tpl:63,197
+msgid "File Name: (Browse to select a file)"
+msgstr ""
+
+#: document-node-form.tpl:74,205
+msgid "Description:"
+msgstr ""
+
+#: document-node-form.tpl:81,213
+msgid "Select Document Language:"
+msgstr ""
+
+#: document-node-form.tpl:89
+msgid "3. Associate the new Document with related Hardware and/or Software"
+msgstr ""
+
+#: document-node-form.tpl:106,233
+msgid "Filter by Language:"
+msgstr ""
+
+#: document-node-form.tpl:151
+msgid "The Document details can be edited or deleted here."
+msgstr ""
+
+#: document-node-form.tpl:181
+msgid "Device Type:"
+msgstr ""
+
+#: template.php, document-node-form.tpl:194
+msgid "Language:"
+msgstr ""
+
+#: document-node-form.tpl:205,224
+msgid "Hardware/Software Associations:"
+msgstr ""
+
+#: document-node-form.tpl:99,226
+msgid "Filter by hardware type:"
+msgstr ""
+
+#: document-node-form.tpl:29
+msgid "2. Enter Information about the new Document"
+msgstr ""
+
+#: document-node-form.tpl:265
+msgid "Cancel"
+msgstr ""
+
+#: views-view-field--documentlist--page-1--field-doc-external-users-value
+msgid "All"
+msgstr ""
+
+#: views-view-field--documentlist--page-1--field-doc-external-users-value
+msgid "Covidien"
+msgstr ""

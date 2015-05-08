@@ -1,0 +1,1016 @@
+<?php
+
+/**
+ * Implement hook_menu
+ */
+function covidien_firmware_menu() {
+  $items = array();
+
+  // URL to access add new User
+  $items ['firmware/list'] = array(
+    'page callback' => 'covidien_firmware_list',
+    'access callback' => 'covidien_firmware_check_access',
+    'type' => MENU_CALLBACK
+  );
+  $items ['firmware/add'] = array(
+    'page callback' => 'covidien_firmware_add',
+    'access callback' => 'covidien_firmware_check_access',
+    'type' => MENU_CALLBACK
+  );
+  $items ['firmware/save'] = array(
+    'page callback' => 'covidien_firmware_save',
+    'access callback' => 'covidien_firmware_check_access',
+    'type' => MENU_CALLBACK
+  );
+  $items ['firmware/edit/%'] = array(
+    'page callback' => 'covidien_firmware_edit',
+    'page arguments' => array(2),
+    'access callback' => 'covidien_firmware_check_access',
+    'type' => MENU_CALLBACK
+  );
+  $items ['firmware/update'] = array(
+    'page callback' => 'covidien_firmware_update',
+    'access callback' => 'covidien_firmware_check_access',
+    'type' => MENU_CALLBACK
+  );
+  $items ['firmware/delete'] = array(
+    'page callback' => 'covidien_firmware_delete',
+    'access callback' => 'covidien_firmware_check_access',
+    'type' => MENU_CALLBACK
+  );
+  $items ['firmware/autocomplete'] = array(
+    'page callback' => 'covidien_firmware_autocomplete',
+    'access callback' => 'covidien_firmware_check_access',
+    'type' => MENU_CALLBACK
+  );
+  $items ['firmware/ajax/get_fw_list'] = array(
+    'page callback' => 'covidien_firmware_ajax_get_firmware_list',
+    'access callback' => 'covidien_firmware_check_access',
+    'type' => MENU_CALLBACK
+  );
+  $items ['firmware/ajax_get_config_list'] = array(
+    'page callback' => 'get_hardware_config_list_table',
+    'access callback' => 'covidien_firmware_check_access',
+    'type' => MENU_CALLBACK
+  );
+  $items ['firmware/ajax_get_hw_list'] = array(
+    'page callback' => 'covidien_firmware_ajax_get_hw_list_tbl',
+    'access callback' => 'covidien_firmware_check_access',
+    'type' => MENU_CALLBACK
+  );
+  $items ['covidien/firmware/devicetype'] = array(
+    'page callback' => 'covidien_fw_devicetype',
+    'access callback' => 'covidien_firmware_check_access',
+    'type' => MENU_CALLBACK
+  );
+  $items ['firmware/ajax/fw_duplicate_check'] = array(
+    'page callback' => 'covidien_firmware_ajax_fw_duplicate_check',
+    'access callback' => 'covidien_firmware_check_access',
+    'type' => MENU_CALLBACK
+  );
+  $items ['firmware/ajax/fileupload'] = array(
+    'page callback' => 'covidien_firmware_fileupload',
+    'access callback' => 'covidien_firmware_check_access',
+    'type' => MENU_CALLBACK
+  );
+  $items ['firmware/ajax/fileremove'] = array(
+    'page callback' => 'covidien_firmware_fileremove',
+    'access callback' => 'covidien_firmware_check_access',
+    'type' => MENU_CALLBACK
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_init()
+ */
+function covidien_firmware_init() {
+  module_load_include('php', 'covidien_firmware', '/includes/covidien_firmware_query');
+  if (arg(0) == 'firmware') {
+    drupal_add_js(drupal_get_path('theme', 'covidien_theme') . '/js/covidien.js');
+    drupal_add_js('misc/ahah.js');
+    drupal_add_js('misc/autocomplete.js');
+    drupal_add_js(drupal_get_path('module', 'covidien_ui') . '/js/covidien_ahah.js');
+    drupal_add_js(drupal_get_path('module', 'covidien_ui') . '/js/covidien_autocomplete.js');
+  }
+}
+
+/**
+ * Implements hook_node_info
+ */
+function covidien_firmware_node_info() {
+  return array(
+    'firmware' => array(
+      'name' => t('Firmware'),
+      'module' => 'covidien_firmware',
+      'description' => t('Firmware'),
+    )
+  );
+}
+
+/**
+ * Implements hook_theme()
+ */
+function covidien_firmware_theme() {
+  return array(
+    'covidien_firmware_list' => array(
+      'template' => 'firmware_list',
+      'arguments' => array('form' => NULL),
+    ),
+    'covidien_firmware_form' => array(
+      'template' => 'firmware_form',
+      'arguments' => array('form' => NULL),
+    ),
+  );
+}
+
+/**
+ * menu access callback
+ * @global type $user
+ * @return boolean
+ */
+function covidien_firmware_check_access() {
+  return covidien_cot_admin_access_callback('firmware');
+}
+
+function covidien_firmware_list() {
+  drupal_set_title(t('System Administration'));
+  $output = theme('covidien_firmware_list');
+  return $output;
+}
+
+function covidien_firmware_add() {
+  drupal_set_title(t('Add New Firmware to Catalog'));
+  return drupal_get_form('covidien_firmware_form');
+}
+
+function covidien_firmware_edit() {
+  drupal_set_title(t('Edit a New Firmware Catalog'));
+  return drupal_get_form('covidien_firmware_form');
+}
+
+function covidien_firmware_form($id) {
+  $form['firmware_id'] = array(
+    '#type' => 'hidden',
+    '#value' => $id,
+  );
+  $form['firmware_name'] = array(
+    '#type' => 'textfield',
+    '#id' => 'firmware_name',
+    '#required' => TRUE,
+    '#name' => 'firmware_name',
+    '#attributes' => array('placeholder' => 'Enter Firmware Name'),
+  );
+  $form['firmware_part'] = array(
+    '#type' => 'textfield',
+    '#id' => 'firmware_part',
+    '#required' => TRUE,
+    '#name' => 'firmware_part',
+    '#attributes' => array('placeholder' => 'Enter Firmware Part #'),
+  );
+  $form['firmware_version'] = array(
+    '#type' => 'textfield',
+    '#id' => 'firmware_version',
+    '#required' => TRUE,
+    '#name' => 'firmware_version',
+    '#attributes' => array('placeholder' => 'Enter Firmware Version'),
+  );
+  $form['firmware_description'] = array(
+    '#type' => 'textfield',
+    '#id' => 'firmware_description',
+    '#required' => TRUE,
+    '#name' => 'firmware_description',
+    '#attributes' => array('placeholder' => 'Enter Firmware Description'),
+  );
+  //firmware file upload
+  $form['file_id'] = array(
+    '#type' => 'hidden',
+    '#id' => 'file_id',
+  );
+  //add check box no file
+  $form['no_file'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Do not upload'),
+    '#name' => 'no_file',
+    '#id' => 'no_file',
+    '#default_value' => 0,
+  );
+  $form['firmware_file'] = array(
+    '#type' => 'file',
+    '#id' => 'firmware_file',
+  );
+  $form['filefield_upload'] = array(
+    '#type' => 'button',
+    '#value' => t('Upload'),
+  );
+  $form['filefield_remove'] = array(
+    '#type' => 'button',
+    '#value' => t('Remove'),
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save Firmware'),
+    '#attributes' => array('class' => 'non_active_blue', 'disabled' => 'disabled'),
+    '#id' => 'btn_submit',
+  );
+  $form['#action'] = $id ? url('firmware/update') : url('firmware/save');
+  $form['#theme'] = array('covidien_firmware_form');
+  $form['#attributes'] = array('enctype' => "multipart/form-data"); //upload file must attributes 
+  return $form;
+}
+
+function covidien_firmware_form_validate($values) {
+  if (!covidien_ui_input_validate($values['firmware_name'], true)) {
+    form_set_error('firmware_name', 'Invalid firmware name.');
+  }
+  if (!covidien_ui_input_validate($values['firmware_part'], true)) {
+    form_set_error('firmware_part', 'Invalid firmware part.');
+  }
+  if (!covidien_ui_input_validate($values['firmware_version'], true)) {
+    form_set_error('firmware_version', 'Invalid firmware version');
+  }
+  if (!covidien_ui_input_validate($values['firmware_description'])) {
+    form_set_error('firmware_description', 'Invalid firmware description.');
+  }
+  if (count(form_get_errors())) {
+    drupal_goto(referer_uri());
+    return false;
+  }
+  return true;
+}
+
+function covidien_firmware_fileremove() {
+  $post = filter_xss_arr($_POST);
+  $filepath = db_result(db_query("SELECT filepath FROM {files} WHERE fid=%d", $post['file_id']));
+  if ($post['firmware_id']) {
+    db_query("UPDATE {firmware} SET file_id=%d, file='%s' WHERE nid=%d", 0, '', $post['firmware_id']);
+  }
+  if ($post['file_id']) {
+    db_query("DELETE FROM {files} WHERE fid=%d", $post['file_id']);
+  }
+  if ($filepath) {
+    file_delete($filepath);
+  }
+  drupal_json(array('status' => 'success', 'data' => $post));
+  exit;
+}
+
+function covidien_firmware_fileupload() {
+  $new_dir_path = 'sites/default/files/firmware/';
+  file_check_directory($new_dir_path, FILE_CREATE_DIRECTORY);
+  $field_name = 'firmware_file';
+  $message = '';
+  if (isset($_FILES['files']) && is_uploaded_file($_FILES['files']['tmp_name'][$field_name])) {
+    // attempt to save the uploaded file
+    $file = file_save_upload($field_name, array(), $new_dir_path);
+    // set error if file was not uploaded
+    if (!$file) {
+      $message = 'Error uploading file.';
+    } else {
+      $result = file_move($file->filepath, $new_dir_path);
+      if ($result != 1) {
+        $message = 'Error uploading file.';
+      }
+    }
+  }
+  echo $file ? $file->fid : 0;
+  exit;
+}
+
+function covidien_firmware_save() {
+  covidien_firmware_form_validate($_POST);
+
+  global $drupal_abs_path, $user;
+  $post = filter_xss_arr($_POST);
+  $id = $post['firmware_id'];
+  $device_type = $post['sel_device_type'];
+  $name = $post['firmware_name'];
+  $version = $post['firmware_version'];
+  $part = $post['firmware_part'];
+  $description = $post['firmware_description'];
+  $file = $post['file_name'];
+  $device_type_name = $post['device_type_name'];
+  $device_type_id_list = $post['device_type_id_list'];
+  $status = $post['firmware_status'];
+  $hc_list = $post['field_hc_list'];
+  $file_id = $post['file_id'];
+  $no_file = $post['no_file'];
+  $regulatory_exp = $post['regulatory_exp'];
+  //save to node
+  $now = time();
+  $node = $id ? node_load($id) : new stdClass();
+  if (!$id) {
+    $node->nid = $id;
+    $node->type = 'firmware';
+    $node->uid = 1;
+    $node->format = 0;
+    $node->title = $name;
+    $node->changed = $now;
+    node_save($node);
+  } else {
+    $update_node_sql = "update node set title='%s' ,changed = %d where nid = %d ";
+    db_query($update_node_sql, $name, $now, $id);
+  }
+
+  //save to firmware
+  if ($id) {
+    $update_firmware_sql = "UPDATE {firmware} SET part='%s', version='%s', description='%s', file='%s', file_id=%d, status=%d where nid=%d";
+    db_query($update_firmware_sql, $part, $version, $description, $file, $file_id, $status, $id);
+    $message = t('Firmware @name has been changed. ', array('@name' => $name));
+  } else {
+    $insert_firmware_sql = "INSERT INTO {firmware} (vid, nid, part, device_type_id, version, description, file, file_id, status) 
+		VALUES (%d, %d, '%s', %d, '%s', '%s', '%s', %d, %d)";
+    db_query($insert_firmware_sql, $node->vid, $node->nid, $part, $device_type, $version, $description, $file, $file_id, $status);
+    $message = t('Firmware @name has been created. ', array('@name' => $name));
+  }
+  //save to firmware relation
+  $left_type = db_result(db_query("SELECT id FROM {named_configuration_type} WHERE name = '%s'", 'firmware_item'));
+  save_config_item_relation($node->nid, $left_type, $hc_list);
+
+  //save firmware regulatory exceotion
+  db_query("delete from firmware_exception where firmware_nid=%d", $node->nid);
+  if (!empty($regulatory_exp)) {
+    $regulatory_exp = array_unique($regulatory_exp);
+    foreach ($regulatory_exp as $value) {
+      $sql = "insert into firmware_exception values(%d,%d)";
+      db_query($sql, $node->nid, $value);
+    }
+  }
+  drupal_set_message($message);
+  drupal_goto('firmware/list');
+}
+
+function covidien_firmware_update() {
+  covidien_firmware_save();
+}
+
+function covidien_firmware_delete() {
+  $nid = check_plain($_GET['nid']);
+  db_query("UPDATE {node} SET status = 0 WHERE nid = %d", $nid);
+  drupal_set_message(t('Has deleted name @name', array('@name' => check_plain($_GET['name']))));
+  drupal_goto('firmware/list');
+}
+
+function covidien_theme_preprocess_covidien_firmware_form(&$vars) {
+  drupal_add_js(drupal_get_path('module', 'covidien_firmware') . '/js/covidien_firmware.js');
+  $form = $vars['form'] + _filter_fw_select_form();
+
+  $form['select_device_type']['#id'] = 'edit-field-device-type-nid';
+  unset($form['select_device_type']['#options'][0]);
+
+  $firm_id = arg(2);
+  //add covidien_firmware_form
+  $firmware_form = covidien_firmware_form($firm_id);
+  //if edit
+  $firmware = array();
+  $selectedCountryStr = '';
+  if ($firm_id && is_numeric($firm_id)) {
+    $query = "SELECT f.nid, n.title, f.part, f.type_id, f.description, f.status, f.device_type_id, f.version, f.file_id, f.file
+				FROM {firmware} f JOIN {node} n ON f.nid = n.nid WHERE f.nid = %d";
+    $result = db_query($query, $firm_id);
+    $row = db_fetch_object($result);
+    $firmware = array(
+      'id' => $row->nid,
+      'name' => $row->title,
+      'part' => $row->part,
+      'type_id' => $row->type_id,
+      'description' => $row->description,
+      'status' => $row->status,
+      'device_type_id' => $row->device_type_id,
+      'version' => $row->version,
+      'file_id' => $row->file_id,
+      'file' => $row->file,
+    );
+    $refs = $firm_id ? get_configuration_ref_list($firm_id) : array();
+    $firmware['refs'] = $refs;
+
+    $form['select_device_type']['#value'] = $firmware['device_type_id'];
+    $form['select_device_type']['#options'] = array($firmware['device_type_id'] => $form['select_device_type']['#options'][$firmware['device_type_id']]);
+    $form['select_device_type']['#attributes'] = array('disabled' => 'disabled');
+    $form['file_id']['#value'] = $firmware['file_id'];
+    $form['firmware_id']['#value'] = $firmware['id'];
+    $form['firmware_name']['#value'] = $firmware['name'];
+    $form['firmware_part']['#value'] = $firmware['part'];
+    $form['firmware_version']['#value'] = $firmware['version'];
+    $form['firmware_description']['#value'] = $firmware['description'];
+    $form['firmware_file']['#value'] = $firmware['file'];
+
+    //get firmware regulatory exception
+    $sql = "select b.nid,b.title from firmware_exception a, node b where a.country_nid = b.nid and a.firmware_nid =%d";
+    $result = db_query($sql, $firm_id);
+    while ($item = db_fetch_object($result)) {
+      $selectedCountryStr .= $item->nid . "," . $item->title . "|";
+    }
+  }
+  $firm_status_option = _get_firmware_status();
+  module_load_include('module', 'covidien_named_config');
+  $firm_status_option = item_filter_status($firmware['status'], $firm_status_option);
+  $form['firmware_status'] = array(
+    '#type' => 'select',
+    '#name' => 'firmware_status',
+    '#id' => 'firmware_status',
+    '#options' => $firm_status_option,
+    '#default_value' => $firmware['status'],
+    '#value' => $firmware['status'],
+  );
+
+  if ($firmware['id'] && !$firmware['file_id']) {
+    $form['no_file']['#value'] = 1;
+  }
+  $unknown_status = _get_firmware_status_unknown();
+  if ($firmware['status'] != $unknown_status->id) {
+    unset($form['firmware_status']['#options'][$unknown_status->id]);
+  }
+  $vars['form'] = $form;
+  $vars['no_file'] = drupal_render($form['no_file']);
+  $vars['firmware'] = $firmware;
+//   $vars['select_device'] = drupal_render($form['select_device_type']);
+  $device_type_id = $firmware['device_type_id'] ? $firmware['device_type_id'] : $_SESSION['default_dtype'];
+  $vars['hw_list'] = covidien_firmware_get_hardware_list_tbl($device_type_id);
+  $form_device_type = field_device_type_select($device_type_id, 'All');
+  $form_device_type['select_device_type']['#name'] = 'sel_device_type';
+  $form_device_type['select_device_type']['#value'] = $device_type_id;
+  $vars['select_device'] = drupal_render($form_device_type['select_device_type']);
+  $vars['select_firmware_status'] = drupal_render($form['firmware_status']);
+  $vars['reg_excep_list'] = drupal_render($form['ISOCountryList']);
+  $vars['hc_list'] = '<div id="hc_list_wraper"></div>';
+  $vars['selectedCountryStr'] = $selectedCountryStr;
+}
+
+function covidien_theme_preprocess_covidien_firmware_list(&$vars) {
+  $vars['result_table'] = covidien_firmware_get_firmware_list();
+  $device_type_id = $_GET['device_type_id'] ? check_plain($_GET['device_type_id']) : $_SESSION['default_dtype'];
+  $select_device_type = field_device_type_select($device_type_id);
+  $device_type_form['field_device_type'] = $select_device_type['select_device_type'];
+  //sel_device_type 
+  $device_type_form['field_device_type']['#name'] = 'sel_device_type';
+  $device_type_form['field_device_type']['#id'] = 'sel_device_type';
+  $vars['select_device'] = drupal_render($device_type_form['field_device_type']);
+  $vars['device_type_id'] = $device_type_id;
+  $vars['search_name'] = $search_name;
+}
+
+function readable_filesize($size) {
+  $mod = 1024;
+  $units = explode(' ', 'B KB MB GB TB PB');
+  for ($i = 0; $size > $mod; $i++) {
+    $size /= $mod;
+  }
+  return round($size, 2) . ' ' . $units[$i];
+}
+
+function covidien_firmware_autocomplete() {
+  $items = array();
+  $keyword = trim($_REQUEST['keyword']);
+  $keyword = str_replace("_", "\_", $keyword);
+  $query = "SELECT DISTINCT n.title FROM node n JOIN firmware f ON f.nid = n.nid WHERE n.title LIKE '%%%s%%' ORDER BY n.title ASC";
+  $result = db_query($query, $keyword);
+  while ($row = db_fetch_object($result)) {
+    $items[$row->title] = $row->title;
+  }
+  print drupal_to_js($items);
+  exit();
+}
+
+/**
+ * Implements cron functioanlity.
+ */
+function covidien_firmware_cron() {
+  covidien_update_log('Run Start ' . __FUNCTION__);
+
+  $query_files = db_query(covidien_firmware_cron_query(2));
+  $rows = array();
+  while ($row = db_fetch_object($query_files)) {
+    $rows[$row->firmware_id] = $row;
+  }
+  foreach ($rows as $rec) {
+    $rep_output = upload_firmware_file_to_repo($rec);
+    if (empty($rep_output['error'])) {
+      $filesha1 = $rep_output['filesha1'];
+      $filesize = $rep_output['filesize'];
+      $filepath = $rep_output['filepath'];
+    } else {
+      $filesha1 = '0000';
+    }
+    drupal_set_message($rec->firmware_id . ' ' . print_r($rep_output, 1));
+    if (trim($filesha1) != '') {
+      $query_update = covidien_firmware_cron_query(0);
+      db_query($query_update, $filesha1, $rec->firmware_id);
+      $query_update1 = covidien_firmware_cron_query(1);
+      db_query($query_update1, $filepath, $filesize, $rec->fid);
+      $msg = 'Content firmware id:' . $rec->firmware_id . ' file_id';
+      $msg .= $rec->fid . ' Path:' . $filepath;
+      watchdog("covidien_firmware", $msg, array(), WATCHDOG_INFO);
+    } else {
+      $msg = 'Content firmware id:' . $rec->firmware_id . ' file_id : ';
+      $msg .= $rec->fid . ' Path:' . $rec->filepath;
+      watchdog("covidien_fw", $msg, array(), WATCHDOG_ERROR);
+    }
+  }
+  covidien_update_log('Finished ' . __FUNCTION__);
+}
+
+/**
+ * Helper function for upload a file to files repo.
+ */
+function upload_firmware_file_to_repo($file) {
+  global $drupal_abs_path;
+  global $drupal_repourl;
+  global $drupal_firmware_repo;
+  $filepath = $file->filepath;
+  $filepatharr = explode('/', $filepath);
+  $filename = array_pop($filepatharr);
+  $filepath = implode('/', $filepatharr);
+  $sourcebasepath = $filepath . '/';
+  $version = array_pop($filepatharr);
+  $firmware_name = array_pop($filepatharr);
+  $device_type_name = array_pop($filepatharr);
+  $repourl = $drupal_repourl;
+  $path = $drupal_firmware_repo . $device_type_name . "/" . $firmware_name . "/" . $version . "/";
+  /**
+   * $newfilename created with timestamp to avoid file update.
+   */
+  $newfilename = time() . '_' . $filename;
+  $command = 'zip -j "' . $sourcebasepath . $newfilename . '.zip" "' . $sourcebasepath . $filename . '"';
+  $out = array();
+  exec($command, $out) or $output = array('error' => 'Compression Failed' . $command);
+  if (!empty($output['error'])) {
+    return $output;
+  }
+  if ($filename != "") {
+    unlink($sourcebasepath . $filename) or $output = array('error' => 'Error on UNLINKIN Original File');
+  }
+  if (!empty($output['error'])) {
+    return $output;
+  }
+  encrypt_firmware_file($sourcebasepath, $newfilename, '.zip');
+  $filesha1 = sha1_file($sourcebasepath . $newfilename . '.zip');
+  // File size
+  $filesize = filesize($sourcebasepath . $newfilename . '.zip');
+  $command = 'curl -k https://' . $repourl . '/upload.php?path=' . $path;
+  $command .= '  -F file=@"' . $sourcebasepath . $newfilename . '.zip"  -A "Mozilla/5.0  Firefox/1.5.0.2"';
+  $out = array();
+  exec($command, $out) or $output = array('error' => 'Upload to Repository Failed');
+  if (!empty($output['error'])) {
+    return $output;
+  }
+  if (file_exists($sourcebasepath . $newfilename . '.zip')) {
+    unlink($sourcebasepath . $newfilename . '.zip') or $output = array('error' => 'Error on UNLINK Zip');
+  }
+  if (empty($output['error'])) {
+    $newfilepath = $path . $newfilename . '.zip';
+    return array('filesha1' => $filesha1, 'filepath' => $newfilepath, 'filesize' => $filesize, 'module' => 'firmware');
+  } else {
+    return $output;
+  }
+}
+
+/**
+ * Get file mime type.
+ * 
+ * @param $file the file full path.
+ */
+function get_mime($file) {
+  if (function_exists("finfo_file")) {
+    $finfo = finfo_open(FILEINFO_MIME_TYPE); // return mime type ala mimetype extension
+    $mime = finfo_file($finfo, $file);
+    finfo_close($finfo);
+    return $mime;
+  } else if (function_exists("mime_content_type")) {
+    return mime_content_type($file);
+  } else if (!stristr(ini_get("disable_functions"), "shell_exec")) {
+    // http://stackoverflow.com/a/134930/1593459
+    $file = escapeshellarg($file);
+    $mime = shell_exec("file -bi " . $file);
+    return $mime;
+  } else {
+    return false;
+  }
+}
+
+/**
+ * Helper function to Encrypt.
+ */
+function encrypt_firmware_file($sourcebasepath, $filename, $ext) {
+  global $encrypt_key;
+  $size = 1048576;
+  $source_file = $sourcebasepath . $filename . $ext;
+  $encrypt_file = $sourcebasepath . $filename . '_encrypt' . $ext;
+  $fp = fopen($source_file, 'r');
+  $fpw = fopen($encrypt_file, 'w');
+  $key = $encrypt_key;
+  $alg = MCRYPT_RIJNDAEL_128;
+  $mode = MCRYPT_MODE_CFB;
+  $iv = "123^&6781#@$456%";
+  // read some data
+  while (!feof($fp)) {
+    $contents = fread($fp, $size);
+    $data = mcrypt_encrypt($alg, md5($key), $contents, $mode, $iv);
+    fwrite($fpw, $data);
+  }
+  fclose($fp);
+  fclose($fpw);
+  unlink($source_file);
+  rename($encrypt_file, $source_file);
+}
+
+function _filter_fw_select_form($product_line = 0, $device_id = 0) {
+  $device_id = $device_id ? $device_id : check_plain($_GET['device_type_id']); //get
+  $device_id = $device_id ? $device_id : $_SESSION['default_dtype'];  //session
+  $form['select_device_type'] = array(
+    '#type' => 'select',
+    '#id' => 'sel_device_type',
+    '#name' => 'sel_device_type',
+    '#options' => _get_device_list_options($product_line),
+    '#default_value' => $device_id,
+    '#value' => $device_id,
+  );
+  $form['ISOCountryList'] = array(
+    '#type' => 'select',
+    '#id' => 'ISOCountry',
+    '#name' => 'ISOCountry',
+    '#options' => _get_iso_country_list(),
+    '#default_value' => 'All',
+  );
+  return $form;
+}
+
+function _get_device_list_options($product_line = 0) {
+  global $user;
+  $product_line = $product_line ? $product_line : $user->product_line;
+  $user_roles = $user->roles;
+  $user_role_name = '';
+  $uid = $user->uid;
+
+  if ($uid == '1') {
+    $sql = "SELECT nid, title FROM node where type='devicetype'";
+    $result = db_query($sql);
+    //firmware doesn't support old device type. Remove old deivce type from list. 
+    $deviceTypeRelation = get_device_type_relation_with_gateway_version();
+    $rows = array();
+    $rows[] = t('All');
+    while ($row = db_fetch_object($result)) {
+      if ($deviceTypeRelation[$row->title] >= '2.1') {
+        $rows[$row->nid] = $row->title;
+      }
+    }
+    return $rows;
+  }
+
+  $person_nid = db_result(db_query("select nid from {node} where uid='%s' and type = 'person'", $uid));
+  $device_type = $_POST['sel_device_type'] ? check_plain($_POST['sel_device_type']) : '';
+  if (count($user_roles) > 0) {
+    foreach ($user_roles as $role) {
+      $roleArr = explode('__', $role);
+      if ($roleArr [0] == $product_line) {
+        $user_role_name = $roleArr[1];
+        break;
+      }
+    }
+  }
+  $user_device_type_previlege = array();
+  $user_device_type_previlege[] = t('All');
+  if ($user_role_name == "CoT Admin") {
+    $sql = "select d.nid, d.title from content_field_person_pk a left join
+            content_field_expiration_datetime expiration ON a.nid = expiration.nid and a.vid = expiration.vid,
+            node b, content_field_device_type c, node d where a.field_person_pk_nid = %d
+            and a.nid = b.nid and b.type = 'device_user_privileges' and b.nid = c.nid
+        	and expiration.field_expiration_datetime_value is null and c.field_device_type_nid = d.nid ";
+    $result = db_query($sql, $person_nid);
+    while ($row = db_fetch_object($result)) {
+      $user_device_type_previlege[$row->nid] = $row->title;
+    }
+  }
+  $sql = "SELECT node.nid, node.title FROM node JOIN content_field_device_product_line pl ON node.nid=pl.nid AND node.type='devicetype'";
+  $arg = array();
+
+  if ($product_line && is_numeric($product_line)) {
+    $sql .= "WHERE pl.field_device_product_line_nid = %d";
+    $arg[] = $product_line;
+  }
+  $result = db_query($sql, $arg);
+  //firmware doesn't support old device type. Remove old deivce type from list. 
+  $deviceTypeRelation = get_device_type_relation_with_gateway_version();
+  $rows = array();
+  $rows[] = t('All');
+  while ($row = db_fetch_object($result)) {
+    if ($deviceTypeRelation[$row->title] >= '2.1') {
+      $rows[$row->nid] = $row->title;
+    }
+  }
+  $valid_device_type = array_intersect_assoc($rows, $user_device_type_previlege);
+
+  return $valid_device_type;
+}
+
+function _get_iso_country_list() {
+  $rows[] = t('--select--');
+  $query = "select nid,title from node where type='country'";
+  $result = db_query($query);
+  while ($row = db_fetch_object($result)) {
+    $rows[$row->nid] = $row->title;
+  }
+  return $rows;
+}
+
+function _get_firmware_status() {
+  $query = "SELECT id, name FROM firmware_status";
+  $result = db_query($query);
+  $rows = array();
+  while ($row = db_fetch_object($result)) {
+    $rows[$row->id] = $row->name;
+  }
+  return $rows;
+}
+
+function get_hardware_config_list_table() {
+  //check the checked firmware
+  $firmware_refs = array();
+  module_load_include('module', 'covidien_named_config', 'module');
+  $firmware_id = $firmware_id ? $firmware_id : check_plain($_GET['firmware_id']);
+  $device_type_id = $device_type_id ? $device_type_id : check_plain($_GET['device_type_id']);
+  $hw_id_list = check_plain($_GET['hw_id_list']);
+  $hw_id_list = explode('|', $hw_id_list);
+  if ($firmware_id && is_numeric($firmware_id)) {
+    $type_id = db_result(db_query("SELECT id FROM {named_configuration_type} WHERE name='%s'", 'firmware_item'));
+    $firmware_refs = get_configuration_ref_list($firmware_id, $type_id);
+  }
+  $sql = "SELECT c.nid, n.title, c.type_id, c.version, c.description, c.device_type_id
+			FROM {view_named_configuration} c ";
+  if (!empty($hw_id_list)) {
+    foreach ($hw_id_list as $key => $hw_id) {
+      if ($hw_id) {
+        $tbl_name = 'ncr' . $key;
+        $sql .= ' JOIN {named_configuration_relation} ' . $tbl_name . ' ON c.type_id = ' . $tbl_name . '.left_type and c.nid = ' . $tbl_name . '.left_nid and ' . $tbl_name . '.right_nid = %d ';
+        $query_arg[] = $hw_id;
+      }
+    }
+  }
+  $sql .= " JOIN {node} n ON c.nid = n.nid
+			JOIN {named_configuration_type} t ON c.type_id = t.id 
+			WHERE t.name = '%s' AND c.is_obsolete = '0'";
+  $query_arg[] = 'hardware_configuration';
+  if ($device_type_id && is_numeric($device_type_id)) {
+    $sql .= " AND device_type_id = %d ";
+    $query_arg[] = $device_type_id;
+  }
+
+  $header = array(
+    array('data' => ''),
+    array('data' => t('Hardware configuration name')),
+    array('data' => t('Version')),
+    array('data' => t('Description')),
+  );
+
+//get table list
+  $result = db_query($sql, $query_arg);
+  $rows = array();
+  while ($row = db_fetch_object($result)) {
+//check seleted
+    $checked = check_ref_checked($row->nid, $firmware_refs, $row->type_id);
+    $rows[$row->nid]['nid'] = "<input type=\"checkbox\" class=\"form-checkbox\" {$checked['checked']} value=\"$row->nid\" id=\"edit-field-hc_list-$row->nid\" name=field_hc_list[$row->type_id][$row->nid]\">";
+    $rows[$row->nid]['name'] = "<a href=\"/covidien/?q=named-config/edit/$row->nid\" target=\"_blank\">$row->title</a>";
+    $rows[$row->nid]['version'] = $row->version;
+    $rows[$row->nid]['description'] = $row->description;
+  }
+
+  $output = "<div style=\"float:left; position: relative; width: 45%;\">";
+  $output .= "<span title=\"This field is required.\" class=\"form-required\">*</span>Candidate Hardware configurations";
+  $output .= "<div style=\"overflow: auto; max-height: 400px;\">";
+// table head need to customize
+  $output .= theme_table($header, $rows, array('id' => 'left_table'));
+  $output .= "</div></div>";
+  $output .= "<div style=\"float:left;\"><br>";
+  $output .= "<table style=\"border:0px;\"><tbody style=\"border:0px;\"><tr onclick=\"move_table_item_right();\"><td style=\"border:0px;\">";
+  $output .= "<input type=\"button\" class=\"form-submit\" value=\"-->\" /> ";
+  $output .= "</td></tr>";
+  $output .= "<tr onclick=\"move_table_item_left();\"><td style=\"border:0px;\">";
+  $output .= "<input type=\"button\" class=\"form-submit\"  value=\"<--\" /> ";
+  $output .= "</td></tr>";
+  $output .= "</td></tr></tbody></table></div>";
+  $output .= "<div style=\"float:left; position: relative; width: 45% \"><span title=\"This field is required.\" class=\"form-required\">*</span>Selected Hardware configurations";
+  $output .= "<div style=\"overflow: auto; max-height: 400px;\" >";
+  $output .= " <table id='right_table'>
+  <thead>
+    <tr>
+      <th></th>
+      <th>Hardware configuration name</th>
+      <th>Version</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  </table> ";
+  $output .= "</div></div>";
+  drupal_json(array('status' => 'success', 'data' => $output));
+}
+
+/*
+ * $left_id 	$left_type
+ * $right_list[type][id] 
+ */
+
+function save_config_item_relation($left_nid, $left_type, $right_list = array(), $required_right_list = array(), $right_types = array()) {
+//delete old relations
+  $arguments = array();
+  $delete_sql = "DELETE FROM {named_configuration_relation} WHERE left_nid = %d AND left_type = %d ";
+  $arguments[] = $left_nid;
+  $arguments[] = $left_type;
+  if (!empty($right_types)) {
+    foreach ($right_types as $right_type_nid) {
+      $right_type_nids .= $right_type_nid . ',';
+    }
+    $right_type_nids = trim($right_type_nids, ',');
+    if (!empty($right_type_nids)) {
+      $delete_sql .= " and right_type in (" . $right_type_nids . ")";
+    }
+  }
+  db_query($delete_sql, $arguments);
+//insert item and config relations
+  $insert_sql = "INSERT INTO {named_configuration_relation} (left_nid, left_type, right_nid, right_type, create_time, update_time, required) VALUES (%d, %d, %d, %d, %d, %d, %d)";
+  $now = time();
+  if (!empty($right_list) && count($right_list) > 0) {
+    foreach ($right_list as $right_type => $right_ids) {
+//check right types 
+      if (!empty($right_types)) {
+        if (in_array($right_type, $right_types)) {
+          foreach ($right_ids as $right_nid) {
+            $required = ($required_right_list[$right_type] == $right_nid) ? 2 : 0;
+            db_query($insert_sql, $left_nid, $left_type, $right_nid, $right_type, $now, $now, $required);
+          }
+        }
+      } else {
+        foreach ($right_ids as $right_nid) {
+          $required = ($required_right_list[$right_type] == $right_nid) ? 2 : 0;
+          db_query($insert_sql, $left_nid, $left_type, $right_nid, $right_type, $now, $now, $required);
+        }
+      }
+    }
+  }
+  return 'Changed named_configuration_relation';
+}
+
+function covidien_fw_devicetype() {
+  $product_line = check_plain($_POST['product_line']);
+  $select_device_type = field_device_type_select(0, $product_line, 2.1);
+  $options = $select_device_type['select_device_type']['#options'];
+
+  print drupal_to_js(array_keys($options));
+  exit();
+}
+
+function covidien_firmware_get_firmware_list() {
+// pagesize need to customize
+  $pageSize = 10;
+// sql extends start
+  $device_type_id = $_GET['device_type_id'] ? check_plain($_GET['device_type_id']) : $_SESSION['default_dtype'];
+  $product_line = check_plain($_GET['product_line']);
+  $search_name = check_plain($_GET['search_name']);
+  if ($product_line) {
+    $_SESSION['default_cot'] = $product_line;
+  } else {
+    $product_line = $_SESSION['default_cot'];
+  }
+//sql
+  $sql = "SELECT f.nid, CONCAT(n.title , ' v ', f.version) AS name,
+				f.part, dt.title AS devicetype, f.description,
+				f.file, n.changed, fs.name as status, files.filesize, files.timestamp
+				FROM {firmware} f 
+				JOIN {node} dt ON f.device_type_id = dt.nid 
+				JOIN {node} n ON f.nid = n.nid
+				JOIN {content_field_device_product_line} p ON f.device_type_id = p.nid
+				LEFT JOIN {files} ON f.file_id = files.fid
+				JOIN {firmware_status} fs ON f.status = fs.id
+				WHERE dt.type = 'devicetype' ";
+  $args = array();
+
+  if ($product_line && is_numeric($product_line)) {
+    $sql .= " AND p.field_device_product_line_nid = %d ";
+    $args[] = $product_line;
+  }
+  if ($device_type_id && is_numeric($device_type_id)) {
+    $sql .= " AND f.device_type_id = %d ";
+    $args[] = $device_type_id;
+  }
+  if ($search_name) {
+    $sql .= " AND n.title like '%%%s%%' ";
+    $args[] = $search_name;
+  }
+// 	sql extends end
+// table head need to customize
+  $header = array(
+    array('data' => t('Name & Version'), 'field' => 'n.title', 'sort' => 'asc'),
+    array('data' => t('Part #'), 'field' => 'f.part', 'sort' => 'asc'),
+    array('data' => t('Device Type'), 'field' => 'dt.title', 'sort' => 'asc'),
+    array('data' => t('Description'), 'field' => 'f.description', 'sort' => 'asc'),
+    array('data' => t('File Name'), 'field' => 'f.file', 'sort' => 'asc'),
+    array('data' => t('File Size'), 'field' => 'files.filesize', 'sort' => 'asc'),
+    array('data' => t('Upload Date'), 'field' => 'files.timestamp', 'sort' => 'desc'),
+    array('data' => t('Status'), 'field' => 'f.status', 'sort' => 'asc'),
+  );
+  $sql .= check_plain($_GET['sort']) ? tablesort_sql($header) : " ORDER BY n.changed DESC ";
+  $count_query = "SELECT count(*) FROM ($sql) AS count_query";
+  $result = pager_query($sql, $pageSize, 0, $count_query, $args);
+  $rows = array();
+
+  //check edit access 
+  global $user;
+  $has_edit_access = false;
+  if ($user->uid == 1 || (is_array($user->devices_access) && in_array('edit', $user->devices_access['firmware']))) {
+    $has_edit_access = true;
+  }
+
+  while ($row = db_fetch_object($result)) {
+    if ($has_edit_access) {
+      $rows[$row->nid]['name'] = l($row->name, "firmware/edit/$row->nid", array('attributes' => array('firmwareid' => $row->nid)));
+    } else {
+      $rows[$row->nid]['name'] = $row->name;
+    }
+    $rows[$row->nid]['part'] = $row->part;
+    $rows[$row->nid]['devicetype'] = $row->devicetype;
+    $rows[$row->nid]['description'] = $row->description;
+    $rows[$row->nid]['file'] = $row->file;
+    $rows[$row->nid]['filesize'] = $row->filesize ? readable_filesize($row->filesize) : '';
+    $rows[$row->nid]['upload_time'] = $row->timestamp ? date('Y-m-d H:i:s A', $row->timestamp) : '';
+    $rows[$row->nid]['status'] = $row->status;
+  }
+  $vars['result_table'] = '';
+  return theme_table($header, $rows) . theme('pager', NULL, 10, 0);
+}
+
+function covidien_firmware_ajax_get_firmware_list() {
+  drupal_json(array('status' => 'success', 'data' => covidien_firmware_get_firmware_list()));
+}
+
+function covidien_firmware_ajax_fw_duplicate_check() {
+  $firmware_name = check_plain($_POST['firmware_name']);
+  $firmware_part = check_plain($_POST['firmware_part']);
+  $firmware_version = check_plain($_POST['firmware_version']);
+
+  $sql = "select 
+    n.title
+	from
+    node n
+        join
+    firmware f ON n.nid = f.nid
+        left join
+    content_field_expiration_datetime cfd ON n.nid = cfd.nid and n.vid = cfd.vid
+	where
+    n.type = 'firmware'
+    and n.title='%s'
+    and f.part='%s'
+    and f.version='%s'";
+  $result = db_query($sql, $firmware_name, $firmware_part, $firmware_version);
+  if ($row = db_fetch_object($result)) {
+    echo '0';
+  } else {
+    echo '1';
+  }
+}
+
+function covidien_firmware_get_hardware_list_tbl($device_type_id = 0) {
+  $device_type_id = $device_type_id ? $device_type_id : $_SESSION['default_dtype'];
+  $query = "SELECT n.nid, n.title, h.field_hw_part_value, h.field_hw_version_value, h.field_hw_description_value
+			FROM {content_field_device_type} d
+			JOIN {content_type_hardware} h ON d.nid=h.nid 
+			JOIN {node} n ON n.nid=h.nid 
+			JOIN {content_field_expiration_datetime} cfd ON cfd.nid = n.nid and cfd.vid = n.vid
+			WHERE cfd.field_expiration_datetime_value IS NULL ";
+  $args = array();
+  if ($device_type_id && is_numeric($device_type_id)) {
+    $query .= " AND d.field_device_type_nid = %d ";
+    $args[] = $device_type_id;
+  }
+  $header = array(
+    array('data' => t('Select'), 'field' => 'n.nid', 'sort' => 'asc'),
+    array('data' => t('Name & Version'), 'field' => 'n.title', 'sort' => 'asc',),
+    array('data' => t('Part Number'), 'field' => 'h.field_hw_part_value', 'sort' => 'asc',),
+    array('data' => t('Description'), 'field' => 'h.field_hw_description_value', 'sort' => 'desc',),
+  );
+  $rows = array();
+  $ref_type = db_result(db_query("SELECT id FROM {named_configuration_type} WHERE name='%s'", 'hardware_item'));
+  $result = db_query($query, $args);
+  while ($row = db_fetch_object($result)) {
+//check reference
+    $checked = array();
+    $rows[$row->nid]['select_nid'] = "<input type=\"checkbox\" class=\"form-checkbox\" value=\"$row->nid\" id=\"reference_list-$row->nid\" name=\"reference_list[$ref_type][$row->nid]\">";
+    $rows[$row->nid]['name'] = $row->title . ' v ' . $row->field_hw_version_value;
+    $rows[$row->nid]['part'] = $row->field_hw_part_value;
+    $rows[$row->nid]['description'] = $row->field_hw_description_value;
+  }
+
+  $output = "<div style=\"float:left; position: relative; width: 80% \">";
+  $output .= "<div style=\"overflow: auto; max-height: 400px;\">";
+// table head need to customize
+  $output .= theme_table($header, $rows, array('class' => 'hw-list-table', 'id' => 'hw_list_tbl', 'style' => 'margin-left:0px;'));
+  $output .= "</div></div>";
+  return $output;
+}
+
+function covidien_firmware_ajax_get_hw_list_tbl() {
+  drupal_json(array('status' => 'success', 'data' => covidien_firmware_get_hardware_list_tbl()));
+}
+
+function _get_firmware_status_unknown() {
+  $result = db_query("SELECT id, name FROM {firmware_status} WHERE name='%s'", 'Unknown');
+  return db_fetch_object($result);
+}

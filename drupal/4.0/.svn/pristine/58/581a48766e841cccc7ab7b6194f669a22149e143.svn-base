@@ -1,0 +1,82 @@
+// $Id: $
+
+Drupal.behaviors.pluploadBuild = function(context) {
+  // Setup uploader pulling some info out Drupal.settings
+  $("#uploader").pluploadQueue({
+    // General settings
+    runtimes: 'html5,flash,html4',
+    url: Drupal.settings.plupload.url + '?node_type=' + $('#node_type').val(),
+    max_file_size: '10000mb',
+    chunk_size: '1mb',
+    unique_names: false,
+    flash_swf_url: Drupal.settings.plupload.swfurl + '?node_type=' + $('#node_type').val(),
+    // Specify what files to browse for
+    filters: [
+      {title: "Files", extensions: Drupal.settings.plupload.extensions}
+    ]
+  });
+};
+
+Drupal.behaviors.pluploadSuccess = function(context) {
+  var totalUploadFiles = 0;
+  var upload = $('#uploader').pluploadQueue();
+
+  upload.bind('FileUploaded', function(up, file, info) {
+    /*
+     totalUploadFiles--;
+     if (totalUploadFiles == 0) {
+     var count = $('#uploader').pluploadQueue().total.uploaded;
+     var successText = Drupal.formatPlural(count, 'Success! 1 image uploaded.', 'Success! @count images uploaded.');
+     $('div.plupload_header').slideUp('slow', function() {
+     $('div.plupload_header').html('<h3>' + successText + '</h3>').slideDown('slow');
+     });
+     }*/
+    //Called when file has finished uploading
+    //console.log('Up', up, '[FileUploaded] File:', file, "Info:", info);
+    $('#sw_upload_localize_path').val(file.name);
+    $('#file_name').html(file.name);
+    info = Drupal.parseJson(info.response);
+    $('#edit-field-sw-file-0-fid').val(info.id);
+    $('#no_file').attr('checked', false);
+    $('#uploader').hide();
+    $('#remover').show();
+    checkTBfilled();
+  });
+
+  upload.bind('QueueChanged', function(up, files) {
+    totalUploadFiles = upload.files.length;
+    //if add new file replace old file 
+    for (i = 0; i < totalUploadFiles; i++) {
+      if (i != (totalUploadFiles - 1))
+        up.removeFile(up.files[i]);
+    }
+  });
+
+  //add by neil 
+  if ($('#edit-field-sw-file-0-fid').val() != 0 && $('#edit-field-sw-file-0-fid').val() != '') {
+    $('#uploader').hide();
+    $('#remover').show();
+    $('#file_name').html($('.filename .filefield-file').html());
+  }
+  var file_remove = $('#file_remove');
+  file_remove.click(function() {
+    $('.ahah-progress.ahah-progress-throbber').show();
+    var fid = $('#edit-field-sw-file-0-fid').val();
+    $.get(Drupal.settings.basePath + 'plupload-file-remove/' + fid, function(info) {
+      var info = Drupal.parseJson(info);
+      //refresh  plupload 
+      $(".plupload_buttons").css("display", "inline");
+      $(".plupload_upload_status").css("display", "inline");
+      upload.splice();
+      upload.refresh();
+      //show plupload 
+      $('#uploader').show();
+      $('#remover').hide();
+      $('#.ahah-progress.ahah-progress-throbber').hide();
+      $('#edit-field-sw-file-0-fid').val(0);
+      $('#no_file').attr('checked', true);
+      checkTBfilled();
+    });
+  });
+
+};

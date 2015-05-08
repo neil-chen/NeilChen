@@ -1,0 +1,8 @@
+<?php
+
+/**
+ * hook_init
+ */
+function covidien_sampledata_init() {
+  module_load_include('install', 'covidien_sampledata');
+}

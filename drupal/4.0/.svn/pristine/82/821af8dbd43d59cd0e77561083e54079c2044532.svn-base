@@ -1,0 +1,110 @@
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  Theme,v 1 2012/08/21 06:26:03 Covidien
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2009-06-16 19:00+0200\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#:deviceinfo.tpl:32
+msgid "Hardware"
+msgstr ""
+
+#: deviceinfo.tpl:32
+msgid "Software"
+msgstr ""
+
+#: deviceinfo.tpl:43
+msgid "Device Type:"
+msgstr ""
+
+#: template.php, deviceinfo.tpl:34
+msgid "Serial #:"
+msgstr ""
+
+#: template.php, deviceinfo.tpl:38
+msgid "Region:"
+msgstr ""
+
+#: template.php, deviceinfo.tpl:40
+msgid "Account"
+msgstr ""
+
+#: template.php, deviceinfo.tpl:42
+msgid "Facility"
+msgstr ""
+
+#: deviceinfo.tpl:58
+msgid "Service History"
+msgstr ""
+
+#: deviceinfo.tpl:59
+msgid "HW/SW Configuration"
+msgstr ""
+
+#: template.php, deviceinfo.tpl:57
+msgid "Configuration Name"
+msgstr ""
+
+#: deviceinfo.tpl:69
+msgid "Current Hardware/Software Configuration for this device:"
+msgstr ""
+
+#: deviceinfo.tpl:76
+msgid "Find Another Device"
+msgstr ""
+
+#:deviceinfo.tpl:45
+msgid "Device Serial Number:"
+msgstr ""
+
+#:deviceinfo.tpl:47
+msgid "Region:"
+msgstr ""
+
+#:deviceinfo.tpl:50
+msgid "Customer Name:"
+msgstr ""
+
+#:deviceinfo.tpl:52
+msgid "Customer Account Number:"
+msgstr ""
+
+#:deviceinfo.tpl:60
+msgid "Component Discrepancy List"
+msgstr ""
+
+#:deviceinfo.tpl:54
+msgid "Location:"
+msgstr ""
+
+#:deviceinfo.tpl:60
+msgid "Maintenance Expires:"
+msgstr ""
+
+#:deviceinfo.tpl:60
+msgid "Service Person:"
+msgstr ""
+
+#:deviceinfo.tpl:60
+msgid "Date:"
+msgstr ""
+
+#:deviceinfo.tpl:60
+msgid "User Entered Facility:"
+msgstr ""
+
+#:deviceinfo.tpl:60
+msgid "User Entered Facility Address:"
+msgstr ""

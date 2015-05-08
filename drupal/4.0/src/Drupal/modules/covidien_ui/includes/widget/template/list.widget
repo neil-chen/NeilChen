@@ -1,0 +1,87 @@
+<div class="view-content" id="div_list_result">
+      <table class="views-table cols-5" style="table-layout:fixed">
+    	<thead>
+    	<tr>              
+              	{#foreach from=$columnList item=column#} 
+              		<th class="views-field views-field-title">
+ 							<a href="{#$column.link#}" title="sort by {#$column.title#}" class="active">{#$column.title#}</a>    
+ 					 </th>
+ 				{#/foreach#}	
+          </tr>
+  </thead>
+  
+  <tbody id="tbody_result">
+  		{#assign var="deviceTypeId" value=1 #}
+  		{#foreach from=$rowList item=row name=bodyTr#}
+  		  {#if $smarty.foreach.bodyTr.index%2 eq 0#} 
+          	<tr class="odd views-row-first views-row-last">
+          {#else#}
+          	<tr class="even views-row-first views-row-last">
+          {#/if#}
+          
+          		{#foreach from=$row item=record name=current#}          	    
+          			{#if $smarty.foreach.current.index== 0#}          				
+          				{#assign var="linkId" value=$record #}          				
+          			{#else if $smarty.foreach.current.index==1#}
+          				<td class="views-field views-field-title" style="word-break:break-all; word-wrap:break-word;width:100">
+          				<a href="{#$defaultUrl#}id={#$linkId#}" configId={#$linkId#}>{#$record#}</a>
+          				</td>
+          			{#else#}
+          				<td class="views-field views-field-title" style="word-break:break-all;width:100">
+          				{#$record#}
+          				</td>
+          			{#/if#}
+                  	
+            			
+          		{#/foreach#}	
+		{#/foreach#}	
+		
+		{#if $rowList|@count eq 0 #}
+
+		<tr class="odd views-row-first views-row-last">
+			<td colspan="{#$columnList|@count#}" class="views-field views-field-title">No configuration available</td>
+		</tr>
+		{#/if#}
+      </tbody>
+</table>
+    </div>
+  
+  
+  
+<form id="list_page_form" action={#$action#} method="post" >
+  <input type="hidden" name="sql"  value="{#$sql#}" />
+  {#if isset($sortField) #}          				
+    <input type="hidden" name="sortField" value={#$sortField#} />
+  {#/if#}
+  <input type="hidden" name="sortType" value={#$sortType#} />
+  <input type="hidden" name="pageSize" value={#$pageSize#} />
+  <input type="hidden" name="page" value={#$page#} />
+</form>
+
+
+
+<script type="text/javascript">
+	
+
+  function gotopage(index){
+    $("#list_page_form").attr("action", window.location.href );
+	$("input[name='page']").val(index);
+    $("#list_page_form").submit();
+  }
+
+
+	
+function sortByField(sortField){
+    $("#list_page_form").attr("action", window.location.href );
+	$("input[name='sortField']").val(sortField);
+	var sortType = $("input[name='sortType']").val();
+	if(sortType=='desc'){
+	  $("input[name='sortType']").val('asc');
+	}else {
+	  $("input[name='sortType']").val('desc');
+	}
+	$("#list_page_form").submit();
+	  
+}
+
+</script>

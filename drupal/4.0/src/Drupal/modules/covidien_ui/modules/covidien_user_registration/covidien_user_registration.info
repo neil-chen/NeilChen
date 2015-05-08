@@ -1,0 +1,8 @@
+name = User Registration
+description = This module is for user self registration.
+core = 6.x
+package = Covidien
+dependencies[] = covidien_ui
+dependencies[] = ahah_helper
+dependencies[] = jquery_plugin
+dependencies[] = covidien_users

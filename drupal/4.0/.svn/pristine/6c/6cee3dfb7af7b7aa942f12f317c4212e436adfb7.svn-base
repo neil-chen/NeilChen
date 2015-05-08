@@ -1,0 +1,5 @@
+name = Covidien Named Configuration
+description = Covidien Named Configuration
+core = 6.x
+php = 5.0
+package = Covidien

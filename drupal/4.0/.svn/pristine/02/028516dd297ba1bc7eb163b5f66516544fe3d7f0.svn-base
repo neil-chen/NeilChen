@@ -1,0 +1,616 @@
+<?php
+
+/**
+ * @file
+ * Hardware catlog Form Customization done here.
+ */
+
+/**
+ * Adding the JS only for hardware related pages.
+ */
+function covidien_hw_init() {
+  module_load_include('php', 'covidien_hw', 'includes/covidien_hw_query');
+  module_load_include('module', 'covidien_ui');
+  if (arg(0) == 'covidien' && arg(2) == 'hardware') {
+    drupal_add_js(drupal_get_path('module', 'covidien_hw') . '/js/covidien_hw.js');
+    drupal_add_js(drupal_get_path('module', 'covidien_ui') . '/js/covidien_autocomplete.js');
+  }
+}
+
+/**
+ * Implements hook_menu() functionality.
+ */
+function covidien_hw_menu() {
+  $items = array();
+  $items['covidien/hardware/autocomplete'] = array(
+    'title' => '',
+    'page callback' => 'covidien_hw_autocomplete',
+    'page arguments' => array(3, 4),
+    'access callback' => 'covidien_hw_check_access',
+    'type' => MENU_CALLBACK,
+  );
+  $items ['covidien/hardware/devicetype'] = array(
+    'page callback' => 'covidien_hw_devicetype',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * Access callback, for this allow anyone to access the 'ACTION_URL'.
+ */
+function covidien_hw_check_access() {
+  return covidien_cot_admin_access_callback('hardware');
+}
+
+function covidien_hw_node_info() {
+  return array(
+    'hardwarestatus' => array(
+      'name' => t('Hardware Status'),
+      'module' => 'covidien_hw',
+      'description' => t('A hardware has one status'),
+    )
+  );
+}
+
+/**
+ * Autosugesstion
+ * @parm
+ * arg1: devicetype
+ * arg2: search string
+ */
+function covidien_hw_autocomplete($arg1, $arg2) {
+  $items = catalog_autocomplete('hardware', $arg1, $arg2);
+  print drupal_to_js($items);
+  exit();
+}
+
+/**
+ * Form Customisation
+ */
+function covidien_hw_form_alter(&$form, &$form_state, $form_id) {
+  if ($form_id == 'hardware_node_form') {
+    drupal_add_js(drupal_get_path('module', 'covidien_hw') . '/js/covidien_hw.js');
+    //Button customize
+    $butcancel = array(
+      '#type' => 'submit',
+      '#access' => TRUE,
+      '#value' => t('Cancel'),
+      '#submit' => array('covidien_hw_form_cancel'),
+      '#attributes' => array('class' => 'secondary_submit',),
+    );
+    $hw_device_sn = $form['#node'] ? $form['#node']->device_serial_number : '';
+    $hardware_status = $form['#node'] ? $form['#node']->hardware_status : '';
+    $form['device_serial_number'] = array(
+      '#type' => 'textfield',
+      '#name' => 'device_serial_number',
+      '#id' => 'device_serial_number',
+      '#default_value' => $hw_device_sn,
+      '#value' => $hw_device_sn,
+      '#attributes' => array('placeholder' => 'Enter Device Serial Number'),
+    );
+    $hw_status_option = _get_hardware_status();
+    //GATEWAY-2601 Add filter status
+    $hw_status_unknow = _get_hardware_status_unknown();
+    if ($hardware_status != $hw_status_unknow->nid) {
+      unset($hw_status_option[$hw_status_unknow->nid]);
+    }
+    /* GATEWAY-2624
+      else {
+      $hw_status_option = array($hw_status_unknow->nid => $hw_status_unknow->title);
+      } */
+    module_load_include('module', 'covidien_named_config');
+    $hw_status_option = item_filter_status($form['#node']->hardware_status, $hw_status_option);
+    $form['hardware_status'] = array(
+      '#type' => 'select',
+      '#name' => 'hardware_status',
+      '#id' => 'hardware_status',
+      '#options' => $hw_status_option,
+      '#default_value' => $hardware_status,
+      '#value' => $hardware_status,
+    );
+    $form['buttons']['cancel'] = $butcancel;
+    //add
+    unset($form['title']['#title']);
+    //node reference type fileds
+    unset($form['field_device_type']['#title']);
+    unset($form['field_sw_list']['#title']);
+    unset($form['field_hw_type']['#title']);
+    //cck fields
+    unset($form['field_hw_version'][0]['#title']);
+    unset($form['field_hw_part'][0]['#title']);
+    unset($form['field_hw_description'][0]['#title']);
+    if ($form['nid']['#value']) {
+      //edit
+      $form['buttons']['submit']['#value'] = t('Save Changes');
+      // RFC
+      //$confirmmsg = t('Do you want to save the changes you just made to this page?');
+      //$form['buttons']['submit']['#attributes'] = array('onclick' => 'if(!confirm("' . $confirmmsg . '")){return false;}');
+      $form['field_device_type']['#pre_render'] = array('field_device_type_disabled');
+      $butdelete = array(
+        '#type' => 'submit',
+        '#access' => TRUE,
+        '#value' => t('Delete this Hardware'),
+        '#submit' => array('covidien_hw_form_delete', 'hardware_form_submit'),
+      );
+      $form['buttons']['delete'] = $butdelete;
+      $confirmdelmsg = t('Are you sure you want to delete this hardware?');
+      $form['buttons']['delete']['#attributes'] = array(
+        'onclick' => 'if(!confirm("' . $confirmdelmsg . '")){return false;}',
+        'class' => 'secondary_submit',
+      );
+      drupal_set_title(t('Edit Hardware'));
+    } else {
+      $form['field_device_type']['#default_value'][0]['nid'] = $_SESSION['default_dtype'];
+      //Setting Default value
+      if ($form['title']['#default_value'] == '') {
+        $form['title']['#default_value'] = t('Enter Hardware Name');
+      }
+      $form['buttons']['submit']['#value'] = t('Add New Hardware');
+      drupal_set_title(t('Add New Hardware to Catalog'));
+      $belement = array();
+      $belement['nid']['nid']['#options'] = array('-' => '-');
+
+      /* $select_device_type = field_device_type_select($device_type_id);
+        $form['field_device_type'] = $select_device_type['select_device_type'];
+        $form['field_device_type']['#name'] = 'field_device_type[nid][nid]';
+        $form['field_device_type']['#id'] = 'edit-field-device-type-nid-nid';
+        $form['field_device_type']['#class'] = 'form-select required'; */
+
+      $form['field_hw_type']['#pre_render'] = array('field_hw_type_pre_ren');
+    }
+    unset($form['buttons']['preview']);
+    //validate
+    $form['#validate'][] = 'hardware_form_validate';
+    $form['buttons']['submit']['#submit'][] = 'hardware_form_submit';
+  }
+  if ($form_id == 'views_exposed_form' && $form['submit']['#id'] == 'edit-submit-Hardwarelist') {
+    $form['#validate'][] = 'hardware_list_validate';
+    $form['submit']['#value'] = t('Go');
+    $form['submit']['#value'] = t('Filter');
+    drupal_set_title(t('System Administration'));
+    $form['field_hw_type_nid']['#options']['All'] = 'All';
+    $form['field_device_type_nid']['#options']['All'] = 'All';
+    array_unshift($form['#submit'], 'hw_manage_custom_filters');
+    $form['title']['#autocomplete_path'] = 'covidien/hardware/autocomplete';
+    $form['title']['#validated'] = TRUE;
+    $form['title']['#attributes'] = array(
+      'onfocus' => 'parentSelected($("#edit-field-device-type-nid"), "hardware");',
+    );
+  }
+}
+
+function covidien_hw_devicetype() {
+  $product_line = check_plain($_POST['product_line']);
+  $select_device_type = field_device_type_select(0, $product_line);
+  $options = $select_device_type['select_device_type']['#options'];
+
+  print drupal_to_js(array_keys($options));
+  exit();
+}
+
+function hardware_form_validate(&$form_state) {
+  //GATEWAY-3020 Add check status when change  
+  if ($form_state['nid']['#value']) {
+    $status = db_result(db_query("SELECT title FROM node WHERE nid = %d", $form_state['#post']['hardware_status']));
+    if ($status != 'In Production') {
+      module_load_include('module', 'covidien_named_config');
+      $rows = named_config_check_status_change($form_state['nid']['#value']);
+      if (count($rows) > 0) {
+        form_set_error('hardware_status', 'Please first change status ' . implode(',', $rows));
+      }
+    }
+  }
+  if (!covidien_ui_input_validate($form_state['#post']['title'])) {
+    form_set_error('title', t('Invalid Hardware Name'));
+  }
+  if (!covidien_ui_input_validate($form_state['#post']['field_hw_part'][0]['value'])) {
+    form_set_error('field_hw_part', t('Invalid Hardware Name'));
+  }
+
+  $hardware_version = $form_state['#post']['field_hw_version'][0]['value'];
+  if (!covidien_ui_input_validate($hardware_version)) {
+    form_set_error('field_hw_version', t('Invalid Hardware Revision'));
+  }
+
+  $hardware_desc = $form_state['#post']['field_hw_description'][0]['value'];
+  if (!covidien_ui_input_validate($hardware_desc)) {
+    form_set_error('field_hw_description', t('Invalid Hardware Description'));
+  }
+}
+
+function hardware_list_validate(&$form_state) {
+  $hardware_name = check_plain($_GET['title']);
+
+  if (!covidien_ui_input_validate($hardware_name)) {
+    form_set_error('title', t('Invalid Hardware Name'));
+  }
+}
+
+/**
+ * Implements hook_ajax_data_alter() to modify the ajax callback
+ * function to retrive the checked items.
+ */
+function covidien_hw_ajax_data_alter(&$object, $module, $view) {
+  /**
+   * Overwrite the 'Drupal.Views.Ajax.ajaxViewResponse' callback that's in Views core
+   * as we don't want both callbacks running concurrently.
+   */
+  $view_details = $view->ajax_path[1];
+  $display_id = $view->display['default']->handler->handlers['field']['title']->view->current_display;
+  if ($view->name == 'sw_list' && $display_id == 'block_1') {
+    $object->__callbacks = array('Drupal.covidien_hw.Ajax');
+  }
+}
+
+/**
+ * Implements hook_views_api() to placed the exported view in module.
+ */
+function covidien_hw_views_api() {
+  return array(
+    'api' => '2.0',
+  );
+}
+
+/**
+ * Implements hook_views_default_views().
+ */
+function covidien_hw_views_default_views() {
+  $files = file_scan_directory(drupal_get_path('module', 'covidien_hw') . '/views', '.inc');
+  foreach ($files as $absolute => $file) {
+    require $absolute;
+    if (isset($view)) {
+      $views[$file->name] = $view;
+    }
+  }
+  return $views;
+}
+
+/**
+ * Implementation of hook_ctools_plugin_api().
+ */
+function covidien_hw_ctools_plugin_api($module, $api) {
+  if ($module == 'page_manager' && $api == 'pages_default') {
+    return array('version' => 1);
+  }
+}
+
+/**
+ * Implementation of delete based on requirement
+ */
+function covidien_hw_form_delete($form, &$form_state) {
+  $validate = FALSE;
+  //@info: validation for the given H/W nid used in S/w, Doc, Conf.
+  $sw_nids = sw_association($form_state['values']['nid']);
+  $doc_nids = doc_association($form_state['values']['nid']);
+  $conf_nids = conf_association($form_state['values']['nid']);
+  if (count($sw_nids) > 0 || count($doc_nids) > 0 || count($conf_nids) > 0) {
+    $validate = FALSE;
+  } else {
+    $validate = TRUE;
+  }
+  if ($validate) {
+    $node = node_load($form_state['values']['nid']);
+    $node->field_expiration_datetime[0]['value'] = date('Y-m-d h:i:s');
+    $node->revision = TRUE;
+    node_save($node);
+  } else {
+    $msg_txt = 'This Hardware has associated !association.You must remove this association with the hardware before you can delete it.';
+    $msg_arr = array('!association' => '');
+    if (count($sw_nids) > 0) {
+      $msg_arr['!association'] = t('Software');
+    }
+    if (count($doc_nids) > 0) {
+      if ($msg_arr['!association'] != '') {
+        $msg_arr['!association'] = $msg_arr['!association'] . '/' . t('Document');
+      } else {
+        $msg_arr['!association'] = t('Document');
+      }
+    }
+    if (count($conf_nids) > 0) {
+      if ($msg_arr['!association'] != '') {
+        $msg_arr['!association'] = $msg_arr['!association'] . '/' . t('Configuration');
+      } else {
+        $msg_arr['!association'] = t('Configuration');
+      }
+    }
+    $msg = t($msg_txt, $msg_arr);
+    form_set_error('title', $msg);
+    drupal_goto('node/' . $form_state['values']['nid'] . '/edit');
+  }
+}
+
+/**
+ * Implements cancel button.
+ */
+function covidien_hw_form_cancel() {
+  form_set_error(NULL, '', TRUE);
+  drupal_get_messages();
+  drupal_goto('covidien/admin/hardware');
+}
+
+/**
+ * Implements hook_nodeapi().
+ * customized the node validation error message.
+ */
+function covidien_hw_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+  if ($node->type == 'hardware' && $op == 'validate') {
+    drupal_add_js(drupal_get_path('module', 'covidien_hw') . '/js/covidien_hw.js');
+    if ($node->op == $node->cancel) {
+      $node_op = 'cancel';
+      covidien_hw_form_cancel();
+    } elseif ($node->op == $node->delete) {
+      $node_op = 'delete';
+    } else {
+      $node_op = 'drupal';
+    }
+    if ($node_op == 'drupal') {
+      form_set_error(NULL, '', TRUE);
+      $errors = drupal_get_messages();
+      if (trim($node->title) == '' || $node->title == t('Enter Hardware Name')) {
+        form_set_error('title', t('Invalid Hardware Name'));
+      }
+      if (trim($node->field_hw_part[0]['value']) == '' || $node->field_hw_part[0]['value'] == t('Enter Hardware Part #')) {
+        form_set_error('field_hw_part', t('Invalid Hardware Part #'));
+      }
+      if (trim($node->field_hw_version[0]['value']) == '' || $node->field_hw_version[0]['value'] == t('Enter Hardware Revision')) {
+        form_set_error('field_hw_version', t('Invalid Hardware Revision'));
+      }
+      if ($node->field_device_type[0]['nid'] == 0) {
+        form_set_error('field_device_type', t('Invalid Device Type'));
+      }
+      if ($node->field_hw_type[0]['nid'] == 0) {
+        form_set_error('field_hw_type', t('Invalid Hardware Type'));
+      }
+    } else {
+      form_set_error(NULL, '', TRUE);
+      drupal_get_messages();
+    }
+  }
+  if ($node->type == 'hardware') {
+    if ($op == 'load') {
+      $content_type_hardware = db_fetch_object(db_query("SELECT device_serial_number, hw_status FROM {content_type_hardware} WHERE vid=%d", $node->vid));
+      $node->device_serial_number = $content_type_hardware->device_serial_number;
+      $node->hardware_status = $content_type_hardware->hw_status;
+    }
+    if ($op == 'insert' || $op == 'update') {
+      //save hardware status
+      $node->hardware_status = check_plain($_POST['hardware_status']);
+      $node->device_serial_number = check_plain($_POST['device_serial_number']);
+      db_query("UPDATE {content_type_hardware} SET hw_status=%d, device_serial_number='%s' WHERE vid=%d", $node->hardware_status, $node->device_serial_number, $node->vid);
+    }
+  }
+  if ($node->type == 'hardware' && ($op == 'presave')) {
+    // Remove default value
+    if ($node->field_hw_description[0]['value'] == t('Enter Hardware Description')) {
+      $node->field_hw_description[0]['value'] = '';
+    }
+    $node->title = trim($node->title);
+    $node->field_hw_part[0]['value'] = trim($node->field_hw_part[0]['value']);
+    $node->field_hw_version[0]['value'] = trim($node->field_hw_version[0]['value']);
+  }
+}
+
+/**
+ * Add Blank Value
+ */
+function field_hw_type_pre_ren($element) {
+  $element['nid']['nid']['#options'] = array_reverse($element['nid']['nid']['#options'], TRUE);
+  $element['nid']['nid']['#options'][0] = '';
+  $element['nid']['nid']['#options'] = array_reverse($element['nid']['nid']['#options'], TRUE);
+  return $element;
+}
+
+/**
+ * Helper function for covidien_hw_form_alter().
+ */
+function hw_manage_custom_filters($form, &$form_state) {
+  //modify form_state values of concerned field
+  if ($form_state['values']['title'] == t('Enter Hardware Name')) {
+    $form_state['values']['title'] = '';
+  }
+}
+
+/**
+ * Implements views alter functionality to trim the views argument text.
+ */
+function covidien_hw_views_query_alter(&$view, &$query) {
+  $is_hwlist = ($view->name == 'Hardwarelist');
+  $is_swlist = ($view->name == 'softwarelist');
+  $is_doclist = ($view->name == 'documentlist');
+  $is_usrlist = ($view->name == 'Users');
+  $is_deviceinfo = ($view->name == 'device_information');
+  if ($is_hwlist || $is_swlist || $is_doclist || $is_usrlist || $is_deviceinfo) {
+    $wherecount = count($query->where[0]['args']);
+    if ($wherecount > 0) {
+      foreach ($query->where[0]['args'] as &$arg) {
+        $arg = trim($arg);
+        $arg = str_replace("_", "\_", $arg);
+      }
+    }
+  }
+}
+
+/**
+ * Helper function SW associated with given HW nid
+ */
+function sw_association($hw_nid) {
+  $output = array();
+  $qry = sw_association_query();
+  $record = db_query($qry, $hw_nid);
+  while ($row = db_fetch_object($record)) {
+    $output[] = $row->nid;
+  }
+  return $output;
+}
+
+/**
+ * Helper function DOC associated with given HW nid
+ */
+function doc_association($hw_nid) {
+  $output = array();
+  $qry = doc_association_query();
+  $record = db_query($qry, $hw_nid);
+  while ($row = db_fetch_object($record)) {
+    $output[] = $row->nid;
+  }
+  return $output;
+}
+
+/**
+ * Helper function Device Configuration associated with given HW nid
+ */
+function conf_association($hw_nid) {
+  $output = array();
+  $qry = conf_association_query();
+  $record = db_query($qry, $hw_nid);
+  while ($row = db_fetch_object($record)) {
+    $output[] = $row->nid;
+  }
+  return $output;
+}
+
+function hardware_form_submit(&$form_state) {
+  $device_type_nid = $form_state['#node']->field_device_type[0]['nid'];
+  increase_components_version();
+  module_load_include('module', 'covidien_ui');
+  covidien_ui_create_device_type_file($device_type_nid, '_hareware');
+  covidien_hw_create_file($device_type_nid);
+  covidien_hw_sw_create_file($device_type_nid);
+  drupal_goto('covidien/admin/hardware');
+}
+
+/**
+ * create hardware files
+ */
+function covidien_hw_create_file($device_type = '') {
+  global $hw_sw_config;
+  if (!file_exists($hw_sw_config)) {
+    mkdir($hw_sw_config, 0777);
+  }
+  //add filter hardware status in ('In Production', 'Limited Release')
+  $sql = "SELECT hn.title AS name, h.nid, h.field_hw_part_value, h.field_hw_version_value, dtn.title AS device_type
+    FROM {content_type_hardware} h 
+    JOIN {node} hn ON h.vid = hn.vid
+    JOIN {content_field_device_type} dt ON h.vid = dt.vid
+    JOIN {node} dtn ON dt.field_device_type_nid = dtn.nid
+    JOIN {node} hsn ON h.hw_status = hsn.nid AND hsn.title IN ('In Production', 'Limited Release')
+    LEFT JOIN {content_field_expiration_datetime} ed ON hn.vid = ed.vid 
+    WHERE ed.field_expiration_datetime_value IS NULL";
+  if ($device_type) {
+    $sql .= " AND dtn.nid = %d ";
+  }
+  $result = db_query($sql, $device_type);
+  $rows = array();
+  while ($row = db_fetch_object($result)) {
+    $rows[$row->device_type][$row->nid]['hash'] = md5(json_encode(array(
+      'name' => strtolower($row->name),
+      'revision' => $row->field_hw_version_value,
+      'part_number' => $row->field_hw_part_value)));
+    $rows[$row->device_type][$row->nid]['name'] = $row->name;
+    $rows[$row->device_type][$row->nid]['nid'] = $row->nid;
+    $rows[$row->device_type][$row->nid]['part_number'] = $row->field_hw_part_value;
+    $rows[$row->device_type][$row->nid]['revision'] = $row->field_hw_version_value;
+  }
+  $files = array();
+  foreach ($rows as $device_type => $hardware) {
+    if (!$device_type) {
+      continue;
+    }
+    $file_name = $device_type . '_hardware';
+    $content = '<?xml version="1.0" encoding="UTF-8"?>';
+    $content .= '<components>';
+    foreach ($hardware as $item) {
+      $content .= '<component type="hardware">';
+      $content .= '<hash>' . $item['hash'] . '</hash>';
+      $content .= '<name>' . $item['name'] . '</name>';
+      $content .= '<nid>' . $item['nid'] . '</nid>';
+      $content .= '<part_number>' . $item['part_number'] . '</part_number>';
+      $content .= '<revision>' . $item['revision'] . '</revision>';
+      $content .= '</component>';
+    }
+    $content .= '</components>';
+    file_put_contents($hw_sw_config . '/' . $file_name, $content);
+    $files[] = $file_name;
+  }
+  return $files;
+}
+
+function _get_hardware_status() {
+  $result = db_query("SELECT nid, title FROM {node} WHERE type='hardwarestatus'");
+  $rows = array();
+  while ($row = db_fetch_object($result)) {
+    $rows[$row->nid] = $row->title;
+  }
+  return $rows;
+}
+
+function _get_hardware_status_unknown() {
+  $result = db_query("SELECT nid, title FROM {node} WHERE type='hardwarestatus' AND title='%s'", 'Unknown');
+  return db_fetch_object($result);
+}
+
+/**
+ * use views-view--Hardwarelist--page-1.tpl.php table 
+ * @return string
+ */
+function get_hardware_list_table() {
+  $sql = "SELECT n.nid, n.title, h.field_hw_version_value, h.field_hw_part_value, h.field_hw_description_value, 
+    sn.title AS status_name, tn.title AS type_name
+    FROM {node} n 
+    JOIN {content_type_hardware} h ON n.vid = h.vid
+    JOIN {content_field_device_type} dt ON n.vid = dt.vid
+    JOIN {content_field_device_product_line} dp ON dt.field_device_type_nid = dp.nid
+    LEFT JOIN {node} sn ON h.hw_status = sn.nid
+    LEFT JOIN {node} tn ON h.field_hw_type_nid = tn.nid 
+    LEFT JOIN {content_field_expiration_datetime} ed ON n.vid = ed.vid
+    WHERE ed.field_expiration_datetime_value IS NULL AND n.status = 1 
+    AND dp.field_device_product_line_nid = %d ";
+  //filter
+  $device_type = $_GET['field_device_type_nid'] ? check_plain($_GET['field_device_type_nid']) : 'All';
+  $title = $_GET['title'] ? check_plain($_GET['title']) : '';
+  $type_id = $_GET['field_hw_type_nid'] ? check_plain($_GET['field_hw_type_nid']) : '';
+  $args = array($_SESSION['default_cot']);   //GATEWAY-2544 Add product line filter
+  if ($device_type && $device_type != 'All') {
+    $sql .= " AND dt.field_device_type_nid = %d ";
+    $args[] = $device_type;
+  }
+  if ($title && $title != 'Enter Hardware Name') {
+    $sql .= " AND n.title = '%s' ";
+    $args[] = $title;
+  }
+  if ($type_id && $type_id != 'All') {
+    $sql .= " AND h.field_hw_type_nid = %d ";
+    $args[] = $type_id;
+  }
+  $header = array(
+    array('data' => t('Name & Revision'), 'field' => 'n.title', 'sort' => 'asc'),
+    array('data' => t('Part #'), 'field' => 'h.field_hw_part_value', 'sort' => 'asc'),
+    array('data' => t('Description'), 'field' => 'h.field_hw_description_value', 'sort' => 'asc'),
+    array('data' => t('Hardware Status'), 'field' => 'sn.title', 'sort' => 'asc'),
+    array('data' => t('Hardware Type'), 'field' => 'tn.title', 'sort' => 'desc'),
+  );
+  $sql .= check_plain($_GET['sort']) ? tablesort_sql($header) : " ORDER BY n.changed DESC ";
+  $count_query = "SELECT COUNT(*) FROM (" . $sql . ") AS count_query";
+  $result = pager_query($sql, 10, 0, $count_query, $args);
+  $rows = array();
+  global $user;
+  while ($row = db_fetch_object($result)) {
+    $rows[$row->nid]['name'] = $row->title . ' ' . $row->field_hw_version_value;
+    if (is_array($user->devices_access['hardware'])) {
+      if (in_array('edit', $user->devices_access['hardware'])) {
+        $rows[$row->nid]['name'] = l($row->title . ' ' . $row->field_hw_version_value, "node/$row->nid/edit");
+      }
+    }
+    $rows[$row->nid]['part'] = $row->field_hw_part_value;
+    $rows[$row->nid]['desc'] = $row->field_hw_description_value;
+    $rows[$row->nid]['status'] = $row->status_name;
+    $rows[$row->nid]['type'] = $row->type_name;
+  }
+  // table head need to customize
+  $output = theme_table($header, $rows, array('class' => 'views-table', 'style' => 'margin: 0; width: 100%;'));
+  $output .= theme('pager', NULL, 10, 0);
+
+  return $output;
+}

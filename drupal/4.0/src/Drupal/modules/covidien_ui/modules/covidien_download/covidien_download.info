@@ -1,0 +1,6 @@
+name = Covidien Download
+description = Download clients
+core = 6.x
+php = 5.0
+package = Covidien
+dependencies[] = covidien_ui

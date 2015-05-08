@@ -1,0 +1,137 @@
+# $Id: unique_field.pot,v 1.1.2.1 2010/01/20 20:05:06 detour Exp $
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  unique_field.module,v 1.6.2.6 2009/11/13 01:30:15 detour
+#  unique_field.info,v 1.2.2.6 2009/11/13 01:30:13 detour
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2010-01-20 03:05-0600\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: unique_field.module:130
+msgid "The @labels fields must have unique values. The @label field has a value that is already used."
+msgstr ""
+
+#: unique_field.module:195
+msgid "The @label field requires a unique value, and the specified value is already used."
+msgstr ""
+
+#: unique_field.module:207
+msgid "This form requires that the fields @labels are a unique combination. The specified values are already used."
+msgstr ""
+
+#: unique_field.module:221;389
+msgid "Author"
+msgstr ""
+
+#: unique_field.module:224;391;430
+msgid "Language"
+msgstr ""
+
+#: unique_field.module:252
+msgid "Matches are found in the following content: !list-html"
+msgstr ""
+
+#: unique_field.module:255
+msgid "Click !here to bypass this check and resubmit."
+msgstr ""
+
+#: unique_field.module:255
+msgid "here"
+msgstr ""
+
+#: unique_field.module:332
+msgid "Could not formulate query for unique_field_match_value on @field with data type @dbtype."
+msgstr ""
+
+#: unique_field.module:388
+msgid "title"
+msgstr ""
+
+#: unique_field.module:405
+msgid "Taxonomy terms from @vocab-name"
+msgstr ""
+
+#: unique_field.module:413
+msgid "Unique field settings"
+msgstr ""
+
+#: unique_field.module:420
+msgid "Choose the fields that should be unique"
+msgstr ""
+
+#: unique_field.module:423
+msgid "After designating that certain fields should be unique, users will not be able to submit the content form to create a new node or update an existing one if it contains values in the designated fields that duplicate others."
+msgstr ""
+
+#: unique_field.module:427
+msgid "Choose the scope for the unique values"
+msgstr ""
+
+#: unique_field.module:429
+msgid "Content type"
+msgstr ""
+
+#: unique_field.module:431
+msgid "All nodes"
+msgstr ""
+
+#: unique_field.module:432
+msgid "Single node only"
+msgstr ""
+
+#: unique_field.module:435
+msgid "Choose whether the values in the specified fields must be unique among nodes of this content type, among nodes of the same language, among all nodes, or only among the fields of the present node."
+msgstr ""
+
+#: unique_field.module:439
+msgid "Choose whether values must be unique individually or in combination"
+msgstr ""
+
+#: unique_field.module:441
+msgid "Each of the specified fields must have a unique value"
+msgstr ""
+
+#: unique_field.module:442
+msgid "The combination of values from the specified fields must be unique"
+msgstr ""
+
+#: unique_field.module:445
+msgid "For example, if you have fields for the parts of a street address (street number and name, city, and zip code) on a node, and want to allow only one node per complete address, but not only one node per city or per zip code, then you would want to choose that the fields must be unique in combination."
+msgstr ""
+
+#: unique_field.module:449
+msgid "Check this box to show which nodes match when duplicate values are found"
+msgstr ""
+
+#: unique_field.module:450
+msgid "Enabled"
+msgstr ""
+
+#: unique_field.module:464
+msgid "The scope of a single node requires that each field must be unique."
+msgstr ""
+
+#: unique_field.module:468
+msgid "The author, language, and taxonomy fields are not supported within the scope of a single node."
+msgstr ""
+
+#: unique_field.info:0
+msgid "Unique field"
+msgstr ""
+
+#: unique_field.info:0
+msgid "Provides content validation requirement that a node's title, author, language, taxonomy terms, or CCK fields are unique."
+msgstr ""
+

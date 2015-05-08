@@ -1,0 +1,14 @@
+name = Append View
+description = "Views plugin to include (download) a view as a field."
+dependencies[] = views
+package = Views
+core = 6.x
+
+
+
+; Information added by drupal.org packaging script on 2011-06-22
+version = "6.x-1.0"
+core = "6.x"
+project = "views_pdf"
+datestamp = "1308772620"
+

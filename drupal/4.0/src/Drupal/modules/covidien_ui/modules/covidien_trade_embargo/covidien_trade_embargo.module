@@ -1,0 +1,705 @@
+<?php
+
+/**
+ * hook_menu
+ */
+function covidien_trade_embargo_menu() {
+  $items = array();
+  $items['trade_embargo/list'] = array(
+    'title' => t('Trade Embargo List'),
+    'description' => t('Trade Embargo List.'),
+    'page callback' => 'covidien_trade_embargo_list',
+    'access callback' => 'covidien_trade_embargo_check_access',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['trade_embargo_country/list'] = array(
+    'title' => t('Trade Embargo Country List'),
+    'description' => t('Trade Embargo Country List.'),
+    'page callback' => 'covidien_trade_embargo_country_list',
+    'access callback' => 'covidien_trade_embargo_check_access',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['trade_embargo_country/push_embargo_country_list'] = array(
+    'title' => t('Trade Embargo Push Country List'),
+    'description' => t('Trade Embargo Push Country List.'),
+    'page callback' => 'covidien_trade_push_embargo_country_list',
+    'access callback' => 'covidien_trade_embargo_check_access',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['trade_embargo_country/delete/%'] = array(
+    'title' => t('Delete Trade Embargo Country'),
+    'description' => t('Delete Trade Embargo Country.'),
+    'page callback' => 'covidien_trade_embargo_country_delete',
+    'access callback' => 'covidien_trade_embargo_check_access',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['trade_embargo_country/add'] = array(
+    'title' => t('Add Trade Embargo Country'),
+    'description' => t('Add Trade Embargo Country.'),
+    'page callback' => 'covidien_trade_embargo_country_add',
+    'access callback' => 'covidien_trade_embargo_check_access',
+    'type' => MENU_CALLBACK,
+  );
+  $items['trade_embargo/update_biz_rule'] = array(
+    'page callback' => 'get_trade_embargo_update_biz_rule',
+    'access callback' => 'covidien_trade_embargo_check_access',
+    'type' => MENU_CALLBACK,
+  );
+  $items['trade_embargo_country/download_exception_list'] = array(
+    'title' => t('Download Trade Embargo Country Exception List'),
+    'description' => t('Download Trade Embargo Country Exception List.'),
+    'page callback' => 'covidien_trade_embargo_download_exception_list',
+    'access callback' => 'covidien_trade_embargo_check_access',
+    'type' => MENU_CALLBACK,
+  );
+  $items['trade_embargo_country/upload_exception_list'] = array(
+    'title' => t('Upload Exception List'),
+    'description' => t('Upload Exception List.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('upload_exception_list_form'),
+    'access callback' => 'covidien_trade_embargo_check_access',
+    'type' => MENU_CALLBACK,
+  );
+  $items['trade_embargo_country/analyze_exceptions'] = array(
+    'title' => t('Analyze Exceptions'),
+    'description' => t('Add new customer.'),
+    'page callback' => 'covidien_trade_embargo_analyze_exceptions',
+    'access callback' => 'covidien_trade_embargo_check_access',
+    'type' => MENU_CALLBACK,
+  );
+  $items['trade_embargo_country/apply_exceptions'] = array(
+    'title' => t('Apply Exceptions'),
+    'description' => t('Apply Exceptions.'),
+    'page callback' => 'covidien_trade_embargo_apply_exceptions',
+    'access callback' => 'covidien_trade_embargo_check_access',
+    'type' => MENU_CALLBACK,
+  );
+  $items['trade_embargo/autocomplete/device_serial'] = array(
+    'page callback' => 'get_trade_embargo_serail_number',
+    'access callback' => 'covidien_trade_embargo_check_access',
+    'type' => MENU_CALLBACK,
+  );
+  $items['trade_embargo/get_country_table'] = array(
+    'page callback' => 'get_trade_embargo_get_country_table',
+    'access callback' => 'covidien_trade_embargo_check_access',
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * Implement hook_check_access(), to block unauthorized users.
+ */
+function covidien_trade_embargo_check_access() {
+  return covidien_cot_admin_access_callback('trade_embargo');
+}
+
+/**
+ * hook_theme
+ */
+function covidien_trade_embargo_theme() {
+  return array(
+    'covidien_trade_embargo_list' => array(
+      'template' => 'covidien-trade-embargo-list',
+      'arguments' => array('trade_embargo' => NULL)
+    ),
+    'covidien_trade_embargo_country_list' => array(
+      'template' => 'covidien-trade-embargo-country-list',
+      'arguments' => array('trade_embargo' => NULL)
+    )
+  );
+}
+
+/**
+ * menu callback trade_embargo/list
+ */
+function covidien_trade_embargo_list() {
+  global $user;
+  //No Cot admin user go to Country List
+  if (!check_user_role_has_cot_admin($user->roles) && $user->uid != 1) {
+    drupal_goto('trade_embargo_country/list');
+    exit;
+  }
+  drupal_add_js(drupal_get_path('module', 'covidien_users') . '/js/newjquery.min.js');
+  drupal_add_js(drupal_get_path('module', 'covidien_users') . '/js/jquery.colorbox-min.js');
+  drupal_add_js(drupal_get_path('module', 'covidien_users') . '/js/jquery-ui.min.js');
+  drupal_add_css(drupal_get_path('module', 'covidien_users') . '/css/colorbox.css');
+  drupal_set_title(t('Trade Embargo'));
+  $trade_embargo['form'] = covidien_trade_embargo_form();
+  $header = array('#', 'Device Type', 'Country', 'SN',);
+  $country_rows = get_trade_embargo_rows();
+  $trade_embargo['table'] = theme_table($header, $country_rows);
+  return theme('covidien_trade_embargo_list', $trade_embargo);
+}
+
+/**
+ * menu callback trade_embargo_country/list
+ */
+function covidien_trade_embargo_country_list() {
+  global $user;
+  //Cot admin user go to Exception List
+  if (check_user_role_has_cot_admin($user->roles) && $user->uid != 1) {
+    drupal_goto('trade_embargo/list');
+    exit;
+  }
+  drupal_set_title(t('Trade Embargo Country'));
+  $country_rows = get_trade_embargo_country_rows();
+  $header = array('#', 'Country', 'ISO Code', '',);
+  $trade_embargo_form = covidien_trade_embargo_form();
+  $trade_embargo['country_list'] = theme_table($header, $country_rows);
+  unset($trade_embargo_form['country']['#options']['All']);
+  $trade_embargo['country_form'] = drupal_render($trade_embargo_form['country']);
+  return theme('covidien_trade_embargo_country_list', $trade_embargo);
+}
+
+/**
+ * check user role has CoT Admin
+ */
+function check_user_role_has_cot_admin($roles) {
+  foreach ($roles as $role) {
+    if (stripos($role, 'CoT Admin') !== false) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * menu callback trade_embargo_country/add
+ */
+function covidien_trade_embargo_country_add() {
+  $country_id = check_plain($_POST['country']);
+  $sql = "SELECT id FROM {trade_embargo_country} WHERE device_id = 0 AND country_id = %d";
+  $id = db_result(db_query($sql, $country_id));
+  if ($id) {
+    drupal_json(array('status' => 'faild', 'data' => 'Has this Country'));
+  } else {
+    db_query("INSERT INTO {trade_embargo_country} (device_id, country_id, device_type_id) VALUES (0, %d, 0)", $country_id);
+    drupal_json(array('status' => 'success', 'data' => 'Added to Country list'));
+  }
+  exit;
+}
+
+/**
+ * menu callback trade_embargo_country/delete/%
+ */
+function covidien_trade_embargo_country_delete() {
+  $id = arg(2);
+  $sql = "DELETE FROM {trade_embargo_country} WHERE device_id = 0 AND id = %d";
+  db_query($sql, $id);
+  drupal_set_message('You has delete this country on this list.');
+  drupal_goto('trade_embargo_country/list');
+  exit;
+}
+
+/**
+ * upload exception list form
+ * hook_form
+ */
+function upload_exception_list_form(&$form) {
+  $form = array();
+  $form['#attributes'] = array('enctype' => "multipart/form-data");
+  $form['exception_file'] = array(
+    '#type' => 'file',
+    '#title' => t('Exception File'),
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+    '#attributes' => array('style' => 'margin: 10px 12px 0 0;'),
+  );
+  $form['cancel'] = array(
+    '#type' => 'button',
+    '#value' => t('Cancel'),
+    '#id' => 'secondary_submit',
+    '#attributes' => array('onclick' => 'parent.jQuery.fn.colorbox.close();return false;', 'style' => 'float: right; margin: 10px 20px 0 0;'),
+  );
+  return $form;
+}
+
+/**
+ * hook_submit
+ */
+function upload_exception_list_form_submit(&$form_state) {
+  global $trade_embargo_path, $drupal_abs_path;
+  $new_dir_path = $drupal_abs_path . '/sites/default/files/' . $trade_embargo_path;
+  file_check_directory($new_dir_path, $mode = FILE_CREATE_DIRECTORY);
+  $field_name = 'exception_file';
+  if (isset($_FILES['files']) && is_uploaded_file($_FILES['files']['tmp_name'][$field_name])) {
+    // attempt to save the uploaded file
+    $file = file_save_upload($field_name);
+    // set error if file was not uploaded
+    if (!$file) {
+      form_set_error($field_name, 'Error uploading file.');
+      return;
+    } else {
+      $result = file_move($file->filepath, $new_dir_path . $filename, FILE_EXISTS_REPLACE);
+      if ($result == 1) {
+        drupal_set_message(t('Update exception file succesfully.'));
+        echo '<script type="text/javascript">parent.jQuery.fn.colorbox.close();</script>';
+        exit;
+      } else {
+        form_set_error($field_name, 'Error uploading file.');
+      }
+    }
+  }
+  return;
+}
+
+/**
+ * menu callback trade_embargo_country/analyze_exceptions
+ */
+function covidien_trade_embargo_analyze_exceptions() {
+  $file_rows = covidien_trade_parse_xml_file();
+  $data_rows = get_trade_embargo_rows();
+  $diff_rows = covidien_trade_embargo_array_diff($data_rows, $file_rows);
+  $header_update = array('No Change', 'Add New', 'Delete');
+  $header = array('Device Type', 'Country', 'SN');
+  $diff_table = array(
+    array('data' => theme_table($header, $diff_rows['no_change'], array('id' => 'trade_embargo_no_change')), 'valign' => 'top'),
+    array('data' => theme_table($header, $diff_rows['add'], array('id' => 'trade_embargo_add')), 'valign' => 'top'),
+    array('data' => theme_table($header, $diff_rows['delete'], array('id' => 'trade_embargo_no_delete')), 'valign' => 'top'),
+  );
+  $output = theme_table($header_update, array($diff_table), array('id' => 'trade_embargo_analyze_exceptions'));
+  $output .= '<div id="country-fooder">
+    <div class="form-item-left">
+      <a class="form-submit secondary_submit" href="' . url('trade_embargo/list') . '">Back</a>
+    </div></div>';
+  return $output;
+}
+
+/**
+ * diff array data and file data
+ */
+function covidien_trade_embargo_array_diff($data_rows, $file_rows) {
+  $rows = array();
+  $frows = update_trade_embargo_array_to_one_array($file_rows);
+  $drows = update_trade_embargo_array_to_one_array($data_rows);
+  //no change
+  $no_change_rows = array_intersect($frows, $drows);
+  //add 
+  $add_rows = array_diff($frows, $no_change_rows);
+  //delete
+  $del_rows = array_diff($drows, $no_change_rows);
+  //update array
+  $no_change_rows = update_trade_embargo_array_to_back($no_change_rows);
+  $add_rows = update_trade_embargo_array_to_back($add_rows);
+  $del_rows = update_trade_embargo_array_to_back($del_rows);
+
+  return array('no_change' => $no_change_rows, 'add' => $add_rows, 'delete' => $del_rows);
+}
+
+/**
+ * update array key to device and country
+ */
+function update_trade_embargo_array_to_one_array($array) {
+  $rows = array();
+  foreach ($array as $row) {
+    $rows[] = trim($row['device_type']) . ',' . trim($row['country']) . ',' . trim($row['device_sn']);
+  }
+  return $rows;
+}
+
+/**
+ * update array device and country to value
+ */
+function update_trade_embargo_array_to_back($array) {
+  $rows = array();
+  $i = 0;
+  foreach ($array as $val) {
+    $val_array = explode(',', $val);
+    $rows[$i]['device_type'] = $val_array[0];
+    $rows[$i]['country'] = $val_array[1];
+    $rows[$i]['device_sn'] = $val_array[2];
+    ++$i;
+  }
+  return $rows;
+}
+
+/**
+ * get last file
+ */
+function covidien_trade_get_last_file() {
+  global $drupal_abs_path, $trade_embargo_path;
+  $dir = $drupal_abs_path . '/sites/default/files/' . $trade_embargo_path;
+  $handler = opendir($dir);
+  $files = array();
+  while (($filename = readdir($handler)) !== false) {
+    if ($filename != "." && $filename != "..") {
+      $file_info = pathinfo($dir . $filename);
+      if ($file_info['extension'] == 'xml') {
+        $files[filemtime($dir . $filename)] = $dir . $filename;
+      }
+    }
+  }
+  closedir($handler);
+  return $files[max(array_keys($files))];
+}
+
+/**
+ * parse xml file to table rows
+ */
+function covidien_trade_parse_xml_file() {
+  $filename = covidien_trade_get_last_file();
+  $xml = simplexml_load_file($filename);
+  $rows = array();
+  $i = 0;
+  foreach ($xml as $exceptions) {
+    $country = $exceptions->country->attributes();
+    foreach ($exceptions->country->exception as $device_types) {
+      $device_type = $device_types->attributes();
+      foreach ($device_types->device as $devices) {
+        $device = $devices->attributes();
+        $rows[$i]['device_type'] = trim((string) $device_type['deviceType']);
+        $rows[$i]['country'] = trim((string) $country['name']);
+        $rows[$i]['device_sn'] = trim((string) $devices['sn']);
+        ++$i;
+      }
+    }
+  }
+  return $rows;
+}
+
+/**
+ * menu callback trade_embargo_country/apply_exceptions
+ */
+function covidien_trade_embargo_apply_exceptions() {
+  $file_rows = covidien_trade_parse_xml_file();
+  $data_rows = get_trade_embargo_rows();
+  $diff_rows = covidien_trade_embargo_array_diff($data_rows, $file_rows);
+  foreach ($diff_rows['add'] as $row) {
+    covidien_trade_embargo_insert($row);
+  }
+  foreach ($diff_rows['delete'] as $row) {
+    covidien_trade_embargo_delete($row);
+  }
+  drupal_set_message(t('applied exceptions'));
+  drupal_goto('trade_embargo/list');
+  exit;
+}
+
+/**
+ * get device nid by device name and device type
+ */
+function get_device_nid($device, $device_type_nid) {
+  $sql = "SELECT n.nid FROM {node} n 
+        JOIN {content_type_device} d ON n.nid = d.nid AND n.vid = d.vid 
+        JOIN {content_field_device_type} dt ON n.nid = dt.nid
+        WHERE n.type='device' AND n.title='%s' AND dt.field_device_type_nid=%d";
+  $result = db_query($sql, $device, $device_type_nid);
+  $rows = array();
+  while ($row = db_fetch_object($result)) {
+    $rows[$row->nid] = $row->nid;
+  }
+  return $rows;
+}
+
+/**
+ * get country nid by country name 
+ */
+function get_country_nid($country) {
+  $sql = "SELECT n.nid FROM {node} n 
+        JOIN {content_type_country} c ON n.nid = c.nid AND n.vid = c.vid 
+        WHERE n.title = '%s' AND n.type = 'country'";
+  $result = db_query($sql, $country);
+  return db_result($result);
+}
+
+/**
+ * get device type nid by device type name
+ */
+function get_device_type_nid($device_type) {
+  $sql = "SELECT n.nid FROM {node} n 
+        JOIN {content_type_devicetype} d ON n.nid = d.nid AND n.vid = d.vid 
+        WHERE n.title = '%s' AND n.type = 'devicetype'";
+  $result = db_query($sql, $device_type);
+  return db_result($result);
+}
+
+/**
+ * insert row to trade embargo table trade_embargo_country
+ */
+function covidien_trade_embargo_insert($row) {
+  $device_type_nid = get_device_type_nid($row['device_type']);
+  $device_nid = get_device_nid($row['device_sn'], $device_type_nid);
+  $country_nid = get_country_nid($row['country']);
+  $sql = "INSERT INTO {trade_embargo_country} (device_id, country_id, device_type_id, activation_time) VALUES (%d, %d, %d, %d)";
+  db_query($sql, $device_nid, $country_nid, $device_type_nid, time());
+  return db_last_insert_id('trade_embargo_country', 'id');
+}
+
+/**
+ * delete row to trade embargo trade_embargo_country 
+ */
+function covidien_trade_embargo_delete($row) {
+  $device_type_nid = get_device_type_nid($row['device_type']);
+  $device_nids = get_device_nid($row['device_sn'], $device_type_nid);
+  $country_nid = get_country_nid($row['country']);
+
+  if (count($device_nids)) {
+    $sql = "DELETE FROM {trade_embargo_country} WHERE device_type_id = %d AND country_id = %d AND device_id IN (" . db_placeholders($device_nids, 'int') . ")";
+    db_query($sql, array_merge(array($device_type_nid, $country_nid), $device_nids));
+  }
+  return;
+}
+
+/**
+ * menu callback trade_embargo/get_country_table
+ */
+function get_trade_embargo_get_country_table() {
+  $header = array('#', 'Device Type', 'Country', 'SN',);
+  $country_rows = get_trade_embargo_rows();
+  $output = theme_table($header, $country_rows);
+  echo drupal_to_js(array('status' => 'success', 'data' => $output));
+  exit;
+}
+
+/**
+ * menu callback trade_embargo_country/download_exception_list
+ */
+function covidien_trade_embargo_download_exception_list() {
+  $content = covidien_trade_embargo_get_device_to_xml();
+  header("Content-type: text/html; charset=utf-8");
+  header("Content-type: text/xml");
+  echo $content;
+  exit;
+}
+
+/**
+ * get trade embargo list xml file
+ */
+function covidien_trade_embargo_get_device_to_xml() {
+  $sql = "SELECT t.id, n.title AS country, dtn.title AS device_type, dn.title AS device_sn, pn.title AS product_line
+    FROM {trade_embargo_country} t
+    JOIN {node} n ON t.country_id = n.nid AND n.type = 'country' AND n.status = 1
+    JOIN {content_type_country} c ON t.country_id = c.nid
+    JOIN {node} dtn ON t.device_type_id = dtn.nid AND dtn.type = 'devicetype'
+    JOIN {node} dn ON t.device_id = dn.nid AND dn.type = 'device'
+    JOIN {content_field_device_product_line} dp on t.device_type_id = dp.nid
+    LEFT JOIN {node} pn on dp.field_device_product_line_nid = pn.nid and pn.type = 'product_line'";
+  $result = db_query($sql);
+  $rows = array();
+  while ($row = db_fetch_object($result)) {
+    $rows[$row->product_line][$row->country][$row->device_type][$row->id] = $row->device_sn;
+  }
+  $content = '<?xml version="1.0" encoding="utf-8"?><exceptions>';
+  foreach ($rows as $product_line => $countries) {
+    $content .= '<exceptions ClassOfTrade="' . $product_line . '">';
+    foreach ($countries as $country => $device_types) {
+      $content .= '<country name="' . $country . '">';
+      foreach ($device_types as $device_type => $device_sns) {
+        $content .= '<exception deviceType="' . $device_type . '">';
+        foreach ($device_sns as $device_sn) {
+          $content .= '<device sn="' . $device_sn . '"></device>';
+        }
+        $content .= '</exception>';
+      }
+      $content .= '</country>';
+    }
+    $content .= '</exceptions>';
+  }
+  $content .= '</exceptions>';
+
+  return $content;
+}
+
+/**
+ * get_trade_embargo_rows by table trade_embargo_country
+ * @return type array
+ */
+function get_trade_embargo_rows() {
+  $filter['device_type'] = filter_xss($_GET['device_type_id']);
+  $filter['country'] = filter_xss($_GET['country']);
+  $filter['device_sn'] = filter_xss($_GET['serail_number']);
+  $sql = "SELECT t.id, n.title AS country, dtn.title AS device_type, dn.title AS device_sn
+    FROM {trade_embargo_country} t
+    JOIN {node} n ON t.country_id = n.nid AND n.type = 'country' AND n.status = 1
+    JOIN {content_type_country} c ON t.country_id = c.nid
+    JOIN {node} dtn ON t.device_type_id = dtn.nid AND dtn.type = 'devicetype'
+    JOIN {node} dn ON t.device_id = dn.nid AND dn.type = 'device'
+    WHERE 1 = 1 ";
+  $args = array();
+  if ($filter['device_type'] && is_numeric($filter['device_type'])) {
+    $sql .= " AND t.device_type_id = %d ";
+    $args[] = $filter['device_type'];
+  }
+  if ($filter['country'] && is_numeric($filter['country'])) {
+    $sql .= " AND t.country_id = %d ";
+    $args[] = $filter['country'];
+  }
+  if ($filter['device_sn']) {
+    $sql .= " AND dn.title = '%s' ";
+    $args[] = $filter['device_sn'];
+  }
+  $result = db_query($sql, $args);
+  $rows = array();
+  while ($row = db_fetch_object($result)) {
+    $rows[$row->id]['id'] = $row->id;
+    $rows[$row->id]['device_type'] = $row->device_type;
+    $rows[$row->id]['country'] = $row->country;
+    $rows[$row->id]['device_sn'] = $row->device_sn;
+  }
+  return $rows;
+}
+
+/**
+ * get the trade embargo country rows by trade_embargo_country
+ * @return type array
+ */
+function get_trade_embargo_country_rows() {
+  $sql = "SELECT t.id, n.title, c.field_iso_3166_2lcode_value
+    FROM {trade_embargo_country} t
+    JOIN {node} n ON t.country_id = n.nid AND n.type = 'country' AND n.status = 1
+    JOIN {content_type_country} c ON t.country_id = c.nid
+    WHERE t.device_id = 0";
+  $result = db_query($sql);
+  $rows = array();
+  while ($row = db_fetch_object($result)) {
+    $rows[$row->id]['id'] = $row->id;
+    $rows[$row->id]['iso'] = $row->field_iso_3166_2lcode_value;
+    $rows[$row->id]['country'] = $row->title;
+    $rows[$row->id]['delete'] = l(t('Delete'), 'trade_embargo_country/delete/' . $row->id);
+  }
+  return $rows;
+}
+
+/**
+ * hook_form
+ */
+function covidien_trade_embargo_form() {
+  $form = array();
+  $device_select = field_device_type_select();
+  $form['device_type'] = $device_select['select_device_type'];
+  $country_options = (array('All' => 'All') + get_trade_embargo_country());
+  $form['country'] = array(
+    '#type' => 'select',
+    '#id' => 'country',
+    '#options' => $country_options,
+  );
+  $form['serail_number'] = array(
+    '#type' => 'textfield',
+    '#id' => 'serail_number',
+    '#autocomplete_path' => 'trade_embargo/autocomplete/device_serial',
+    '#attributes' => array('placeholder' => 'Search - Enter Device Serial Number'),
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#id' => 'trade_embargo_go',
+    '#value' => t('Go')
+  );
+  return $form;
+}
+
+/**
+ * get device type list
+ * @return type array
+ */
+function get_trade_embargo_device_type() {
+  $sql = "SELECT nid, title FROM {node} WHERE type = 'devicetype'";
+  $result = db_query($sql);
+  $rows = array();
+  while ($row = db_fetch_object($result)) {
+    $rows[$row->nid] = $row->title;
+  }
+  return $rows;
+}
+
+/**
+ * get country list
+ * @return type array
+ */
+function get_trade_embargo_country() {
+  $sql = "SELECT n.nid, n.title FROM {node} n LEFT JOIN {trade_embargo_country} t ON n.nid = t.country_id WHERE n.type = 'country'";
+  $result = db_query($sql);
+  $rows = array();
+  while ($row = db_fetch_object($result)) {
+    $rows[$row->nid] = $row->title;
+  }
+  return $rows;
+}
+
+/**
+ * get device serial number list for use ajax
+ */
+function get_trade_embargo_serail_number() {
+  $sql = "SELECT n.nid, n.title FROM {trade_embargo_country} t JOIN {node} n ON t.device_id = n.nid and n.type = 'device'";
+  $result = db_query($sql);
+  $rows = array();
+  while ($row = db_fetch_object($result)) {
+    $rows[$row->title] = $row->title;
+  }
+  drupal_json($rows);
+  exit;
+}
+
+/**
+ * menu callback trade_embargo/update_biz_rule
+ */
+function get_trade_embargo_update_biz_rule() {
+  global $drupal_abs_path, $trade_embargo_publish_path, $drupal_swrepo;
+  $dir = $drupal_abs_path . 'sites/default/files/' . $trade_embargo_publish_path;
+  file_check_directory($dir, FILE_CREATE_DIRECTORY);
+  $trade_embargo = covidien_trade_embargo_get_device_to_xml();
+  $trade_embargo_country = covidien_trade_embargo_get_no_device_to_xml();
+  file_put_contents($dir . '/exceptions.xml', $trade_embargo);
+  file_put_contents($dir . '/countries.xml', $trade_embargo_country);
+  covidien_trade_embargo_create_business_rules($dir . '/countries.xml');
+  drupal_json(array('status' => 'success', 'data' => 'Published Embargo Country List.'));
+  exit();
+}
+
+/**
+ * get trade embargo country list no have device to xml file
+ */
+function covidien_trade_embargo_get_no_device_to_xml() {
+  $countries = get_trade_embargo_country_rows();
+  $content = '<?xml version="1.0" encoding="utf-8"?><countries>';
+  foreach ($countries as $item) {
+    $content .= '<country name="' . $item['iso'] . '"></country>';
+  }
+  $content .= '</countries>';
+  return $content;
+}
+
+/**
+ * create a Business Rules for trade embargo country
+ * @return boolean
+ */
+function covidien_trade_embargo_create_business_rules($file_path) {
+  global $user;
+  $device_type = 'Administrative_Agent';
+  $language = 'English';
+  $status = 'In Production';
+  $hardware = 'WINTEL';
+  $type = 'Business Rules';
+  $device_type_nid = db_result(db_query("SELECT nid FROM {node} WHERE title='%s' AND type='devicetype'", $device_type));
+  $language_nid = db_result(db_query("SELECT nid FROM {node} WHERE title='%s' AND type='language'", $language));
+  $status_nid = db_result(db_query("SELECT nid FROM {node} WHERE title='%s' AND type='softwarestatus'", $status));
+  $type_nid = db_result(db_query("SELECT nid FROM {node} WHERE title='%s' AND TYPE='softwaretype'", $type));
+  $hw_nid = db_result(db_query("SELECT n.nid FROM {node} n 
+    JOIN {content_field_device_type} fdt ON n.nid=fdt.nid
+    WHERE n.title='%s' AND n.type='hardware' AND fdt.field_device_type_nid=%d", $hardware, $device_type_nid));
+  module_load_include('module', 'filefild', 'field_file.inc');
+  global $drupal_swrepo;
+  $dest = 'sites/default/files/' . $drupal_swrepo;
+  file_check_directory($dest, FILE_CREATE_DIRECTORY);
+  $file = field_file_save_file($file_path, array(), $dest);
+  //create a new software
+  $node = new stdClass();
+  $node->title = 'Trade embargo countries';
+  $node->type = 'software';
+  $node->uid = $user->uid;
+  $node->name = $user->name;
+  $node->status = 1;
+  $node->field_device_type[0]['nid'] = $device_type_nid;
+  $node->field_sw_description[0]['value'] = 'Trade embargo countries';
+  $node->field_sw_file[0] = $file;
+  $node->field_sw_language[0]['nid'] = $language_nid;
+  $node->field_sw_part[0]['value'] = '0';
+  $node->field_sw_status[0]['nid'] = $status_nid;
+  $node->field_sw_type[0]['nid'] = $type_nid;
+  $node->field_sw_version[0]['value'] = time();
+  $node->field_hw_list[0]['nid'] = $hw_nid;
+  node_save($node);
+  return $node;
+}

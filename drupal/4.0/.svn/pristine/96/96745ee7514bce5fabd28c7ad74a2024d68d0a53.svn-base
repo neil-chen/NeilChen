@@ -1,0 +1,248 @@
+<?php
+
+/**
+ * hook_install create tables
+ */
+function covidien_named_config_install() {
+  //create table named_configuration_status
+  $named_configuration_status = "CREATE TABLE `named_configuration_status` (
+        `id` int(11) NOT NULL AUTO_INCREMENT,
+        `name` varchar(50) DEFAULT NULL,
+        PRIMARY KEY (`id`)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
+  db_query($named_configuration_status);
+  db_query("insert into `named_configuration_status`(`name`) values ('Limited Release'),('In Production'),('Obsolete')");
+
+  //create table named_configuration
+  $named_configuration = "CREATE TABLE `named_configuration` (
+      `nid` int(11) NOT NULL,
+      `type_id` tinyint(4) DEFAULT '0',
+      `device_type_id` int(11) DEFAULT 0,
+      `version` varchar(255) DEFAULT NULL,
+      `description` varchar(255) DEFAULT 0,
+      `status` tinyint(4) DEFAULT '0',
+      `is_deleted` tinyint(4) DEFAULT '0',
+      `obsolete_time` int(11) DEFAULT NULL,
+      PRIMARY KEY (`nid`),
+      KEY `named_cfg_type_nid_idx` (`type_id`,`nid`),
+      KEY `named_cfg_device_type_nid_idx` (`device_type_id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
+  db_query($named_configuration);
+  //create table named_configuration_relation
+  $named_configuration_relation = "CREATE TABLE `named_configuration_relation` (
+      `id` int(11) NOT NULL AUTO_INCREMENT,
+      `left_nid` int(11) NOT NULL DEFAULT '0' COMMENT 'config id or item id',
+      `left_type` tinyint(4) NOT NULL DEFAULT '0' COMMENT 'link to named_configuration_type id',
+      `right_nid` int(11) NOT NULL DEFAULT '0' COMMENT 'config id or item id',
+      `right_type` tinyint(4) NOT NULL DEFAULT '0' COMMENT 'link to named_configuration_type id',
+      `create_time` int(11) DEFAULT NULL,
+      `update_time` int(11) DEFAULT NULL,
+      `required` tinyint(4) NOT NULL DEFAULT '0' COMMENT '0:not required, 1:left required, 2:right required',
+      PRIMARY KEY (`id`),
+      KEY `named_cfg_rlt_left_type_idx` (`left_type`,`left_nid`),
+      KEY `named_cfg_rlt_left_nid_idx` (`left_nid`),
+      KEY `named_cfg_rlt_right_nid_idx` (`right_nid`),
+      KEY `named_cfg_rlt_right_type_idx` (`right_nid`,`right_type`)
+    ) ENGINE=InnoDB AUTO_INCREMENT=219 DEFAULT CHARSET=utf8";
+  db_query($named_configuration_relation);
+  //create table named_configuration_type
+  $named_configuration_type = "CREATE TABLE `named_configuration_type` (
+      `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'reference type id',
+      `name` varchar(255) DEFAULT NULL COMMENT 'reference type name',
+      `title` varchar(255) DEFAULT NULL COMMENT 'reference type display title',
+      `display` tinyint(4) NOT NULL DEFAULT '0' COMMENT 'display on select configuration on web, order by display no',
+      `wight` int(11) DEFAULT '0' COMMENT 'display order',
+      `link_type_id` varchar(255) NOT NULL DEFAULT 0 COMMENT 'types can be found through current id',
+      PRIMARY KEY (`id`),
+      KEY `named_cfg_type_name_idx` (`name`)
+    ) ENGINE=MyISAM AUTO_INCREMENT=12 DEFAULT CHARSET=utf8";
+  db_query($named_configuration_type);
+  db_query("insert into `named_configuration_type`(`id`,`name`,`title`,`display`,`wight`,`link_type_id`) values (1,'hardware_item','Hardware Item',0,0,'0'),(2,'software_item','Software Item',0,0,'5'),(3,'firmware_item','Firmware Item',0,0,'5'),(4,'document_item','Docoment Item',0,0,'5,6,7'),(5,'hardware_configuration','Named Hardware Configuration',1,3,'1'),(6,'software_configuration','Named Software Configuration',1,4,'2'),(7,'firmware_configuration','Named Firmware Configuration',1,5,'3'),(8,'system_configuration','Named System Configuration',1,2,'5,6,7'),(9,'device_configuration','Device Configuration',0,1,'8')");
+
+  covidien_named_config_update_6001();
+  covidien_named_config_update_6002();
+  covidien_named_config_update_6003();
+  covidien_named_config_update_6004();
+  covidien_named_config_update_6100();
+  covidien_named_config_update_6101();
+  covidien_named_config_update_6102();
+  covidien_named_config_update_6103();
+  return 'Created named configuration table.';
+}
+
+/**
+ * hook_uninstall
+ */
+function covidien_named_config_uninstall() {
+  
+}
+
+function covidien_named_config_update_6001() {
+  create_named_config_database_view();
+  return array(array('success' => true, 'query' => 'Created named configuration database views'));
+}
+
+function create_named_config_database_view() {
+  $view_named_configuration = "CREATE OR REPLACE VIEW `view_named_configuration` AS (
+select `c`.`nid` AS `nid`,`c`.`type_id` AS `type_id`,`n`.`title` AS `title`,`c`.`device_type_id` AS `device_type_id`,`c`.`version` AS `version`,`n`.`created` AS `create_time`,`n`.`changed` AS `update_time`,if((`c`.`obsolete_time` is null or `c`.`obsolete_time`>unix_timestamp()),0,1) AS `is_obsolete`,`c`.`description` AS `description`,`t`.`name` AS `type_name`,`t`.`title` AS `type_title`,`t`.`link_type_id` AS `link_type_id` from ((`named_configuration` `c` join `node` `n` on((`c`.`nid` = `n`.`nid`))) left join `named_configuration_type` `t` on((`c`.`type_id` = `t`.`id`))))";
+
+  $view_named_configuration_relation = "CREATE OR REPLACE VIEW `view_named_configuration_relation` AS (
+select  `r`.`id` AS `id`,  `r`.`left_nid` AS `left_nid`,  `r`.`left_type` AS `left_type`,  `nl`.`title` AS `left_title`,  `tl`.`name` AS `left_type_name`,  `tl`.`title` AS `left_type_title`,  `r`.`right_nid` AS `right_nid`,  `r`.`right_type` AS `right_type`,  `nr`.`title` AS `right_title`,  `tr`.`name` AS `right_type_name`,  `tr`.`title` AS `right_type_title`,  `r`.`create_time` AS `create_time`,  `r`.`update_time` AS `update_time` from ((((`named_configuration_relation` `r`  left join `node` `nl`  on ((`r`.`left_nid` = `nl`.`nid`)))  left join `node` `nr`  on ((`r`.`right_nid` = `nr`.`nid`)))  left join `named_configuration_type` `tl`  on ((`r`.`left_type` = `tl`.`id`)))  left join `named_configuration_type` `tr`  on ((`r`.`right_type` = `tr`.`id`))))";
+
+  $view_named_firmware_configuration = "CREATE OR REPLACE VIEW `view_named_firmware_configuration` AS (
+select  `c`.`nid` AS `nid`,  `c`.`type_id` AS `type_id`,  `nf`.`title` AS `title`,  `c`.`device_type_id` AS `device_type_id`,  `d`.`title` AS `device_type_name`,  `c`.`version` AS `version`,  `c`.`description` AS `description`,  `nf`.`created` AS `create_time`,  `nf`.`changed` AS `update_time`,  group_concat(distinct `f`.`nid` separator ',') AS `firmware_list` from (((((`named_configuration` `c`  join `named_configuration_type` `t`  on ((`c`.`type_id` = `t`.`id`)))  join `node` `nf`  on ((`c`.`nid` = `nf`.`nid`)))  left join `named_configuration_relation` `r`  on ((`c`.`nid` = `r`.`left_nid`)))  left join `firmware` `f`  on ((`r`.`right_nid` = `f`.`nid`)))  left join `node` `d`  on ((`c`.`device_type_id` = `d`.`nid`))) where (`t`.`name` = 'firmware_configuration') group by `c`.`nid`)";
+
+  $view_named_hardware_configuration = "CREATE OR REPLACE VIEW `view_named_hardware_configuration` AS (
+select  `c`.`nid` AS `nid`,  `c`.`type_id` AS `type_id`,  `nh`.`title` AS `title`,  `c`.`device_type_id` AS `device_type_id`,  `d`.`title` AS `device_type_name`,  `c`.`version` AS `version`,  `c`.`description` AS `description`,  `nh`.`created` AS `create_time`,  `nh`.`changed` AS `update_time`,  group_concat(distinct `h`.`nid` separator ',') AS `hardware_list` from (((((`named_configuration` `c`  join `named_configuration_type` `t`  on ((`c`.`type_id` = `t`.`id`)))  join `node` `nh`  on ((`c`.`nid` = `nh`.`nid`)))  left join `named_configuration_relation` `r`  on ((`c`.`nid` = `r`.`left_nid`)))  left join `content_type_hardware` `h`  on ((`r`.`right_nid` = `h`.`nid`)))  left join `node` `d`  on ((`c`.`device_type_id` = `d`.`nid`))) where (`t`.`name` = 'hardware_configuration') group by `c`.`nid`)";
+
+  $view_named_software_configuration = "CREATE OR REPLACE VIEW `view_named_software_configuration` AS (
+select  `c`.`nid` AS `nid`,  `c`.`type_id` AS `type_id`,  `ns`.`title` AS `title`,  `c`.`device_type_id` AS `device_type_id`,  `d`.`title` AS `device_type_name`,  `c`.`version` AS `version`,  `c`.`description` AS `description`,  `ns`.`created` AS `create_time`,  `ns`.`changed` AS `update_time`,  group_concat(distinct `s`.`nid` separator ',') AS `software_list` from (((((`named_configuration` `c`  join `named_configuration_type` `t`  on ((`c`.`type_id` = `t`.`id`)))  join `node` `ns`  on ((`c`.`nid` = `ns`.`nid`)))  left join `named_configuration_relation` `r`  on ((`c`.`nid` = `r`.`left_nid`)))  left join `content_type_software` `s`  on ((`r`.`right_nid` = `s`.`nid`)))  left join `node` `d`  on ((`c`.`device_type_id` = `d`.`nid`))) where (`t`.`name` = 'software_configuration') group by `c`.`nid`)";
+
+  $view_named_system_configuration = "CREATE OR REPLACE VIEW `view_named_system_configuration` AS (
+select  `c`.`nid` AS `nid`,  `c`.`type_id` AS `type_id`,  `cn`.`title` AS `title`,  `c`.`device_type_id` AS `device_type_id`,  `d`.`title` AS `device_type_name`,  `c`.`version` AS `version`,  `c`.`description` AS `description`,  `cn`.`created` AS `create_time`,  `cn`.`changed` AS `update_time`,  max((case `rt`.`name` when 'hardware_configuration' then `r`.`right_nid` else NULL end)) AS `hw_config_nid`,  max((case `rt`.`name` when 'software_configuration' then `r`.`right_nid` else NULL end)) AS `sw_config_nid`,  max((case `rt`.`name` when 'firmware_configuration' then `r`.`right_nid` else NULL end)) AS `fw_config_nid` from (((((`named_configuration` `c`  join `named_configuration_type` `t`  on ((`c`.`type_id` = `t`.`id`)))  join `node` `cn`  on ((`c`.`nid` = `cn`.`nid`)))  left join `named_configuration_relation` `r`  on ((`c`.`nid` = `r`.`left_nid`)))  left join `named_configuration_type` `rt`  on ((`r`.`right_type` = `rt`.`id`)))  left join `node` `d`  on ((`c`.`device_type_id` = `d`.`nid`))) where (`t`.`name` = 'system_configuration') group by `c`.`nid`)";
+
+  db_query($view_named_configuration);
+  db_query($view_named_configuration_relation);
+  db_query($view_named_firmware_configuration);
+  db_query($view_named_hardware_configuration);
+  db_query($view_named_software_configuration);
+  db_query($view_named_system_configuration);
+}
+
+/**
+ * callback status by type
+ * @return array
+ */
+function _named_configuration_substatus_array() {
+  return array(
+    //create a new named configuration can not select Obsolete
+    'All' => 'Normal',
+    'Named Hardware Configuration' => array('Warning'),
+    'Named Software Configuration' => array('Warning'),
+    'Named Firmware Configuration' => array('Warning'),
+    'Named System Configuration' => array('Invalid-Hardware', 'Incompatible-Software', 'Upgrade-Forbidden'),
+  );
+}
+
+function covidien_named_config_update_6002() {
+  module_load_include('module', 'covidien_ui');
+  covidien_update_log('Run ' . __FUNCTION__);
+
+  //create table named_configuration_status
+  $named_configuration_substatus = "CREATE TABLE `named_configuration_substatus` (
+        `id` int(11) NOT NULL AUTO_INCREMENT,
+        `name` varchar(50) DEFAULT NULL,
+        `type_id` int(11) NOT NULL DEFAULT 0,
+        PRIMARY KEY (`id`)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
+  db_query($named_configuration_substatus);
+  //insert status by type
+  $type_status = _named_configuration_substatus_array();
+  foreach ($type_status as $type => $status) {
+    if ($type == 'All') {
+      db_query("INSERT INTO {named_configuration_substatus} (name, type_id) VALUES ('%s', %d)", $status, 0);
+      continue;
+    }
+    $type_id = db_result(db_query("SELECT id FROM {named_configuration_type} WHERE title='%s'", $type));
+    if (!$type_id) {
+      continue;
+    }
+    foreach ($status as $item_status) {
+      db_query("INSERT INTO {named_configuration_substatus} (name, type_id) VALUES ('%s', %d)", $item_status, $type_id);
+    }
+  }
+
+  module_load_include('module', 'covidien_ui');
+  covidien_update_log('Finished ' . __FUNCTION__);
+
+  return array(array('success' => true, 'query' => 'Added named configuration substatus'));
+}
+
+function covidien_named_config_update_6003() {
+  $ret = array();
+  $field = array(
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+    'default' => 0,
+    'description' => 'substatus by type.');
+  db_add_field($ret, 'named_configuration', 'substatus', $field);
+  //set all sub status to Normal 
+  $normal_id = db_result(db_query("SELECT id FROM {named_configuration_substatus} WHERE name = '%s'", 'Normal'));
+  db_query("UPDATE {named_configuration} SET substatus = %d", $normal_id);
+
+  return $ret;
+}
+
+function covidien_named_config_update_6004() {
+  $view_named_system_configuration = "CREATE OR REPLACE VIEW `view_named_system_configuration` AS (
+select  `c`.`nid` AS `nid`,  `c`.`type_id` AS `type_id`,  `cn`.`title` AS `title`,  `c`.`device_type_id` AS `device_type_id`,  `d`.`title` AS `device_type_name`,  `c`.`version` AS `version`,  `c`.`description` AS `description`, `ns`.`name` as `status` , `nsubs`.`name` as `substatus` ,  `cn`.`created` AS `create_time`,  `cn`.`changed` AS `update_time`,  max((case `rt`.`name` when 'hardware_configuration' then `r`.`right_nid` else NULL end)) AS `hw_config_nid`,  max((case `rt`.`name` when 'software_configuration' then `r`.`right_nid` else NULL end)) AS `sw_config_nid`,  max((case `rt`.`name` when 'firmware_configuration' then `r`.`right_nid` else NULL end)) AS `fw_config_nid` from (((((`named_configuration` `c`  join `named_configuration_type` `t`  on ((`c`.`type_id` = `t`.`id`)))  join `node` `cn`  on ((`c`.`nid` = `cn`.`nid`)))  left join `named_configuration_relation` `r`  on ((`c`.`nid` = `r`.`left_nid`)))  left join `named_configuration_type` `rt`  on ((`r`.`right_type` = `rt`.`id`))) join `named_configuration_status` `ns` on `c`.`status` = `ns`.`id` join `named_configuration_substatus` `nsubs` on `nsubs`.`id` = `c`.`substatus` left join `node` `d`  on ((`c`.`device_type_id` = `d`.`nid`))) where (`t`.`name` = 'system_configuration') group by `c`.`nid`)";
+  db_query($view_named_system_configuration);
+
+  $view_named_hardware_configuration = "CREATE OR REPLACE VIEW `view_named_hardware_configuration` AS (
+select  `c`.`nid` AS `nid`,  `c`.`type_id` AS `type_id`,  `nh`.`title` AS `title`,  `c`.`device_type_id` AS `device_type_id`,  `d`.`title` AS `device_type_name`,  `c`.`version` AS `version`,  `c`.`description` AS `description`, `ns`.`name` as `status`, `nsubs`.`name` as `substatus` , `nh`.`created` AS `create_time`,  `nh`.`changed` AS `update_time`,  group_concat(distinct `h`.`nid` separator ',') AS `hardware_list` from (((((`named_configuration` `c`  join `named_configuration_type` `t`  on ((`c`.`type_id` = `t`.`id`)))  join `node` `nh`  on ((`c`.`nid` = `nh`.`nid`)))  left join `named_configuration_relation` `r`  on ((`c`.`nid` = `r`.`left_nid`)))  left join `content_type_hardware` `h`  on ((`r`.`right_nid` = `h`.`nid`)))  join `named_configuration_status` `ns` on `c`.`status` = `ns`.`id` join `named_configuration_substatus` `nsubs` on `nsubs`.`id` = `c`.`substatus` left join `node` `d`  on ((`c`.`device_type_id` = `d`.`nid`))) where (`t`.`name` = 'hardware_configuration') group by `c`.`nid`)";
+
+  $view_named_firmware_configuration = "CREATE OR REPLACE VIEW `view_named_firmware_configuration` AS (
+select  `c`.`nid` AS `nid`,  `c`.`type_id` AS `type_id`,  `nf`.`title` AS `title`,  `c`.`device_type_id` AS `device_type_id`,  `d`.`title` AS `device_type_name`,  `c`.`version` AS `version`,  `c`.`description` AS `description`, `ns`.`name` as `status`, `nsubs`.`name` as `substatus` ,  `nf`.`created` AS `create_time`,  `nf`.`changed` AS `update_time`,  group_concat(distinct `f`.`nid` separator ',') AS `firmware_list` from (((((`named_configuration` `c`  join `named_configuration_type` `t`  on ((`c`.`type_id` = `t`.`id`)))  join `node` `nf`  on ((`c`.`nid` = `nf`.`nid`)))  left join `named_configuration_relation` `r`  on ((`c`.`nid` = `r`.`left_nid`)))  left join `firmware` `f`  on ((`r`.`right_nid` = `f`.`nid`))) join `named_configuration_status` `ns` on `c`.`status` = `ns`.`id` join `named_configuration_substatus` `nsubs` on `nsubs`.`id` = `c`.`substatus` left join `node` `d`  on ((`c`.`device_type_id` = `d`.`nid`))) where (`t`.`name` = 'firmware_configuration') group by `c`.`nid`)";
+
+  $view_named_software_configuration = "CREATE OR REPLACE VIEW `view_named_software_configuration` AS (
+select  `c`.`nid` AS `nid`,  `c`.`type_id` AS `type_id`,  `ns`.`title` AS `title`,  `c`.`device_type_id` AS `device_type_id`,  `d`.`title` AS `device_type_name`,  `c`.`version` AS `version`,  `c`.`description` AS `description`, `ncs`.`name` as `status`, `nsubs`.`name` as `substatus` ,  `ns`.`created` AS `create_time`,  `ns`.`changed` AS `update_time`,  group_concat(distinct `s`.`nid` separator ',') AS `software_list` from (((((`named_configuration` `c`  join `named_configuration_type` `t`  on ((`c`.`type_id` = `t`.`id`)))  join `node` `ns`  on ((`c`.`nid` = `ns`.`nid`)))  left join `named_configuration_relation` `r`  on ((`c`.`nid` = `r`.`left_nid`)))  left join `content_type_software` `s`  on ((`r`.`right_nid` = `s`.`nid`)))  join `named_configuration_status` `ncs` on `c`.`status` = `ncs`.`id` join `named_configuration_substatus` `nsubs` on `nsubs`.`id` = `c`.`substatus` left join `node` `d`  on ((`c`.`device_type_id` = `d`.`nid`))) where (`t`.`name` = 'software_configuration') group by `c`.`nid`)";
+
+  db_query($view_named_firmware_configuration);
+  db_query($view_named_hardware_configuration);
+  db_query($view_named_software_configuration);
+  db_query($view_named_system_configuration);
+
+  return array(array('success' => true, 'query' => 'Add status to view_named_system_configuration,view_named_firmware_configuration,view_named_hardware_configuration,view_named_system_configuration'));
+}
+
+function covidien_named_config_update_6100() {
+  $id = db_result(db_query("SELECT id FROM named_configuration_status WHERE name = '%s'", 'Archived'));
+  if ($id) {
+    return array(array('success' => true, 'query' => 'Named configuration status has Archived'));
+  }
+  db_query("INSERT INTO {named_configuration_status} (name) VALUES ('Archived')");
+  return array(array('success' => true, 'query' => 'Added named configuration status Archived'));
+}
+
+function covidien_named_config_update_6101() {
+  $result = db_query("SELECT c.nid FROM {named_configuration} c 
+    LEFT JOIN {named_configuration_status} s ON c.status=s.id
+    WHERE s.name='Unknown' OR s.name IS NULL");
+  $rows = array();
+  while ($row = db_fetch_object($result)) {
+    $rows[$row->nid] = $row->nid;
+  }
+  //update old Unknown to Archived
+  if (count($rows)) {
+    $status_id = db_result(db_query("SELECT id FROM {named_configuration_status} WHERE name='Archived'"));
+    db_query("UPDATE {named_configuration} SET status=%d WHERE nid IN (" . db_placeholders($rows) . ")", array_merge(array($status_id), $rows));
+  }
+  //delete Unknown
+  db_query("DELETE FROM {named_configuration_status} WHERE name='Unknown'");
+  return array(array('success' => true, 'query' => 'Remove named configuration status Unknown'));
+}
+
+function covidien_named_config_update_6102() {
+  //Upgrade-Forbidden
+  $upgrade_forbidden = 'Upgrade-Forbidden';
+  $sub_id = db_result(db_query("SELECT id FROM {named_configuration_substatus} WHERE name='%s'", $upgrade_forbidden));
+  if ($sub_id) {
+    module_load_include('module', 'covidien_ui');
+    covidien_update_log('Run ' . __FUNCTION__);
+    return array(array('success' => true, 'query' => 'Configuration warning status has ' . $upgrade_forbidden));
+  }
+  $type_id = db_result(db_query("SELECT id FROM {named_configuration_type} WHERE name='%s'", 'system_configuration'));
+  db_query("INSERT INTO {named_configuration_substatus} (name, type_id) VALUES ('%s', %d)", $upgrade_forbidden, $type_id);
+  module_load_include('module', 'covidien_ui');
+  covidien_update_log('Run ' . __FUNCTION__);
+  return array(array('success' => true, 'query' => 'Configuration warning status add ' . $upgrade_forbidden));
+}
+
+function covidien_named_config_update_6103() {
+  $view_named_configuration = "CREATE OR REPLACE VIEW `view_named_configuration` AS (
+select `c`.`nid` AS `nid`,`c`.`type_id` AS `type_id`,`n`.`title` AS `title`,`c`.`device_type_id` AS `device_type_id`,`c`.`version` AS `version`,`n`.`created` AS `create_time`,`n`.`changed` AS `update_time`,if((`c`.`obsolete_time` is null or `c`.`obsolete_time`>unix_timestamp()),0,1) AS `is_obsolete`,`c`.`description` AS `description`, `ncs`.`name` as `status`, `nsubs`.`name` as `substatus` ,`t`.`name` AS `type_name`,`t`.`title` AS `type_title`,`t`.`link_type_id` AS `link_type_id` from ((`named_configuration` `c` join `node` `n` on((`c`.`nid` = `n`.`nid`))) join `named_configuration_status` `ncs` on `c`.`status` = `ncs`.`id` join `named_configuration_substatus` `nsubs` on `nsubs`.`id` = `c`.`substatus` left join `named_configuration_type` `t` on((`c`.`type_id` = `t`.`id`))))";
+  db_query($view_named_configuration);
+
+  return array(array('success' => true, 'query' => 'Add status and substatus to view_named_configuration'));
+}

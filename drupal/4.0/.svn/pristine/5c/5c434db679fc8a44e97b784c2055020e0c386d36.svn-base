@@ -1,0 +1,114 @@
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  Theme,v 1 2012/08/21 06:26:03 Covidien
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2009-06-16 19:00+0200\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: covidien_device_config.module:79
+msgid "Access denied"
+msgstr ""
+
+#: covidien_device_config.module:106
+msgid "Cancel"
+msgstr ""
+
+#: covidien_device_config.module:126,143
+msgid "Select"
+msgstr ""
+
+#: covidien_device_config.module:127,144
+msgid "Required"
+msgstr ""
+
+#: covidien_device_config.module:128,145
+msgid "Optional"
+msgstr ""
+
+#: covidien_device_config.module:162
+msgid "Save Changes"
+msgstr ""
+
+#: covidien_device_config.module:163
+msgid "Do you want to save the changes you just made to this page?"
+msgstr ""
+
+#: covidien_device_config.module:172
+msgid "Delete this Configuration"
+msgstr ""
+
+#: covidien_device_config.module:176
+msgid "Are you sure you want to delete this configuration?"
+msgstr ""
+
+#: covidien_device_config.module:185,244
+msgid "Enter Configuration Name"
+msgstr ""
+
+#: covidien_device_config.module:188
+msgid "Enter Configuration Version Number"
+msgstr ""
+
+#: covidien_device_config.module:190
+msgid "Add New Configuration"
+msgstr ""
+
+#: covidien_device_config.module:197
+msgid "All"
+msgstr ""
+
+#: covidien_device_config.module:198
+msgid "Go"
+msgstr ""
+
+#: covidien_device_config.module:199
+msgid "System Administration"
+msgstr ""
+
+#: covidien_device_config.module:245
+msgid "Invalid Configuration Name"
+msgstr ""
+
+#: covidien_device_config.module:248
+msgid "Enter Configuration Version Number"
+msgstr ""
+
+#: covidien_device_config.module:249
+msgid "Invalid Configuration Version Number"
+msgstr ""
+
+#: covidien_device_config.module:254
+msgid "Invalid Effective Date"
+msgstr ""
+
+#: covidien_device_config.module:263
+msgid "Invalid End of Life Date"
+msgstr ""
+
+#: covidien_device_config.module:269
+msgid "Effective Date must be earlier than End of Life Date"
+msgstr ""
+
+#: covidien_device_config.module:309
+msgid "Invalid Hardware"
+msgstr ""
+
+#: covidien_device_config.module:315
+msgid "Invalid Status of Hardware/Software Catalog Items"
+msgstr ""
+
+#: covidien_device_config.module:307
+msgid "Invalid selection of Hardware/Software Catalog Items"
+msgstr ""

@@ -1,0 +1,78 @@
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  Theme,v 1 2012/08/21 06:26:03 Covidien
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2009-06-16 19:00+0200\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: device-type-config-node-form.tpl:14
+msgid "1. Select Device Type:"
+msgstr ""
+
+#: device-type-config-node-form.tpl:26
+msgid "2. Enter Information for the new Configuration:"
+msgstr ""
+
+#: device-type-config-node-form.tpl:32
+msgid "Configuration Name:"
+msgstr ""
+
+#: device-type-config-node-form.tpl:39
+msgid "Configuration Version Number:"
+msgstr ""
+
+#: device-type-config-node-form.tpl:48
+msgid "Enter Effective Date:"
+msgstr ""
+
+#: device-type-config-node-form.tpl:57
+msgid "Enter End of Life Date:"
+msgstr ""
+
+#: template.php, device-type-config-node-form.tpl:70
+msgid "3. Select items from Hardware/Software Catalog to add to this Configuration:"
+msgstr ""
+
+#: device-type-config-node-form.tpl:113
+msgid "The Configuration can be edited or deleted here."
+msgstr ""
+
+#: device-type-config-node-form.tpl:121
+msgid "Device Type:"
+msgstr ""
+
+#: device-type-config-node-form.tpl:125
+msgid "Configuration Version #:"
+msgstr ""
+
+#: device-type-config-node-form.tpl:129
+msgid "Effective Date:"
+msgstr ""
+
+#: device-type-config-node-form.tpl:133
+msgid "End of Life Date:"
+msgstr ""
+
+#: device-type-config-node-form.tpl:139
+msgid "Hardware/Software items included in this configuration:"
+msgstr ""
+
+#: device-type-config-node-form.tpl:71
+msgid "3. Select items from the Hardware/Software Catalog to add to this Configuration:"
+msgstr ""
+
+#: device-type-config-node-form.tpl:97,161
+msgid "Cancel"
+msgstr ""

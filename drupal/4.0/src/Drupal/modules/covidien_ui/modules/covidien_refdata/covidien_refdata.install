@@ -1,0 +1,92 @@
+<?php
+
+/**
+ * @file
+ * Used for ref data creation.
+ */
+
+/**
+ * Implementation of hook_install().
+ * The covidien sample ref data created using this module
+ */
+function covidien_refdata_install() {
+  if (!module_exists('covidien_sampledata')) {
+    update_sku();
+  } else {
+    $nodetitle_nid = db_result(db_query("select nid from {node} where type='party' and title='%s'", 'SSG Business Unit'));
+    if ($nodetitle_nid > 0) {
+      $node = node_load($nodetitle_nid);
+      $node->title = 'Surgical Solutions';
+      node_save($node);
+    }
+  }
+  $party_type_val = array();
+  $finaldata = array();
+  $party_type = array('Surgical Solutions', 'Vascular Therapies', 'R&MS', 'Emerging Markets');
+  foreach ($party_type as $val) {
+    $nodetitle_nid = db_result(db_query("select nid from {node} where type='party' and title='%s'", $val));
+    if ($nodetitle_nid == "") {
+      $field_party_type_rec = db_fetch_object(db_query("select nid from {node} where title='%s' and type ='party_type'", "Business Unit"));
+      $field_party_typenid = $field_party_type_rec->nid;
+      $node = array();
+      $node = (object) $node;
+      $node->type = 'party';
+      $node->uid = 1;
+      $node->format = 0;
+      if ($val == "Vascular Therapies" || $val == "R&MS" || $val == "Emerging Markets" || $val == "Surgical Solutions") {
+        $field_party_type_rec = db_fetch_object(db_query("select nid from {node} where title='%s'", 'Business Unit'));
+        $field_party_typenid = $field_party_type_rec->nid;
+        $node->title = $val;
+      }
+      $node->field_party_type[0]['nid'] = $field_party_typenid;
+      node_save($node);
+      $party_type_val[$val] = $node->nid;
+    }
+  }
+  $data = array(
+      'Compression' => 'Vascular Therapies',
+      'Ventilation' => 'R&MS',
+      'Vessel Sealing' => 'Surgical Solutions'
+  );
+  foreach ($data as $k => $v) {
+    $qry = db_fetch_object(db_query("SELECT nid FROM {node} WHERE type='product_line' AND title='%s'", $k));
+    $party_qry = db_fetch_object(db_query("SELECT nid FROM {node} WHERE type='party' AND title='%s'", $v));
+    $party_nid = $party_qry->nid;
+    $node = node_load($qry->nid);
+    $node->field_product_line_bu_party[0]['nid'] = $party_nid;
+    node_save($node);
+  }
+}
+
+// Uninstall Instruction
+function covidien_refdata_uninstall() {
+  
+}
+
+/**
+ * helper function to update the sku.
+ */
+function update_sku() {
+  module_load_include('php', 'covidien_refdata', 'data/sku');
+  $sku = sku_list();
+  if (count($sku) > 0) {
+    foreach ($sku as $dtype => $skuarr) {
+      $nid = db_result(db_query("select nid from {node} where title = '%s' and type='devicetype'", $dtype));
+      foreach ($skuarr as $skucode) {
+        if ($nid > 0) {
+          $node = array();
+          $node = (object) $node;
+          $node->type = 'sku';
+          $node->uid = 1;
+          $node->format = 0;
+          $node->title = $skucode;
+          $node->field_sku_id[0]['value'] = $skucode;
+          $node->field_source_system[0]['value'] = 'E1';
+          $node->field_device_type_pk[0]['nid'] = $nid;
+          node_save($node);
+        }
+      }
+    }
+  }
+  return true;
+}

@@ -1,0 +1,1055 @@
+<?php
+
+/**
+ * @file
+ * This is an example of how to implement an XML-RPC server by registering
+ * callbacks to specific methods and how to make xmlrpc calls using the builtin
+ * xmlrpc() factory provided by Drupal.
+ *
+ * For experimentation you may be interested in the
+ * @link http://drupal.org/project/xmlrpctester XMLRPC Tester module @endlink.
+ *
+ * Note that the @link http://drupal.org/project/services Services module @endlink
+ * is probably the more common way to do XMLRPC at this time.
+ *
+ * @see hook_xmlrpc()
+ * @see xmlrpc()
+ * @see xmlrpc_errno()
+ * @see xmlrpc_error_msg()
+ */
+/**
+ * @defgroup covidien_api Example: XML-RPC
+ * @ingroup examples
+ * @{
+ * XML-RPC client/server. (drupal 6)
+ *
+ * This is an example of how to implement an XML-RPC server by registering
+ * callbacks to specific methods and how to make xmlrpc calls using the builtin
+ * xmlrpc() factory provided by Drupal.
+ *
+ * For experimentation you may be interested in the
+ * @link http://drupal.org/project/xmlrpctester XMLRPC Tester module @endlink.
+ *
+ * Note that the @link http://drupal.org/project/services Services module @endlink
+ * is probably the more common way to do XMLRPC at this time.
+ *
+ * @see hook_xmlrpc()
+ * @see xmlrpc()
+ * @see xmlrpc_errno()
+ * @see xmlrpc_error_msg()
+ */
+// This is the common part of the module, implementing all the code required
+// for the client and the server part (most of this code is UI related). The
+// menu definition is the only part shared in this implementation.
+
+/**
+ * Implementation of hook_menu().
+ * Register all the demonstration forms.
+ */
+function covidien_api_menu() {
+  
+}
+
+function covidien_api_init() {
+  
+}
+
+// The following code is the XMLRPC implmentation of the server part. The fisrt
+// step is to define the methods. This methods should be associated to callbacks
+// that will be defined later.
+
+/**
+ * Implements hook_xmlrpc().
+ *
+ * Provides Drupal with an array to map XML-RPC callbacks to the
+ * functions implemented by this module.
+ *
+ * @see hook_xmlrpc()
+ */
+function covidien_api_xmlrpc() {
+  /*
+    $methods[] =  array(
+    'covidien_api.add',  // Method name
+    '_covidien_api_server_add', // Callback to execute
+    array(                 // Array of types for output/input parameteres
+    'string',  // the type of the return value
+    'string',  // the type of the first argument
+    'string',  // the type of the first argument
+    ),
+    t('Test function API Call.') // Method description
+    );
+   */
+  $methods[] = array(
+    'covidien_api.device_component_history_insert', // Method name
+    '_covidien_api_device_component_history_insert', // Callback to execute
+    array(// Array of types for output/input parameteres
+      'string', // the type of the return value
+      'string', // the type of the first argument
+      'string', // the type of the first argument
+      'string', // the type of the first argument 
+      'string',
+    ),
+    t('Insert the given values to Device component history content type.') // Method description
+  );
+
+  $methods[] = array(
+    'covidien_api.device_log_insert', // Method name
+    '_covidien_api_device_log_insert', // Callback to execute
+    array(// Array of types for output/input parameteres
+      'string', // the type of the return value
+      'string', // the type of the first argument
+      'string', // the type of the first argument
+      'string', // the type of the first argument
+    ),
+    t('Insert given value to Device log.') // Method description
+  );
+
+  $methods[] = array(
+    'covidien_api.device_log_history_insert', // Method name
+    '_covidien_api_device_log_history_insert', // Callback to execute
+    array(// Array of types for output/input parameteres
+      'string', // the type of the return value
+      'string', // the type of the first argument
+      'string', // the type of the first argument
+      'string', // the type of the first argument
+    ),
+    t('Insert given value to device history content type.') // Method description
+  );
+
+  $methods[] = array(
+    'covidien_api.device_insert_custom', // Method name
+    '_covidien_api_device_insert_custom', // Callback to execute
+    array(// Array of types for output/input parameteres
+      'string', // the type of the return value
+      'string', // the type of the first argument
+      'string', // the type of the first argument
+      'string', // the type of the first argument
+      'string', // the type of the first argument
+    ),
+    t('Insert value to Device Content type.') // Method description
+  );
+
+  $methods[] = array(
+    'covidien_api.device_discrepancy_insert', // Method name
+    '_covidien_api_device_discrepancy_insert', // Callback to execute
+    array(// Array of types for output/input parameteres
+      'string', // the type of the return value
+      'string', // the type of the first argument
+      'string', // the type of the second argument
+      'string', // the type of the third argument
+    ),
+    t('Insert given value to Device descrepancy content type.') // Method description
+  );
+
+  $methods[] = array(
+    'covidien_api.watchdog_insert', // Method name
+    '_covidien_api_watchdog_insert', // Callback to execute
+    array(// Array of types for output/input parameteres
+      'string', // the type of the return value
+      'string', // the type of the first argument
+      'string', // the type of the first argument
+      'string', // the type of the first argument
+      'string', // the type of the first argument
+    ),
+    t('Insert value to Watchdog table.') // Method description
+  );
+
+  $methods[] = array(
+    'covidien_api.user_access_policy', // Method name
+    '_covidien_api_user_access_policy', // Callback to execute
+    array(// Array of types for output/input parameteres
+      'string', // the type of the return value
+      'string', // the type of the first argument
+      'string', // the type of the first argument
+      'string', // the type of the first argument
+      'string', // the type of the first argument
+    ),
+    t('Returns if the users have permission to access any modules.') // Method description
+  );
+
+  $methods[] = array(
+    'covidien_api.add_device_installation', // Method name
+    '_covidien_api_add_device_installation', // Callback to execute
+    array(// Array of types for output/input parameteres
+      'string', // the type of the return value
+      'string', // the type of the first argument
+    ),
+    t('Insert given values to Device Installation content type.') // Method description
+  );
+
+  $methods[] = array(
+    'covidien_api.add_device_service_history', // Method name
+    '_covidien_api_add_device_service_history', // Callback to execute
+    array(// Array of types for output/input parameteres
+      'string', // the type of the return value
+      'string', // the type of the first argument
+      'string', // the type of the second argument
+      'string', // the type of the third argument
+      'string', // the type of the fourth arguments
+      'string', // the type of the fifth argument
+      'string', // the type of the sixth argument
+      'string', // the type of the seventh argument
+      'string', // the type of the seventh argument
+      'string', // the type of the seventh argument
+      'string', // the type of the seventh argument
+      'string', // the type of the seventh argument
+      'string'  // the type of the seventh argument
+    ),
+    t('Insert given value to Device Service History.') // Method description
+  );
+
+
+  $methods[] = array(
+    'covidien_api.add_device_log', // Method name
+    '_covidien_api_add_device_log', // Callback to execute
+    array(// Array of types for output/input parameteres
+      'string', // the type of the return value
+      'string', // the type of the first argument
+      'string', // the type of the second argument
+      'string', // the type of the third argument
+    ),
+    t('Insert given value to Device log content type.') // Method description
+  );
+
+  $methods[] = array(
+    'covidien_api.insert_download_info', // Method name
+    '_covidien_api_insert_download_info', // Callback to execute
+    array(// Array of types for output/input parameteres
+      'string', // the type of the return value
+      'string', // the type of the second argument
+      'string', // the type of the second argument
+      'string', // the type of the second argument
+      'string', // the type of the second argument
+      'string', // the type of the second argument
+    ),
+    t('To get Component name with Nid sent by server.') // Method description
+  );
+  $methods[] = array(
+    'covidien_api.software_installation_privilege', // Method name
+    '_covidien_api_software_installation_privilege', // Callback to execute
+    array(// Array of types for output/input parameteres
+      'string', // the type of the return value
+      'string'  // the type of the return value
+    ),
+    t('To get Installation privilege values for Device types.') // Method description
+  );
+  $methods[] = array(
+    'covidien_api.insert_device_component_upgrade_log', // Method name
+    '_insert_device_component_upgrade_log', // Callback to execute
+    array(// Array of types for output/input parameteres
+      'string', // the type of the return value
+      'string', // device nid
+      'string', // sw from component history nid
+      'string'  // session id
+    ),
+    t('To Log device component before upgrade process.') // Method description
+  );
+  $methods[] = array(
+    'covidien_api.insert_device_component_log_after_upgrade', // Method name
+    '_insert_device_component_upgrade_after_log', // Callback to execute
+    array(// Array of types for output/input parameteres
+      'string', // the type of the return value
+      'string', // device nid
+      'string', // Service history nid
+      'string'  // session id
+    ),
+    t('To Log device component before upgrade process.') // Method description
+  );
+  $methods[] = array(
+    'covidien_api.get_timeZone_info', // Method name
+    '_get_timeZone_info', // Callback to execute
+    array(// Array of types for output/input parameteres
+      'string', // the type of the return value
+      'string', // time string
+      'string'  // time string
+    ),
+    t('Convert the given time to server time.') // Method description
+  );
+  $methods[] = array(
+    'covidien_api.update_forgetpassword', // Method name
+    '_update_forgetpassfields', // Callback to execute
+    array(// Array of types for output/input parameteres
+      'string', // the type of the return value
+      'string'  // time string
+    ),
+    t('Update fields when user request forget password.') // Method description
+  );
+  $methods[] = array(
+    'covidien_api.update_user_country', // Method name
+    '_covidien_api_update_user_country', // Callback to execute
+    array(// Array of types for output/input parameteres
+      'string', // userName
+      'string', // countryNid
+      'string'  // the type of the return value
+    ),
+    t('To update user country info.') // Method description
+  );
+  $methods[] = array(
+    //Get the trade embargo countries
+    'covidien_api.get_trade_embargo_countries', // Method name
+    '_covidien_api_get_trade_embargo_countries', // Callback to execute
+    array(// Array of types for output/input parameteres
+      'string' // the type of the return value
+    ),
+    t('To get trade embargo country list.') // Method description
+  );
+  $methods[] = array(
+    //Check if the device has an trade embargo exception for the country
+    'covidien_api.has_trade_embargo_exception', // Method name
+    '_covidien_api_has_trade_embargo_exception', // Callback to execute
+    array(// Array of types for output/input parameteres
+      'string', // the type of the return value
+      'string', // serial number
+      'string'  // country
+    ),
+    t('To get trade embargo country list.') // Method description
+  );
+  $methods[] = array(
+    'covidien_api.get_alert_message_content', // Method name
+    '_covidien_api_get_alert_message_content', // Callback to execute
+    array(// Array of types for output/input parameteres
+      'string', // deviceType
+      'string', // serialNumber
+      'string', // alertEvent
+      'string', // delivery
+      'string', // reason
+      'string'  // the type of the return value
+    ),
+    t('To update user country info.') // Method description
+  );
+  $methods[] = array(
+    'covidien_api.update_device_region', // Method name
+    '_covidien_api_update_device_region', // Callback to execute
+    array(// Array of types for output/input parameteres
+      'string', // device nid
+      'string', // region
+      'string'  // the type of the return value
+    ),
+    t('To update device region.') // Method description
+  );
+
+  return $methods;
+}
+
+/*
+  function _covidien_api_server_add($v1, $v2) {
+  return json_encode($return);
+  }
+ */
+
+function _covidien_api_device_component_history_insert($v1, $v2, $v3, $v4) {
+  $var1 = filter_xss($v1);
+  $var2 = filter_xss($v2);
+  $var3 = filter_xss($v3);
+  $var4 = filter_xss($v4);
+  // the $var4 is UNIX timestamp since 3.0
+  $date = new DateTime();
+  $date->setTimestamp($var4);
+  $date->setTimezone(new DateTimeZone('EST5EDT'));
+  $var4 = $date->format('Y-m-d H:i:s');
+
+  global $user;
+  $node = new stdClass();
+  $node->type = 'device_component_history';
+  $node->uid = $user->uid;
+
+  $node->format = 0;
+  $node->title = 'covidien_api';
+  $node->field_component_device[] = array('nid' => $var1);
+  $node->field_device_component[] = array('nid' => $var2);
+  $node->field_component_serial_number[] = array('value' => $var3);
+  $node->field_activation_datetime[] = array('value' => $var4);
+  node_save($node);
+
+  if ($node->nid > 0) {
+    $arr[0]['status'] = "0";
+  } else {
+    $arr[0]['status'] = "1";
+  }
+  return json_encode($arr);
+}
+
+function _covidien_api_device_log_insert($v1, $v2, $v3) {
+
+  $var1 = filter_xss($v1);
+  $var2 = filter_xss($v2);
+  $var3 = filter_xss($v3);
+
+  global $user;
+  $node = new stdClass();
+  $node->type = 'device_log_field';
+  $node->uid = $user->uid;
+
+  $node->format = 0;
+  $node->title = 'covidien_api';
+  $node->field_device_log_field_name[] = array('value' => $var1);
+  $node->field_device_logfile_position[] = array('value' => $var2);
+  $node->field_deie_logfield_devicetype[] = array('nid' => $var3);
+
+  node_save($node);
+
+  if ($node->nid > 0) {
+    $arr[0]['nid'] = $node->nid;
+  } else {
+    $arr[0]['status'] = "1";
+  }
+  return json_encode($arr);
+}
+
+function _covidien_api_device_log_history_insert($v1, $v2, $v3) {
+
+  $var1 = filter_xss($v1);
+  $var2 = filter_xss($v2);
+  $var3 = filter_xss($v3);
+
+  global $user;
+  $node = new stdClass();
+  $node->type = 'device_log_history';
+  $node->uid = $user->uid;
+
+  $node->format = 0;
+  $node->title = 'covidien_api';
+  $node->field_device_log_history_device[] = array('nid' => $var1);
+  $node->field_device_log_history_field[] = array('nid' => $var2);
+  $node->field_device_logged_value[] = array('value' => $var3);
+
+  node_save($node);
+
+  if ($node->nid > 0) {
+    $arr[0]['status'] = "0";
+  } else {
+    $arr[0]['status'] = "1";
+  }
+  return json_encode($arr);
+}
+
+function _covidien_api_device_insert_custom($v1, $v2, $v3, $v4) {
+  $var1 = filter_xss($v1);
+  $var2 = filter_xss($v2);
+  $var3 = filter_xss($v3);
+  $var4 = filter_xss($v4);
+
+  global $user;
+  $node = new stdClass();
+  $node->type = 'device';
+  $node->uid = $user->uid;
+  $node->format = 0;
+  $node->title = $var2;
+  $node->field_device_serial_number[] = array('value' => $var2);
+  $node->field_device_owner[] = array('nid' => $var3);
+  $node->field_device_type[] = array('nid' => $var1);
+  $node->field_device_is_active[] = array('value' => $var4);
+  node_save($node);
+
+  if ($node->nid > 0) {
+    $arr[0]['status'] = $node->nid;
+  } else {
+    $arr[0]['status'] = "1";
+  }
+  return json_encode($arr);
+}
+
+function _covidien_api_device_discrepancy_insert($v1, $v2, $v3) {
+
+  $var1 = filter_xss($v1);
+  $var2 = filter_xss($v2);
+  $var3 = filter_xss($v3);
+
+  $dev2 = db_query("select type from node where nid='%s'", $var2);
+  $row1 = db_fetch_object($dev2);
+  if (!empty($row1)) {
+    $arr2['type'] = $row1->type;
+  }
+
+  if ($row1->type == 'hardware') {
+    $dev1 = db_query("select content_type_hardware.nid from content_type_hardware join node on node.nid=content_type_hardware.nid and node.vid=content_type_hardware.vid where content_type_hardware.field_hw_version_value='%s'", $var3);
+  } else if ($row1->type == 'software') {
+    $dev1 = db_query("select content_type_software.nid from content_type_software join node on node.nid=content_type_software.nid and node.vid=content_type_software.vid where content_type_software.field_sw_version_value='%s'", $var3);
+  }
+
+  $row = db_fetch_object($dev1);
+  if (!empty($row)) {
+    $arr1['nid'] = $row->nid;
+  }
+
+  global $user;
+  $node = new stdClass();
+  $node->type = 'device_discrepancy';
+  $node->uid = $user->uid;
+
+  $node->format = 0;
+  $node->title = 'covidien_api';
+  $node->field_discrepancy_device[] = array('nid' => $var1);
+  $node->field_discrepancy_component[] = array('nid' => $var2);
+  $node->field_discrepancy_old_component[] = array('nid' => $row->nid);
+
+  node_save($node);
+
+  if ($node->nid > 0) {
+    $arr[0]['status'] = "0";
+  } else {
+    $arr[0]['status'] = "1";
+  }
+  return json_encode($arr);
+}
+
+function _covidien_api_watchdog_insert($val1, $val2, $val3, $val4) {
+
+  $var1 = filter_xss($val1);
+  $var2 = filter_xss($val2);
+  $var3 = filter_xss($val3);
+  $var4 = filter_xss($val4);
+
+  $v1 = array();
+  $devicetype = '';
+  $deviceserial = '';
+  $arr1 = array();
+  $dev1 = db_query("select uid from user_sessions where sid='%s'", $var1);
+
+  $row = db_fetch_object($dev1);
+  if (!empty($row)) {
+    $arr['uid'] = $row->uid;
+  }
+  $v1 = getArrayValues($var3);
+
+  $var2 .= ' - ' . $v1['status'];
+  $devicetype = $v1['devicetype'];
+  $deviceserial = $v1['deviceserialnumber'];
+
+  logUserActivity("Agent", $var2, '', $devicetype, $deviceserial, $arr['uid'], '', $var4);
+  $arr1[0]['status'] = "0";
+
+  return json_encode($arr1);
+}
+
+function getArrayValues($str) {
+  $info = array();
+  $arr = explode(",", $str);
+  foreach ($arr as $key) {
+    $v = explode(":", $key);
+    $info[$v[0]] = $v[1];
+  }
+  return $info;
+}
+
+function _covidien_api_user_access_policy($v1, $v2, $v3, $v4) {
+
+  $var1 = filter_xss($v1);
+  $var2 = filter_xss($v2);
+  $var3 = filter_xss($v3);
+  $var4 = filter_xss($v4);
+
+
+  $dev1 = db_query("select uid from {user_sessions} where sid='%s'", $var1);
+
+  $row = db_fetch_object($dev1);
+  if (!empty($row)) {
+    $arr['uid'] = $row->uid;
+  }
+
+  $userload = user_load($arr['uid']);
+  if (count($userload->roles) > 0) {
+    foreach ($userload->roles as $role) {
+      $rname = explode('__', $role);
+      if (empty($rname[0])) {
+        break;
+      }
+
+      $dev2 = db_query("SELECT node.nid AS nid,node.title AS node_title,    node_node_data_field_device_product_line.title AS node_node_data_field_device_product_line_title,    node_node_data_field_device_product_line.nid AS node_node_data_field_device_product_line_nid  FROM node node   LEFT JOIN content_field_device_product_line node_data_field_device_product_line ON node.vid = node_data_field_device_product_line.vid  LEFT JOIN node node_node_data_field_device_product_line ON node_data_field_device_product_line.field_device_product_line_nid = node_node_data_field_device_product_line.nid  WHERE (node.status = 1) AND (node.type in ('devicetype')) AND (node_data_field_device_product_line.field_device_product_line_nid = '%s' ) ORDER BY nid ASC", $rname[0]);
+      $count = 0;
+      while ($row = db_fetch_object($dev2)) {
+        $devices_nid_arr[] = $row->node_title;
+        $count++;
+      }
+    }
+  }
+  $roleaccess = roleAccessforAPI($arr['uid']);
+  $arr1[0]['status'] = "0";
+  if (!in_array($var4, $roleaccess[$var3])) {
+    $arr1[0]['status'] = "Access Denied";
+  }
+  if (!in_array($var2, $devices_nid_arr)) {
+    $arr1[0]['status'] = "No Device Access Permission";
+  }
+
+
+  return json_encode($arr1);
+}
+
+function _covidien_api_add_device_installation($v1) {
+
+  $var1 = filter_xss($v1);
+
+  global $user;
+  $node = new stdClass();
+  $node->type = 'device_installation';
+  $node->uid = $user->uid;
+
+
+  $node->format = 0;
+  $node->title = 'NULL';
+  $node->field_device_pk[] = array('nid' => $var1);
+  node_save($node);
+
+  if ($node->nid > 0) {
+    $arr[0]['status'] = "0";
+  } else {
+    $arr[0]['status'] = "1";
+  }
+  return json_encode($arr);
+}
+
+/**
+ * ['SN Reprogramming', '2391773', '2dd4e0c9-26bc-4d6e-bd06-11acf264ca9b', '1422527497', '', '', '', '', '', '', '', 'manufacture. L17B1126G -> L17B1129G'] 
+ */
+function _covidien_api_add_device_service_history($v1, $v2, $v3, $v4, $v5, $v6, $v7, $v8, $v9, $v10, $v11, $v12) {
+
+  $var1 = filter_xss($v1);
+  $var2 = filter_xss($v2);
+  $var3 = filter_xss($v3);
+  $var4 = filter_xss($v4);
+  $var5 = filter_xss($v5);
+  $var6 = filter_xss($v6);
+  $var7 = filter_xss($v7);
+  $var8 = filter_xss($v8);
+  $var9 = filter_xss($v9);
+  $var10 = filter_xss($v10);
+  $var11 = filter_xss($v11);
+  $var12 = filter_xss($v12);
+  //var 1
+  $arr1['nid'] = db_result(db_query("select content_type_device_installation.nid from content_type_device_installation
+			join content_field_device_pk on content_field_device_pk.nid=content_type_device_installation.nid and content_field_device_pk.field_device_pk_nid='%s'", $var2));
+
+  //var 2
+  $arr2['nid'] = db_result(db_query("select content_type_device_service_type.nid from content_type_device_service_type join node on node.nid=content_type_device_service_type.nid where node.title='%s'", $var1));
+
+  if (!empty($var10)) {
+    $arr3['nid'] = db_result(db_query("select user_id as nid from {device_component_download} where user_id='%s'", $var10));
+  } else {
+    $arr3['nid'] = db_result(db_query("select content_type_person.nid from content_type_person join users on users.name=content_type_person.field_person_username_value join user_sessions on user_sessions.uid=users.uid where sid='%s'", $var3));
+  }
+
+  $darr['type'] = db_result(db_query("select node.type from node where node.nid='%s'", $var6));
+
+  if ($drow1->type == 'software') {
+    if (empty($var11)) {
+      if (empty($var9)) {
+        $dev4 = db_query("select content_type_software.nid,content_type_device_component_history.field_update_to_component_nid from content_type_device_component_history
+				join content_type_software on content_type_device_component_history.field_device_component_nid=content_type_software.nid
+				join node on node.nid=content_type_software.nid and node.vid=content_type_software.vid
+				where content_type_device_component_history.field_component_device_nid='%s' and node.title='%s' and content_type_software.field_sw_part_value='%s'", $var2, $var8, $var5);
+      } else {
+        $dev4 = db_query("select content_type_software.nid,content_type_device_component_history.field_update_to_component_nid from content_type_device_component_history
+				join content_type_software on content_type_device_component_history.field_device_component_nid=content_type_software.nid
+				join node on node.nid=content_type_software.nid and node.vid=content_type_software.vid
+				where content_type_device_component_history.field_component_device_nid='%s' and node.title='%s' and content_type_software.field_sw_version_value='%s' and content_type_software.field_sw_part_value='%s'", $var2, $var8, $var9, $var5);
+      }
+      $row3 = db_fetch_object($dev4);
+      if (!empty($row3)) {
+        $arr4['nid'] = $row3->nid;
+        $arr4['field_update_to_component_nid'] = $row3->field_update_to_component_nid;
+      }
+    } else {
+      $dev4 = db_query("select from_component_nid as nid,to_component_nid as field_update_to_component_nid from {device_component_download} where from_component_nid='%s' and device_nid='%s' and user_id='%s'", $var11, $var2, $arr3['nid']);
+      $row3 = db_fetch_object($dev4);
+      if (!empty($row3)) {
+        $arr4['nid'] = $row3->nid;
+        $arr4['field_update_to_component_nid'] = $row3->field_update_to_component_nid;
+      }
+    }
+  } else {
+    if (empty($var11)) {
+      if (empty($var9)) {
+        $dev4 = db_query("select content_type_hardware.nid,content_type_device_component_history.field_update_to_component_nid from content_type_device_component_history
+				join content_type_hardware on content_type_device_component_history.field_device_component_nid=content_type_hardware.nid
+				join node on node.nid=content_type_hardware.nid and node.vid=content_type_hardware.vid
+				where content_type_device_component_history.field_component_device_nid='%s' and node.title='%s' and content_type_hardware.field_hw_part_value='%s'", $var2, $var8, $var5);
+      } else {
+        $dev4 = db_query("select content_type_hardware.nid,content_type_device_component_history.field_update_to_component_nid from content_type_device_component_history
+				join content_type_hardware on content_type_device_component_history.field_device_component_nid=content_type_hardware.nid
+				join node on node.nid=content_type_hardware.nid and node.vid=content_type_hardware.vid
+				where content_type_device_component_history.field_component_device_nid='%s' and node.title='%s' and content_type_hardware.field_hw_version_value='%s' and content_type_hardware.field_hw_part_value='%s'", $var2, $var8, $var9, $var5);
+      }
+      $row3 = db_fetch_object($dev4);
+      if (!empty($row3)) {
+        $arr4['nid'] = $row3->nid;
+        $arr4['field_update_to_component_nid'] = $row3->field_update_to_component_nid;
+      }
+    } else {
+      $dev4 = db_query("select from_component_nid as nid,to_component_nid as field_update_to_component_nid from {device_component_download} where from_component_nid='%s' and device_nid='%s' and user_id='%s'", $var11, $var2, $arr3['nid']);
+      $row3 = db_fetch_object($dev4);
+      if (!empty($row3)) {
+        $arr4['nid'] = $row3->nid;
+        $arr4['field_update_to_component_nid'] = $row3->field_update_to_component_nid;
+      }
+    }
+  }
+  global $user;
+  $node = new stdClass();
+  $node->type = 'device_service_history';
+  $node->uid = $user->uid;
+  $node->format = 0;
+  $node->title = 'Device Service';
+  $node->field_device_installation_pk[] = array('nid' => $arr1['nid']);
+  $node->field_device_service_type[] = array('nid' => $arr2['nid']);
+  $node->field_device_pk[] = array('nid' => $var2);
+  $node->field_service_person_pk[] = array('nid' => $arr3['nid']);
+  if (empty($var4) || !is_numeric($var4)) {
+    $var4 = time();
+  }
+  // the $var4 is UNIX timestamp since 3.0 
+  $date = new DateTime();
+  $date->setTimestamp($var4);
+  $date->setTimezone(new DateTimeZone('EST5EDT'));
+  $var4 = $date->format('Y-m-d H:i:s');
+  //'2012-08-24 13:37:39';
+  $node->field_service_datetime[0] = array('value' => $var4, 'value2' => $var4, 'timezone' => 'UTC', 'offset' => 0, 'offset2' => 0, 'timezone_db' => UTC, 'date_type' => 'datetime');
+  //$node->field_service_datetime[0]['value']['date'] ='2012-08-24 13:37:36';
+  $node->field_from_device_component[] = array('nid' => $arr4['nid']);
+  $node->field_to_target_component[] = array('nid' => $arr4['field_update_to_component_nid']);
+  $node->field_to_device_component[] = array('nid' => $var6);
+  $node->field_upgrade_status[] = array('value' => $var7);
+  $node->field_service_note[] = array('value' => $var12);
+  node_save($node);
+
+  if ($node->nid > 0) {
+    $retarr[0]['nid'] = $node->nid;
+  } else {
+    $retarr[0]['status'] = "1";
+  }
+  return json_encode($retarr);
+}
+
+function _covidien_api_add_device_log($v1, $v2, $v3) {
+
+  $var1 = filter_xss($v1);
+  $var2 = filter_xss($v2);
+  $var3 = filter_xss($v3);
+
+
+  global $user;
+  $node = new stdClass();
+  $node->type = 'device_log';
+  $node->uid = $user->uid;
+  $node->format = 0;
+  $node->title = $var1;
+  $node->field_device_service_history[] = array('nid' => $var1);
+  $node->field_device_log_type[] = array('value' => $var2);
+  $node->field_device_log_filename[] = array('value' => $var3);
+  node_save($node);
+
+  if ($node->nid > 0) {
+    $arr[0]['status'] = "0";
+  } else {
+    $arr[0]['status'] = "1";
+  }
+  return json_encode($arr);
+}
+
+function _covidien_api_insert_download_info($v1, $v2, $v3, $v4, $v5) {
+  $var1 = filter_xss($v1);
+  $var2 = filter_xss($v2);
+  $var3 = filter_xss($v3);
+  $var4 = filter_xss($v4);
+  $var5 = filter_xss($v5);
+
+  $dev3 = db_query("select content_type_person.nid from content_type_person join users on users.name=content_type_person.field_person_username_value join user_sessions on user_sessions.uid=users.uid where sid='%s'", $var5);
+  $row = db_fetch_object($dev3);
+  if (!empty($row)) {
+    $arr[0]['nid'] = $row->nid;
+  }
+  $id = db_result(db_query("select id from {device_component_download} where device_nid = '%s' and from_component_nid = '%s' and to_component_nid= '%s'", $var1, $var2, $var3));
+
+  if ($var4 != '') {
+    $var4 = date('Y-m-d H:i:s', strtotime($var4));
+  }
+
+  if (empty($id)) {
+    $query = db_query("insert into {device_component_download} (`device_nid`,`from_component_nid`,`to_component_nid`,`download_time`, `user_id`) values ('%s','%s','%s','%s','%s')", $var1, $var2, $var3, $var4, $row->nid);
+  }
+  $arr[0]['status'] = "1";
+  return json_encode($arr);
+}
+
+function _covidien_api_software_installation_privilege($v1) {
+  $var1 = filter_xss($v1);
+  $return = array();
+  $mode = 0;
+  $uid = db_result(db_query("select uid from {user_sessions} where sid='%s'", $var1));
+  $nid = db_result(db_query("select nid from {node} where uid='%s' and type = 'person'", $uid));
+  $user_privilege = 0;
+
+  $row = array();
+  $qry2 = db_query("select content_field_max_download_level.field_max_download_level_value, node1.nid as devicetype_nid,node1.title as deviceytype, content_field_max_download_level1.field_max_download_level_value as device_type_download_level from content_type_person_application_role join content_field_person_pk on content_type_person_application_role.vid=content_field_person_pk.vid join content_field_app_role_pk on content_field_app_role_pk.vid=content_type_person_application_role.vid join content_field_max_download_level on content_field_max_download_level.vid=content_type_person_application_role.vid join node on node.vid=content_type_person_application_role.vid join content_type_roles on content_type_roles.nid=content_field_app_role_pk.field_app_role_pk_nid join content_field_device_product_line on content_field_device_product_line.field_device_product_line_nid=content_type_roles.field_role_product_line_nid join content_type_devicetype on content_type_devicetype.vid=content_field_device_product_line.vid join node as node1 on node1.vid=content_type_devicetype.vid join content_field_max_download_level as content_field_max_download_level1 on content_field_max_download_level1.vid=content_type_devicetype.vid where content_field_person_pk.field_person_pk_nid='%s'", $nid);
+  while ($row = db_fetch_object($qry2)) {
+    $device_privilege = $row->device_type_download_level;
+    $user_privilege = $row->field_max_download_level_value;
+    if (empty($device_privilege)) {
+      continue;
+    } else if ($user_privilege >= $device_privilege) {
+      $return[0]['devicetype'][$row->deviceytype] = $device_privilege;
+      $mode = 1;
+    } else {
+      $return[0]['devicetype'][$row->deviceytype] = $user_privilege;
+      $mode = 1;
+    }
+  }
+  if ($mode == 1) {
+    $return[0]['status'] = '1';
+  } else {
+    $return[0]['status'] = '0';
+  }
+  return json_encode($return);
+}
+
+function _insert_device_component_upgrade_log($v1, $v2, $v3) {
+  $device_id = filter_xss($v1);
+  $from_component_nid = filter_xss($v2);
+  $session_id = filter_xss($v3);
+  $return = array();
+  $uid = db_result(db_query("select uid from {user_sessions} where sid='%s'", $session_id));
+  $person_nid = db_result(db_query("select nid from {node} where uid='%s' and type = 'person'", $uid));
+  if (empty($person_nid) || empty($device_id) || empty($from_component_nid)) {
+    $return[0]['status'] = '0';
+    return json_encode($return);
+  }
+  $installation_info = db_fetch_object(db_query("select device_installation.nid as nid,device_installation.vid as vid,device.field_device_serial_number_value as serial_number from node node join content_type_device_installation device_installation on node.vid = device_installation.vid join content_field_device_pk device_pk on device_pk.vid = device_installation.vid join content_type_device device on device.nid = device_pk.field_device_pk_nid join node device_node on device_node.vid = device.vid where device.nid = '%s'", $device_id));
+
+  $history_info = db_fetch_object(db_query("select T2.nid,T2.vid from {content_type_device_component_history} as T1 join {node} as T2 on T1.vid = T2.vid join {content_field_expiration_datetime} expire on expire.vid = T1.vid where T1.field_device_component_nid = '%s' and T1.field_component_device_nid='%s' and expire.field_expiration_datetime_value is NULL", $from_component_nid, $device_id));
+
+  $query = db_query("select history.field_device_component_nid as from_component,history.field_update_to_component_nid as to_component,history.nid as history_nid,history.vid as history_vid from {node} node join {content_type_device_component_history} history on node.vid = history.vid join {content_field_expiration_datetime} expire on expire.vid = history.vid where history.field_component_device_nid = '%s' and expire.field_expiration_datetime_value is NULL", $device_id);
+  while ($row = db_fetch_object($query)) {
+    $component_nid = $row->from_component;
+    $component_type = db_result(db_query("select type from {node} where nid = '%s'", $component_nid));
+    $node = new stdClass();
+    $node->type = 'device_component_upgrade_log';
+    $node->uid = $uid;
+    $node->format = 0;
+    $node->title = 'Device component log';
+    if ($component_type == 'hardware') {
+      $component_info = db_fetch_object(db_query("select T2.field_hw_part_value,T2.field_hw_version_value,T2.nid,T2.vid,T1.title from {node} as T1 join {content_type_hardware} as T2 on T1.vid = T2. vid where T2.nid = '%s'", $component_nid));
+      $node->field_from_component_nid[] = array('value' => $component_info->nid);
+      $node->field_from_component_vid[] = array('value' => $component_info->vid);
+      $node->field_from_component_name[] = array('value' => $component_info->title);
+      $node->field_from_component_partnumber[] = array('value' => $component_info->field_hw_part_value);
+      $node->field_from_component_version[] = array('value' => $component_info->field_hw_version_value);
+      $node->field_to_component_nid[] = array('value' => '');
+      $node->field_to_component_vid[] = array('value' => '');
+      $node->field_to_component_name[] = array('value' => '');
+      $node->field_to_component_partnumber[] = array('value' => '');
+      $node->field_to_component_version[] = array('value' => '');
+    } else {
+      $component_info = db_fetch_object(db_query("select T2.field_sw_part_value,T2.field_sw_version_value,T2.nid,T2.vid,T1.title from {node} as T1 join {content_type_software} as T2 on T1.vid = T2. vid where T2.nid = '%s'", $component_nid));
+      $node->field_from_component_nid[] = array('value' => $component_info->nid);
+      $node->field_from_component_vid[] = array('value' => $component_info->vid);
+      $node->field_from_component_name[] = array('value' => $component_info->title);
+      $node->field_from_component_partnumber[] = array('value' => $component_info->field_sw_part_value);
+      $node->field_from_component_version[] = array('value' => $component_info->field_sw_version_value);
+      $node->field_to_component_nid[] = array('value' => '');
+      $node->field_to_component_vid[] = array('value' => '');
+      $node->field_to_component_name[] = array('value' => '');
+      $node->field_to_component_partnumber[] = array('value' => '');
+      $node->field_to_component_version[] = array('value' => '');
+    }
+    $node->field_uh_component_device[] = array('value' => $device_id);
+    $node->field_uh_component_serial_number[] = array('value' => $installation_info->serial_number);
+    $node->field_uh_device_installation_pk[] = array('value' => $installation_info->nid);
+    $node->field_uh_device_service_history[] = array('value' => '');
+    $node->field_uh_activity_datetime[] = array('value' => '');
+    $node->field_component_history_nid[] = array('value' => $history_info->nid);
+    $node->field_component_history_vid[] = array('value' => $history_info->vid);
+    $node->field_device_service_history_vid[] = array('value' => '');
+    $node->field_device_installation_pk_vid[] = array('value' => $installation_info->vid);
+    node_save($node);
+  }
+  $return[0]['status'] = '1';
+  return json_encode($return);
+}
+
+function _insert_device_component_upgrade_after_log($v1, $v2, $v3) {
+  $device_id = filter_xss($v1);
+  $service_id = filter_xss($v2);
+  $session_id = filter_xss($v3);
+  $return = array();
+  $uid = db_result(db_query("select uid from {user_sessions} where sid='%s'", $session_id));
+  $person_nid = db_result(db_query("select nid from {node} where uid='%s' and type = 'person'", $uid));
+  if (empty($person_nid) || empty($device_id) || empty($service_id)) {
+    $return[0]['status'] = '0';
+    return json_encode($return);
+  }
+
+  $sw = db_fetch_object(db_query("select service.field_from_device_component_nid, service.field_to_device_component_nid from {node} node join {content_type_device_service_history} service on node.vid = service.vid where service.nid = '%s'", $service_id));
+  $from_component_nid = $sw->field_from_device_component_nid;
+  $to_component_nid = $sw->field_to_device_component_nid;
+
+  $query = db_query("select upgrade_log.nid, upgrade_log.field_from_component_nid_value from {node} node join {content_type_device_component_upgrade_log} upgrade_log on node.vid = upgrade_log.vid where upgrade_log.field_uh_component_device_value = '%s' and upgrade_log.field_uh_device_service_history_value is NULL", $device_id);
+  while ($row = db_fetch_object($query)) {
+    $log_nid = $row->nid;
+    $from_comp = $row->field_from_component_nid_value;
+    $node = node_load($log_nid);
+    $node->field_uh_device_service_history[] = array('value' => $service_id);
+    if ($from_comp == $from_component_nid) {
+      $component_info = db_fetch_object(db_query("select T2.field_sw_part_value,T2.field_sw_version_value,T2.nid,T2.vid,T1.title from {node} as T1 join {content_type_software} as T2 on T1.vid = T2. vid where T2.nid = '%s'", $to_component_nid));
+      $node->field_to_component_nid[] = array('value' => $component_info->nid);
+      $node->field_to_component_vid[] = array('value' => $component_info->vid);
+      $node->field_to_component_name[] = array('value' => $component_info->title);
+      $node->field_to_component_partnumber[] = array('value' => $component_info->field_sw_part_value);
+      $node->field_to_component_version[] = array('value' => $component_info->field_sw_version_value);
+    }
+    node_save($node);
+  }
+  $return[0]['status'] = '1';
+  return json_encode($return);
+}
+
+function _get_timeZone_info($time, $zone) {
+
+  if (!empty($time)) {
+    $drupal_time_zone = date_default_timezone_name();
+    $given_date = date_create_from_format('D M d H:i:s T Y', $time);
+    $formatted = date_format($given_date, 'Y-m-d H:i:s');
+
+    $date = new DateTime($formatted, new DateTimeZone($zone));
+
+    $date->setTimezone(new DateTimeZone($drupal_time_zone));
+    $date2 = $date->format('Y-m-d H:i:s');
+    $return[0]['date'] = $date2;
+  } else {
+    $drupal_time_zone = date_default_timezone_name();
+    $current_time = time();
+    $time = date('D M d H:i:s T Y', $current_time);
+    $zone = date('e', $current_time);
+    $given_date = date_create_from_format('D M d H:i:s T Y', $time);
+    $formatted = date_format($given_date, 'Y-m-d H:i:s');
+
+    $date = new DateTime($formatted, new DateTimeZone($zone));
+
+    $date->setTimezone(new DateTimeZone($drupal_time_zone));
+    $date2 = $date->format('Y-m-d H:i:s');
+    $return[0]['date'] = $date2;
+  }
+  return json_encode($return);
+}
+
+function _update_forgetpassfields($username) {
+  $uid = finduserexists($username);
+  if (empty($uid)) {
+    $return[0]['status'] = '1';
+    $return[0]['link'] = 'Error: Email not registered';
+    return json_encode($return);
+  }
+  $link = updateforgotstatus($username);
+  global $language;
+  $info['message_id'] = 'forgot_password';
+  $userdet = getuserdetail($username);
+  $info['name'] = $userdet->name;
+  $info['uid'] = $userdet->uid;
+  $info['ipaddress'] = $_SERVER['REMOTE_ADDR'];
+  $info['link'] = $link;
+  $info['to'] = $username;
+  $info['language'] = $language;
+  $mail = new Mail();
+  $status = $mail->forgotpasswordrequest($info);
+
+  $return[0]['status'] = '0';
+  $return[0]['link'] = $link;
+  return json_encode($return);
+}
+
+function _covidien_api_update_user_country($v1, $v2) {
+  $var1 = filter_xss($v1);
+  $var2 = filter_xss($v2);
+  $mode = 0;
+  $person_nid = db_fetch_object(db_query("select nid,vid from content_type_person where field_person_username_value like '%s'", $var1));
+  $country_nid = db_result(db_query("select nid from node where nid='%d' and type='country'", $var2));
+  if ($country_nid > 0 && $person_nid->nid > 0) {
+    db_query("Update {content_field_device_avail_country} set field_device_avail_country_nid = '%s' where nid = '%s'", $country_nid, $person_nid->nid);
+    cache_clear_all("content:$person_nid->nid:$person_nid->vid", 'cache_content', TRUE);
+    $mode = 1;
+  }
+  $return = array();
+  if ($mode == 1) {
+    $return[0]['status'] = '1'; // successful
+  } else {
+    $return[0]['status'] = '0'; // unsuccessful
+  }
+  return json_encode($return);
+}
+
+/**
+ * 'covidien_api.get_trade_embargo_country', // Method name
+ * '_covidien_api_get_trade_embargo_country', // Callback to execute
+ */
+function _covidien_api_get_trade_embargo_countries() {
+  $result = db_query("SELECT c.field_iso_3166_2lcode_value FROM trade_embargo_country t JOIN content_type_country c ON t.country_id = c.nid WHERE t.device_id = 0");
+  $rows = array();
+  while ($row = db_fetch_object($result)) {
+    $rows['countries'][] = $row->field_iso_3166_2lcode_value;
+  }
+  return json_encode(array($rows));
+}
+
+/**
+ * covidien_api.has_trade_embargo_exception
+ * @param string $sn 
+ * @param string $country 
+ * @return string $status json_encode
+ */
+function _covidien_api_has_trade_embargo_exception($sn, $country) {
+  $sql = "SELECT t.id, n.title AS country, dtn.title AS device_type, dn.title AS device_sn
+    FROM {trade_embargo_country} t
+    JOIN {node} n ON t.country_id = n.nid AND n.type = 'country' AND n.status = 1
+    JOIN {content_type_country} c ON t.country_id = c.nid
+    JOIN {node} dtn ON t.device_type_id = dtn.nid AND dtn.type = 'devicetype'
+    JOIN {node} dn ON t.device_id = dn.nid AND dn.type = 'device'
+    WHERE dn.title = '%s' AND c.field_iso_3166_2lcode_value = '%s' ";
+  $result = db_result(db_query($sql, $sn, $country));
+  //JSON:[{status:0|1}]  0: has exception for the country 1: not have exception for the country
+  $status = $result ? 0 : 1;
+  return json_encode(array(array('status' => $status)));
+}
+
+function _covidien_api_get_alert_message_content($deviceType, $serialNumber, $alertEvent, $delivery, $reason) {
+  $sql = "SELECT t.template_path 
+    FROM device_type_alert_template_relation r
+    JOIN alert_message_template t ON r.alert_message_template_id = t.id
+    JOIN alert_event e ON t.alert_event_id = e.id
+    JOIN alert_transport_type tt ON t.alert_transport_type_id = tt.id
+    WHERE t.alert_event_id = %d AND t.alert_transport_type_id = %d
+    AND r.device_type_nid = %d";
+  $args = array($alertEvent, $delivery, $deviceType);
+  $template_path = db_result(db_query($sql, $args));
+  //replace {device_type} {device_serial_nubmer} {reason}
+  $device_type = db_result(db_query("SELECT title FROM {node} WHERE type='devicetype' AND nid=%d", $deviceType));
+  $device_sn_sql = "SELECT n.title FROM {node} n
+    JOIN {content_field_device_type} dt ON n.nid=dt.nid
+    WHERE n.type='device' AND dt.field_device_type_nid=%d AND n.nid=%d";
+  $device_serial_nubmer = db_result(db_query($device_sn_sql, $deviceType, $serialNumber));
+
+  $body = file_get_contents($template_path);
+  //if have not template path, this path have not file, this file have not content
+  if (!$template_path || !file_exists($template_path) || !$body) {
+    $body = "Dear User,\n\nDevice Type is {device_type}, \n\nDevice Serial Number is {device_serial_nubmer}, \n\nThe Reason is: {reason} \n\nThanks and Regards, \nCovidien Admin";
+  }
+  $body = str_replace('{device_type}', $device_type, $body);
+  $body = str_replace('{device_serial_nubmer}', $device_serial_nubmer, $body);
+  $body = str_replace('{reason}', $reason, $body);
+
+  return json_encode(array(array('mailBody' => $body)));
+}
+
+function _covidien_api_update_device_region($device_nid, $region_name) {
+  $region_nid = db_result(db_query("SELECT nid FROM {node} WHERE title='%s' AND type='region'", $region_name));
+  if ($region_nid) {
+    $node = new stdClass();
+    $node->type = 'region';
+    $node->uid = 1;
+    $node->format = 0;
+    $node->title = $region_name;
+    node_save($node);
+    $region_nid = $node->nid;
+  }
+  db_query("UPDATE {content_type_device} SET region_nid=%d WHERE nid=%d", $region_nid, $device_nid);
+
+  return json_encode(array(array('device_nid' => $device_nid, 'region_nid' => $region_nid)));
+}

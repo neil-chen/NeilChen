@@ -1,0 +1,39 @@
+<style>
+table th {
+background-color: #C7EAFB;
+padding: 5px;
+border: 1px solid #D1D3D4;
+font-size: 12px;
+}
+</style>
+
+<table class="views-table cols-8" style="table-layout:fixed">
+<colgroup>
+			
+			{#if $columnHeadList|@count eq 2 #}
+			<col style="width:40%;"></col>
+			<col style="width:40%;"></col>
+			{#else#}				
+				<col style="width:30%;"></col>
+				<col style="width:20%;"></col>
+				<col style="width:50%;"></col>				
+			{#/if#}
+
+</colgroup>
+
+<tbody>
+	<tr>
+		<th colspan="{#$columnHeadList|@count #}" class="available_table_head">{#$title#}</th>
+	</tr>
+	<tr>		
+	{#foreach from=$columnHeadList item=column#} 
+		<th class="views-field" style="font-weight:normal">{#$column#}</th> 			
+ 	{#/foreach#}
+ 	</tr>
+	
+	<tr class='odd views-row-first'>
+		
+	</tr>
+</tbody>
+
+</table>

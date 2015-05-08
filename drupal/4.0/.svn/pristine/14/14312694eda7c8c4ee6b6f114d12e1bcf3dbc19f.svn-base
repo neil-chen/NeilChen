@@ -1,0 +1,161 @@
+<?php
+
+/**
+ * hook_menu
+ */
+function covidien_device_menu() {
+  $items = array();
+  $items['covidien/device-type/list'] = array(
+    'title' => t('Device type list'),
+    'description' => t('Device type list.'),
+    'page callback' => 'device_type_list',
+    'access callback' => 'covidien_device_check_access',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['covidien/device-type/ajax/get-guid'] = array(
+    'page callback' => 'device_get_guid',
+    'access arguments' => array('access content'),
+  );
+  return $items;
+}
+
+/**
+ * Implement hook_check_access(), to block unauthorized users.
+ */
+function covidien_device_check_access() {
+  return covidien_cot_admin_access_callback('devices');
+}
+
+/**
+ * hook_node_info
+ */
+function covidien_device_node_info() {
+  return array(
+    'devicetype' => array(
+      'name' => t('Device Type'),
+      'module' => 'covidien_device',
+      'description' => t('Device Type'),
+    )
+  );
+}
+
+/**
+ * hook_nodeapi
+ */
+function covidien_device_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+  if ($node->type == 'devicetype') {
+    switch ($op) {
+      case 'load':
+        $node->device_type_guid = db_result(db_query("SELECT device_type_guid FROM {content_type_devicetype} WHERE nid = %d", $node->nid));
+        break;
+      case 'validate':
+        if (!$node->device_type_guid) {
+          form_set_error('device_type_guid', t('Invalid Guid'));
+        }
+        break;
+      case 'insert':
+        db_query("UPDATE {content_type_devicetype} SET device_type_guid = '%s' WHERE nid = %d", $node->device_type_guid, $node->nid);
+        break;
+      case 'update':
+        db_query("UPDATE {content_type_devicetype} SET device_type_guid = '%s' WHERE nid = %d", $node->device_type_guid, $node->nid);
+        break;
+      case 'delete':
+        db_query("UPDATE {node} SET status = 0 WHERE nid = %d", $node->nid);
+        break;
+      case 'view':
+        $node->content['guid'] = array(
+          '#value' => '<div class="field"><div class="field-label">' . t('Guid: ') . '</div>' . $node->device_type_guid . '</div>',
+          '#weight' => 10,
+        );
+        break;
+    }
+  }
+}
+
+/**
+ * 
+ */
+function covidien_device_form_alter(&$form, &$form_state, $form_id) {
+  if ($form_id == 'devicetype_node_form') {
+    unset($form['menu']);
+    unset($form['revision_information']);
+    unset($form['comment_settings']);
+    unset($form['path']);
+    unset($form['author']);
+    unset($form['options']);
+    unset($form['field_sw_pack_expiry_interval']);
+    unset($form['field_config_complete_timelimit']);
+    unset($form['field_activation_utc_offset']);
+    unset($form['field_expiration_utc_offset']);
+    unset($form['field_dev_type_file_location']);
+    unset($form['field_activation_datetime']);
+    unset($form['field_expiration_datetime']);
+    unset($form['field_device_type_description']);
+    unset($form['buttons']['preview']);
+
+    $form['title']['#title'] = t('Device Type Name');
+    //reset field_serial_number_regex title
+    $form['field_serial_number_regex'][0]['#title'] = t('Serial Number Regex');
+    //reset field_device_product_line
+    $form['device_type_guid'] = array(
+      '#type' => 'textfield',
+      '#default_value' => '',
+      '#title' => t('Device Type Guid'),
+      '#required' => true,
+      '#weight' => 4,
+      '#default_value' => $form['#node']->device_type_guid,
+    );
+  }
+}
+
+function device_type_list() {
+  $product_line = filter_xss($_GET['product_line']);
+  $query = "SELECT n.nid, d.device_type_guid, n.title AS device_type_name, pn.title AS product_line_name, n.changed FROM content_type_devicetype d 
+        JOIN {node} n ON n.vid = d.vid AND n.type='devicetype'
+        JOIN {content_field_device_product_line} p ON p.nid = d.nid 
+        JOIN {node} pn ON pn.nid = p.field_device_product_line_nid";
+  $args = array();
+  if ($product_line) {
+    $query .= " WHERE p.field_device_product_line_nid = %d ";
+    $args[] = $product_line;
+  }
+  //header
+  $header = array(
+    array('data' => t('Name'), 'field' => 'n.title', 'sort' => 'asc'),
+    array('data' => t('Guid'), 'field' => 'd.device_type_guid', 'sort' => 'asc'),
+    array('data' => t('Product Line'), 'field' => 'pn.title', 'sort' => 'desc'),
+    array('data' => t('Update time'), 'field' => 'n.changed', 'sort' => 'asc'),
+  );
+  $query .= " GROUP BY n.nid " . check_plain($_GET['sort']) ? tablesort_sql($header) : " ORDER BY n.changed DESC ";
+  $result = db_query($query, $args);
+  while ($row = db_fetch_object($result)) {
+    $rows[$row->nid]['name'] = l($row->device_type_name, 'node/' . $row->nid . '/edit');
+    $rows[$row->nid]['guid'] = $row->device_type_guid;
+    $rows[$row->nid]['product_line'] = $row->product_line_name;
+    $rows[$row->nid]['changed'] = $row->changed ? date('Y-m-d H:i:s A', $row->changed) : '';
+  }
+  $output = theme_table($header, $rows);
+  return $output;
+}
+
+/**
+ * menu ajax callback
+ */
+function device_get_guid() {
+  $guid = create_guid();
+  drupal_json(array('status' => 'success', 'data' => $guid));
+}
+
+/**
+ * create a guid
+ */
+function create_guid() {
+  $charid = md5(uniqid(rand(), true));
+  $hyphen = chr(45); // "-"
+  $uuid = substr($charid, 0, 8) . $hyphen
+    . substr($charid, 8, 4) . $hyphen
+    . substr($charid, 12, 4) . $hyphen
+    . substr($charid, 16, 4) . $hyphen
+    . substr($charid, 20, 12);
+  return $uuid;
+}

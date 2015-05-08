@@ -1,0 +1,34 @@
+<div class="view view-hw-list view-id-hw_list view-display-id-block_1 view-dom-id-2">
+  <div class="view-content">
+    <table class="views-table cols-5" border="1">
+
+      <thead>
+		<tr>
+			<th class="views-field views-field-nid" style="text-align:center;" style="width:5%;"  ></td>
+		{#foreach from=$columnHeadList item=column#} 
+			<th class="views-field views-field-title" style="font-weight:normal">{#$column#}</th> 			
+	 	{#/foreach#}
+	 	</tr>
+ 		  </thead>
+ 		  
+	<tbody>	
+		{#foreach from=$rowList item=row#} 
+		
+		<tr class="odd views-row-first">
+		
+			{#foreach from=$row item=current_item name=current#} 
+				{#if $smarty.foreach.current.index==0#}
+		  <td class="views-field views-field-nid" ><input type="checkbox" name="{#$checkbox_name#}" value="{#$current_item#}" {#if $current_item|in_array:$default_checked_value#} checked="checked" {#/if#} ></td>
+	  		{#else#}  			
+		  <td class="views-field views-field-title">{#$current_item#}</td>
+				{#/if#}
+			{#/foreach#}
+			
+		</tr>
+		
+		{#/foreach#}
+
+ 	</tbody>
+</table>
+
+</div>

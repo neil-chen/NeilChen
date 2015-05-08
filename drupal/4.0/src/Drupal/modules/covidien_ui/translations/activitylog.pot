@@ -1,0 +1,54 @@
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  Theme,v 1 2012/08/21 06:26:03 Covidien
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2009-06-16 19:00+0200\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: activitylog.tpl.php:5,11
+msgid "Enter user name"
+msgstr ""
+
+#: activitylog.tpl.php:30
+msgid "User Activity Monitor"
+msgstr ""
+
+#: activitylog.tpl.php:38, audit_trial_report.tpl.php:22
+msgid "Search for a User:"
+msgstr ""
+
+#: activitylog.tpl.php:53
+msgid "Filter Categories:"
+msgstr ""
+
+#: activitylog.tpl.php:60
+msgid "Select Role"
+msgstr ""
+
+#: activitylog.tpl.php:64
+msgid "Covidien Employee"
+msgstr ""
+
+#: activitylog.tpl.php:68
+msgid "Covidien Business Unit"
+msgstr ""
+
+#: activitylog.tpl.php:74
+msgid "Covidien Department"
+msgstr ""
+
+#: activitylog.tpl.php:81
+msgid "Other Company"
+msgstr ""

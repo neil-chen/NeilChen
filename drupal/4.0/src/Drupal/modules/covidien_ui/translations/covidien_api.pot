@@ -1,0 +1,194 @@
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  Theme,v 1 2012/08/21 06:26:03 Covidien
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2009-06-16 19:00+0200\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: template.php, covidien_api.module:77
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:89
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:101
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:112
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:122
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:133
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:144
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:155
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:165
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:176
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:188
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:198
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:209
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:219
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:230
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:250
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:260
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:271
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:283
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:296
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:308
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:319
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:330
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:342
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:353
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:365
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:377
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:389
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:401
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:414
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:427
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:440
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:451
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:464
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:476
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:487
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:498
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:510
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:524
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:537
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:548
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: template.php, covidien_api.module:559
+msgid "Returns the sum of the two arguments."
+msgstr ""
+
+#: covidien_api.module:810
+msgid "To get Component name with Nid sent by server."
+msgstr ""
+
+#: covidien_api.module:819
+msgid "To get Component name with Nid sent by server."
+msgstr ""

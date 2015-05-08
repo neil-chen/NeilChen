@@ -1,0 +1,5 @@
+<?php
+
+/**
+ * Customized in themes.
+ */

@@ -1,0 +1,42 @@
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  Theme,v 1 2012/08/21 06:26:03 Covidien
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2009-06-16 19:00+0200\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: template.php, views-view-table--individual-configuration--default.tpl:24
+msgid "Version:"
+msgstr ""
+
+#: template.php, views-view-table--individual-configuration--default.tpl:25
+msgid "Effective Date:"
+msgstr ""
+
+#: template.php, views-view-table--individual-configuration--default.tpl:26
+msgid "Date Created:"
+msgstr ""
+
+#: template.php, views-view-table--individual-configuration--default.tpl:27
+msgid "End of Life Date:"
+msgstr ""
+
+#: template.php, views-view-table--individual-configuration--default.tpl:36
+msgid "Hardware"
+msgstr ""
+
+#: template.php, views-view-table--individual-configuration--default.tpl:37
+msgid "Software"
+msgstr ""

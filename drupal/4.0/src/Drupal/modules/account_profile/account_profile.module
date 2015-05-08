@@ -1,0 +1,185 @@
+<?php
+
+/**
+ * @file
+ *   Account Profile module
+ *
+ *
+ * @author: Rafal Wieczorek <kenorb@gmail.com>
+ */
+
+/**
+ * Implementation of hook_menu().
+ */
+function account_profile_menu() {
+    $items['admin/settings/account_profile'] = array(
+        'title' => 'Account Profile',
+        'description' => t('Settings for Account Profile'),
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('account_profile_get_admin_form'),
+        'access arguments' => array('administer account_profile'),
+        'file' => 'account_profile.admin.inc',
+        'type' => MENU_NORMAL_ITEM,
+    );
+    return $items;
+}
+
+/**
+ * Implementation of hook_perm().
+ *
+ * @return array An array of valid permissions for the account_profile module
+ */
+function account_profile_perm() {
+  return array('administer account_profile');
+}
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function account_profile_form_alter(&$form, $form_state, $form_id) {
+  $profile = variable_get('account_profile_main_profile', key(content_profile_get_types('names'))); // get main profile name
+  switch ($form_id) {
+    case 'user_profile_form':
+        if (variable_get('account_profile_redirect', TRUE)) {
+          if (isset($_REQUEST['destination'])) {
+            $destination = $_REQUEST['destination'];
+            unset($_REQUEST['destination']);
+            drupal_goto($_GET['q'] . "/$profile", array('destination' => $destination));
+          }
+          else {
+             drupal_goto($_GET['q'] . "/$profile");
+          }
+          // header("Location: " . base_path() . $_GET['q'] . "/$profile");
+          exit;
+        }
+    break;
+    case $profile . '_node_form':
+      /* integration with account form */
+      if (is_numeric(arg(1))) { // activate only on edit page (not on registration page)
+          // check if we are on a user account or node edit page
+          if (arg(0) == 'user') { // on account edit page
+            $user = user_load(arg(1));  
+          } elseif (arg(0) == 'node') { // on content profile node edit page
+            $node = node_load(arg(1));
+            $user = user_load($node->uid);
+          }
+
+          module_load_include('pages.inc', 'user');
+
+          $form['account_profile_uid'] = array(
+            '#type' => 'value',
+            '#value' => $user->uid,
+          );
+
+          $account_form = user_profile_form(array(), $user);
+          unset($account_form['submit'], $account_form['delete']); // remove duplicated Save button and Delete
+          $form = array_merge($account_form, $form);
+          $form['#validate'][] = 'account_profile_form_validate';
+          $form['#validate'][] = 'user_validate_picture';
+          $form['#submit'][] = 'account_profile_form_submit';
+          $form['#submit'][] = 'account_profile_user_profile_submit';
+      }
+      /* Integration with Notifications autosubscribe module  */ 
+      if (module_exists('notifications_autosubscribe')) {
+        // Call hook_form_alter from notifications_autosubscribe
+        // Simulating we are on the user edit form so the
+        // autosubscribe check box is included on the form
+        notifications_autosubscribe_form_alter($form, $form_state, 'user_profile_form');
+      }
+    break;
+    default:
+  }
+}
+
+/**
+ * Implementation of hook_menu_alter().
+ *
+ * Remove Account tab
+ *
+ * @param $items @type{array}
+ * @return null
+ */
+function account_profile_menu_alter(&$items) {
+    $profile = variable_get('account_profile_main_profile', key(content_profile_get_types('names'))); // get main profile name
+    $disable_edit_tab = variable_get('account_profile_edit_tab', TRUE) ;
+    $items['user/%user_category/edit/' . $profile]['type'] = MENU_CALLBACK; // remove content profile tab
+    if ($disable_edit_tab) {
+      $items['user/%user_category/edit']['type'] = MENU_CALLBACK;
+    }
+}
+
+/**
+ * Validation function for the user account and profile editing form.
+ */
+function account_profile_form_validate($form, &$form_state) {
+  user_module_invoke('validate', $form_state['values'], $form_state['values']['_account'], $form_state['values']['_category']);
+  // Validate the username when: user is editing own account and can change username; or an admin user
+  if (($GLOBALS['user']->uid == $form['#uid'] && user_access('change own username')) || user_access('administer users')) {
+    if ($error = user_validate_name($form_state['clicked_button']['#post']['name'])) {
+      form_set_error('name', $error);
+    }
+  }
+  /*
+  if (what?) {
+    watchdog('security', 'Detected malicious attempt to alter protected user fields.', array(), WATCHDOG_WARNING);
+    // set this to a value type field
+    form_set_error('category', t('Detected malicious attempt to alter protected user fields.'));
+  }
+   */
+}
+
+/**
+ * Submit function for the user account and profile editing form.
+ */
+function account_profile_form_submit($form, &$form_state) {
+  $account = $form_state['values']['_account'];
+  // add username
+  $username = $form_state['clicked_button']['#post']['name'];
+  $form_state['values']['name'] = (!empty($username)) ? $username : $account->name;
+  $form_state['values']['uid'] = $form_state['values']['account_profile_uid'];
+  $category = $form_state['values']['_category'];
+  unset($form_state['values']['_account'], $form_state['values']['op'], $form_state['values']['submit'], $form_state['values']['delete'], $form_state['values']['form_token'], $form_state['values']['form_id'], $form_state['values']['_category']);
+  user_module_invoke('submit', $form_state['values'], $account, $category);
+
+  // prevent to store all values in user->data field.
+  $account_form_state = array();
+  module_load_include('pages.inc', 'user');
+  $account_form = user_profile_form(array(), $account);
+
+  // If $form_state['values'][<element>] exists in original user profile form, give it to $account_form_state, and separate the node_form
+  foreach ($form_state['values'] as $key => $value) {
+    if (_multi_array_key_exists($key, $account_form)) {
+      $account_form_state[$key] = $form_state['values'][$key];
+    }
+  }
+  user_save($account, $account_form_state, $category);
+
+  // Clear the page cache because pages can contain usernames and/or profile information:
+  cache_clear_all();
+  drupal_set_message(t('The changes have been saved.'));
+  return;
+}
+
+/**
+ * Helper function to check keys in multidimensional array.
+ * @param $needle
+ * The key
+ * @param $haystack
+ * The array to check
+ * @return boolean
+ * Return TRUE, if key is exist.
+ */
+function _multi_array_key_exists($needle, $haystack) {
+  foreach ($haystack as $key=>$value) {
+    if ($needle===$key) {
+      return $key;
+    }
+    if (is_array($value)) {
+      if(_multi_array_key_exists($needle, $value)) {
+        return $key . ":" . _multi_array_key_exists($needle, $value);
+      }
+    }
+  }
+  return FALSE;
+}
+

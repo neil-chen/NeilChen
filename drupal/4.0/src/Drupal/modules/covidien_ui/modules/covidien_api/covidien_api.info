@@ -1,0 +1,7 @@
+name = Covidien API
+description = Contains API to communicate.
+core = 6.x
+php = 5.0
+package = Covidien
+dependencies[] = content
+dependencies[] = covidien_ui

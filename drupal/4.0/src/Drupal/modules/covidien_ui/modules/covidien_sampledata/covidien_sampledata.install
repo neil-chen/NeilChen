@@ -1,0 +1,604 @@
+<?php
+
+/**
+ * Implementation of hook_install().
+ * The covidien sample data created using this module
+ */
+function covidien_sampledata_install() {
+  module_load_include('php', 'covidien_ui', 'includes/helper_function');
+  module_load_include('php', 'covidien_seeddata', 'data/seeddata_helper');
+  $party_type_val = array();
+  $finaldata = array();
+  $party_type = array('Customer', 'Facility', 'Department', 'Customer 12');
+  foreach ($party_type as $val) {
+    $field_party_type_rec = db_fetch_object(db_query("select nid from {node} where title='%s'", $val));
+    $field_party_typenid = $field_party_type_rec->nid;
+    $node = new stdClass();
+    $node->type = 'party';
+    $node->uid = 1;
+    $node->format = 0;
+    if (($val == "Customer 12") || ($val == "Unknown")) {
+      $field_party_type_rec = db_fetch_object(db_query("select nid from {node} where title='%s'", 'Customer'));
+      $field_party_typenid = $field_party_type_rec->nid;
+      $node->title = $val;
+    } else if ($val == "Department") {
+      $node->title = "Finance Department";
+    } else {
+      $node->title = $val . '_' . rand(1, 10);
+    }
+    $node->field_party_type[0]['nid'] = $field_party_typenid;
+    node_save($node);
+    $party_type_val[$val] = $node->nid;
+  }
+  $field_region_pk = $tmpnode_1->nid;
+  $tmpnode_1 = new stdClass();
+  $tmpnode_1->type = 'bu_customer';
+  $tmpnode_1->uid = 1;
+  $tmpnode_1->format = 0;
+  $tmpnode_1->title = 'BUCustomer ' . rand(1, 10);
+  $tmpnode_1->field_bu_customer_account_number[0]['value'] = "CUS001BAU";
+  $tmpnode_1->field_customer_party_pk[0]['nid'] = $party_type_val['Customer'];
+  $tmpnode_1->field_bu_party_pk[0]['nid'] = $party_type_val['Business Unit'];
+  //$tmpnode_1->field_region_pk[0]['nid'] = $field_region_pk;
+  node_save($tmpnode_1);
+  $bu_customer_nid = $tmpnode_1->nid;
+  $tmpnode_1 = new stdClass();
+  $tmpnode_1->type = 'bu_customer';
+  $tmpnode_1->uid = 1;
+  $tmpnode_1->format = 0;
+  $tmpnode_1->title = 'BUCustomer ' . rand(10, 20);
+  $tmpnode_1->field_bu_customer_account_number[0]['value'] = "CUS102BAU";
+  $tmpnode_1->field_customer_party_pk[0]['nid'] = $party_type_val['Customer 12'];
+  $tmpnode_1->field_bu_party_pk[0]['nid'] = $party_type_val['Vascular Therapies'];
+  //$tmpnode_1->field_region_pk[0]['nid'] = $field_region_pk;
+  node_save($tmpnode_1);
+  $bu_customer_nid1 = $tmpnode_1->nid;
+  $party_type_val['Facility'] = db_result(db_query("select nid from {node} where title like'Facility%' and type ='party'"));
+  $tmpnode_FAC = new stdClass();
+  $tmpnode_FAC->type = 'customer_facility';
+  $tmpnode_FAC->uid = 1;
+  $tmpnode_FAC->format = 0;
+  $tmpnode_FAC->title = 'FACILITY ' . rand(10, 20);
+  $tmpnode_FAC->field_customer_pk[0]['nid'] = $bu_customer_nid1;
+  $tmpnode_FAC->field_facility_pk[0]['nid'] = $party_type_val['Facility'];
+  node_save($tmpnode_FAC);
+  create_sampleusers();
+  $tmpnode_FAC = new stdClass();
+  $tmpnode_FAC->type = 'customer_facility';
+  $tmpnode_FAC->uid = 1;
+  $tmpnode_FAC->format = 0;
+  $tmpnode_FAC->title = 'FACILITY ' . rand(1, 10);
+  $tmpnode_FAC->field_customer_pk[0]['nid'] = $bu_customer_nid;
+  $tmpnode_FAC->field_facility_pk[0]['nid'] = $party_type_val['Facility'];
+  node_save($tmpnode_FAC);
+  $bu_customer_nid3 = db_result(db_query("select node.nid from {node} join {content_type_bu_customer} on content_type_bu_customer.vid=node.vid where node.type='bu_customer' and content_type_bu_customer.field_bu_customer_account_number_value='%s'", 'Unknown'));
+  $tmpnode_FAC = new stdClass();
+  $tmpnode_FAC->type = 'customer_facility';
+  $tmpnode_FAC->uid = 1;
+  $tmpnode_FAC->format = 0;
+  $tmpnode_FAC->title = 'FACILITY Unknown';
+  $tmpnode_FAC->field_customer_pk[0]['nid'] = $bu_customer_nid3;
+  $tmpnode_FAC->field_facility_pk[0]['nid'] = $party_type_val['Facility'];
+  node_save($tmpnode_FAC);
+  $data = array(
+    'device_action_type' => array('Device Inquiry', 'Device software upgrade', 'Device Log upload'),
+    'location' => array('USA', 'CANADA'),
+    'access_option' => array('View Email & Print'),
+  );
+  foreach ($data as $type => $value) {
+    foreach ($value as $val) {
+      $node = new stdClass();
+      $node->type = $type;
+      $node->uid = 1;
+      $node->format = 0;
+      $node->title = $val;
+      node_save($node);
+      $finaldata[$type][$val] = $node->nid;
+    }
+  }
+
+  $nodetitle_nid = db_result(db_query("select nid from {node} where type='product_line' and title='%s'", 'Vessel Sealing'));
+  $node = new stdClass();
+  $node->type = 'devicetype';
+  $node->uid = 1;
+  $node->format = 0;
+  $node->title = 'ForceTriad';
+  $node->field_device_product_line[0]['nid'] = $nodetitle_nid;
+  $node->field_max_download_level[0]['value'] = 2; //All production versions
+  $node->field_serial_number_regex[0]['value'] = ''; //regex
+  node_save($node);
+}
+
+// Uninstall Instruction
+function covidien_sampledata_uninstall() {
+  
+}
+
+/**
+ * Helper function to create users
+ */
+function create_sampleusers() {
+  $product_line_title = array('Ventilation', 'Vessel Sealing', 'Compression', 'Infrastructure', 'Ablation', 'Patient Monitoring', 'Stapling');
+  $trainer_array = array();
+  $product_line = array();
+  $pdevicetype = array();
+  $sys_admin_role = array();
+  foreach ($product_line_title as $nodetitle) {
+    $nodetitle_nid = db_result(db_query("select nid from {node} where type='product_line' and title='%s'", $nodetitle));
+    $product_line[$nodetitle] = $nodetitle_nid;
+    $trainer_array[$nodetitle_nid] = 'GWagent.admin@covidien.com';
+    $qry = db_query("select node.nid,node.title from {node} inner join {content_field_device_product_line} on content_field_device_product_line.vid=node.vid where content_field_device_product_line.field_device_product_line_nid='%d'", $product_line[$nodetitle]);
+    while ($rec = db_fetch_object($qry)) {
+      $pdevicetype[$nodetitle_nid][] = array($rec->title => $rec->nid);
+    }
+    $sys_admin_role['nid'][$nodetitle] = db_result(db_query("select node.nid from {node} join {content_type_roles} on node.vid=content_type_roles.vid where content_type_roles.field_role_product_line_nid='%d' and node.title='%s'", $nodetitle_nid, 'CoT Admin'));
+    $sys_admin_role['rid'][$nodetitle] = db_result(db_query("select rid from {role} where name='%s'", $nodetitle_nid . '__CoT Admin'));
+  }
+  $section_access_permissions = array();
+  $section_access = array(
+    'User management Tab' => array('No', 'View Only', 'View & Edit'),
+    'Software catalog Tab' => array('No', 'View Only', 'View & Edit'),
+    'Hardware catalog Tab' => array('No', 'View Only', 'View & Edit'),
+    'Document Catalog Tab' => array('No', 'View Only', 'View & Edit'),
+    'Configuration Management Tab' => array('No', 'View Only', 'View & Edit'),
+    'Trainer' => array('No', 'Yes'),
+    'In Testing Software visible' => array('No', 'Yes'),
+    'Devices Section' => array('No', 'Yes'),
+    'Reports Section' => array('No', 'Yes'),
+  );
+  foreach ($section_access as $key => $val) {
+    foreach ($val as $val1) {
+      $title = 'auto section_access_option ' . $key . '-' . $val1;
+      $section_access_permissions[$key][$val1] = db_result(db_query("select nid from {node} where type='section_access_option' AND title like '" . $title . "'"));
+    }
+  }
+  // Query the values from previously submitted
+  $party_type_val['Business Unit'] = db_result(db_query("select nid from {node} where title like 'Surgical Solutions' and type='party'"));
+  $party_type_val['Vascular Therapies'] = db_result(db_query("select nid from {node} where title like 'Vascular Therapies' and type='party'"));
+  $party_type_val['Administrative'] = db_result(db_query("select nid from {node} where title like 'Administrative' and type='party'"));
+  $party_type_val['R&MS'] = db_result(db_query("select nid from {node} where title like 'R&MS' and type='party'"));
+  $party_type_val['Person'] = db_result(db_query("select nid from {node} where title like 'Person' and type='party_type'"));
+  //'role_nid'=>$sys_admin_role['nid']['Compression'],'rid_role'=>$sys_admin_role['rid']['Compression']
+  $user_array = array(
+    array(
+      'name' => 'vent.admin@covidien.com',
+      'pass' => 'VENTadmin@123',
+      'mail' => 'vent.admin@covidien.com',
+      'last_name' => 'System1',
+      'first_name' => 'Admin',
+      'business_unit' => $party_type_val['Business Unit'],
+      'department' => $party_type_val['Department'],
+      'covidien_employee' => 'Yes',
+      'role_nid' => $sys_admin_role['nid']['Ventilation'],
+      'rid_role' => $sys_admin_role['rid']['Ventilation'],
+      'download_level' => 2,
+      'cotnid' => $product_line['Ventilation'],
+    ),
+    array(
+      'name' => 'ebd.admin@covidien.com',
+      'pass' => 'EBDadmin@123',
+      'mail' => 'ebd.admin@covidien.com',
+      'last_name' => 'System2',
+      'first_name' => 'Admin',
+      'business_unit' => $party_type_val['Business Unit'],
+      'department' => $party_type_val['Department'],
+      'covidien_employee' => 'Yes',
+      'role_nid' => $sys_admin_role['nid']['Vessel Sealing'],
+      'rid_role' => $sys_admin_role['rid']['Vessel Sealing'],
+      'download_level' => 2,
+      'cotnid' => $product_line['Vessel Sealing'],
+    ),
+    array(
+      'name' => 'com.admin@covidien.com',
+      'pass' => 'COMadmin@123',
+      'mail' => 'com.admin@covidien.com',
+      'last_name' => 'System3',
+      'first_name' => 'Admin',
+      'business_unit' => $party_type_val['Vascular Therapies'],
+      'department' => $party_type_val['Department'],
+      'covidien_employee' => 'Yes',
+      'role_nid' => $sys_admin_role['nid']['Compression'],
+      'rid_role' => $sys_admin_role['rid']['Compression'],
+      'download_level' => 2,
+      'cotnid' => $product_line['Compression'],
+    ),
+    array(
+      'name' => 'inf.admin@covidien.com',
+      'pass' => 'INFadmin@123',
+      'mail' => 'inf.admin@covidien.com',
+      'last_name' => 'System4',
+      'first_name' => 'Admin',
+      'business_unit' => $party_type_val['Administrative'],
+      'department' => $party_type_val['Department'],
+      'covidien_employee' => 'Yes',
+      'role_nid' => $sys_admin_role['nid']['Infrastructure'],
+      'rid_role' => $sys_admin_role['rid']['Infrastructure'],
+      'download_level' => 2,
+      'cotnid' => $product_line['Infrastructure'],
+    ),
+    array(
+      'name' => 'vlex.admin@covidien.com',
+      'pass' => 'Vlex.Admin1234',
+      'mail' => 'vlex.admin@covidien.com',
+      'first_name' => 'vlex',
+      'last_name' => 'admin',
+      'business_unit' => $party_type_val['Vascular Therapies'],
+      'covidien_employee' => 'Yes',
+      'role_nid' => $sys_admin_role['nid']['Vessel Sealing'],
+      'rid_role' => $sys_admin_role['rid']['Vessel Sealing'],
+      'download_level' => 2, 'cotnid' => $product_line['Vessel Sealing'],
+    ),
+    array(
+      'name' => 'SCD.admin@covidien.com',
+      'pass' => 'SCD.Admin1234',
+      'mail' => 'SCD.admin@covidien.com',
+      'first_name' => 'SCD',
+      'last_name' => 'admin',
+      'business_unit' => $party_type_val['Business Unit'],
+      'covidien_employee' => 'Yes',
+      'role_nid' => $sys_admin_role['nid']['Compression'],
+      'rid_role' => $sys_admin_role['rid']['Compression'],
+      'download_level' => 2,
+      'cotnid' => $product_line['Compression'],
+    ),
+    array(
+      'name' => 'anon.ymous@covidien.com',
+      'pass' => 'Anon11235*',
+      'mail' => 'anon.ymous@covidien.com',
+      'first_name' => 'anon',
+      'last_name' => 'ymous',
+      'business_unit' => $party_type_val['Business Unit'],
+      'covidien_employee' => 'Yes',
+      'role_nid' => $sys_admin_role['nid']['Ventilation'],
+      'rid_role' => $sys_admin_role['rid']['Ventilation'],
+      'download_level' => 2,
+      'cotnid' => $product_line['Ventilation'],
+    ),
+  );
+  foreach ($user_array as $user_array) {
+    $user_cnt = db_result(db_query("select count(mail) from {users} where mail='%s'", $user_array['mail']));
+    if ($user_cnt != 0) {
+      continue;
+    }
+
+    db_query("Insert into {users} (name, pass, mail, created, init, status) values ('%s','%s','%s','%s','%s', '%s')", $user_array['mail'], md5($user_array['pass']), $user_array['mail'], time(), $user_array['mail'], '1');
+    $uid = db_last_insert_id('users', 'uid');
+    $language = db_result(db_query("select nid from {node} where type='language' and title='English'"));
+    $country_nid = db_result(db_query("select nid from {node} where type='country' and title='United States'"));
+    db_query("Insert into {users_roles} (uid,rid) VALUES ('%s','%s')", $uid, $user_array['rid_role']);
+
+    $node = new stdClass();
+    $node->uid = $uid;
+    $node->type = 'party';
+    $node->title = $user_array['name'];
+    $node->field_party_type[0]['nid'] = $party_type_val['Person'];
+    node_save($node);
+    $person_party_id = $node->nid;
+    $node = new stdClass();
+    $node->type = "person";
+    $node->title = $user_array['name'];
+    $node->uid = $uid;
+    $node->field_last_name[0]['value'] = $user_array['last_name'];
+    $node->field_first_name[0]['value'] = $user_array['first_name'];
+    $node->field_business_unit[0]['nid'] = $user_array['business_unit'];
+    //$node->field_department[0]['nid'] = $user_array['department'];
+    $node->field_user_language[0]['nid'] = $language;
+    $node->field_covidien_employee[0]['value'] = $user_array['covidien_employee'];
+    $node->field_person_party[0]['nid'] = $person_party_id;
+    $node->field_person_username[0]['value'] = $user_array['name'];
+    $node->field_expiration_datetime[0]['value'] = "0000-00-00 00:00:00";
+    $node->field_device_avail_country[] = array('nid' => $country_nid);
+    node_save($node);
+    db_query("Update {content_field_expiration_datetime} set field_expiration_datetime_value = '%s' where nid = '%s' and field_expiration_datetime_value IS NULL", '0000-00-00 00:00:00', $node->nid);
+    $person_node_id = $node->nid;
+    $node = new stdClass();
+    $node->type = 'party_email_address';
+    $node->uid = $uid;
+    $node->title = $user_array['name'];
+    $node->field_email_address[0]['value'] = $user_array['mail'];
+    $node->field_party_email[0]['nid'] = $person_party_id;
+    node_save($node);
+    $node = new stdClass();
+    $node->type = 'person_application_role';
+    $node->uid = $uid;
+    $node->title = $user_array['name'];
+    $node->field_person_pk[0]['nid'] = $person_node_id;
+    $node->field_app_role_pk[0]['nid'] = $user_array['role_nid'];
+    $node->field_max_download_level[0]['value'] = $user_array['download_level'];
+    $node->field_person_role_default[0]['value'] = 1;
+    node_save($node);
+    $val2 = new stdClass();
+    $val2->title = $user_array['name'];
+    $val2->type = "user_settings";
+    $val2->uid = $uid;
+    $val2->language = "en";
+    $val2->field_email_notifications[0]['nid'] = '';
+    $val2->field_user_language[0]['nid'] = '';
+    node_save($val2);
+    $val2 = new stdClass();
+    $val2->title = 'device_notification_subscription_' . $person_node_id;
+    $val2->type = "device_notification_subscription";
+    $val2->uid = $uid;
+    $val2->language = "en";
+    $val2->field_person[0]['nid'] = $person_node_id;
+    $val2->field_device_notification_type[0]['nid'] = '';
+    node_save($val2);
+    /**
+     * Sample record insertion.
+     */
+    foreach ($pdevicetype[$user_array['cotnid']] as $devicetype) {
+      $devicetype_arr = array_values($devicetype);
+      $dtitle_nid = $devicetype_arr[0];
+      create_user_privilege($dtitle_nid, $user_array['mail'], $section_access_permissions);
+      $trainer_id = db_result(db_query("select nid,title from {node} where type='person' and title='%s'", $trainer_array[$user_array['cotnid']]));
+      sample_training_record($dtitle_nid, $user_array['mail'], $trainer_id);
+    }
+  }
+
+  /**
+   * For multi role user creation
+   */
+  $roles_nid_rid = array();
+  $plnid_title = array();
+  module_load_include('php', 'covidien_seeddata', 'data/seeddata_helper');
+  $rolespermission = permissiondata('install');
+  foreach ($product_line_title as $key) {
+    $plnid_title[$key] = db_result(db_query("select nid from {node} where title = '%s' and type='product_line'", $key));
+    $qry = db_query("select node.nid,node.title from {node} inner join {content_field_device_product_line} on content_field_device_product_line.vid=node.vid where content_field_device_product_line.field_device_product_line_nid=%d", $plnid_title[$key]);
+    while ($rec = db_fetch_object($qry)) {
+      $pdevicetype[$plnid_title[$key]][] = array($rec->title => $rec->nid);
+    }
+    ////////////////////////
+    foreach ($rolespermission as $role => $sectionpermission) {
+      $roles_nid_rid[$plnid_title[$key]][$role]['nid'] = db_result(db_query("select node.nid from {node} join {content_type_roles} on node.vid=content_type_roles.vid where content_type_roles.field_role_product_line_nid='%d' and node.title='%s'", $plnid_title[$key], $role));
+
+      $roles_nid_rid[$plnid_title[$key]][$role]['rid'] = db_result(db_query("select rid from {role} where name='%s'", $plnid_title[$key] . '__' . $role));
+    }
+    /////////////////////////
+  }
+  create_multiuser($product_line_title, $roles_nid_rid);
+  //////////
+  global $drupal_password_expiration_day;
+  $date = time() + ($drupal_password_expiration_day * (24 * 3600));
+  $dateSQL = format_date($date, 'custom', 'Y-m-d H:i:s', 0);
+  db_query("Update {content_type_person} set field_password_expiration_date_value = '%s' where field_password_expiration_date_value IS NULL", $dateSQL);
+  return true;
+}
+
+/**
+ * Helper function to create global user both on install and update.
+ */
+function create_multiuser($product_line_title, $roles_nid_rid) {
+  $section_access_permissions = array();
+  $section_access = array(
+    'User management Tab' => array('No', 'View Only', 'View & Edit'),
+    'Software catalog Tab' => array('No', 'View Only', 'View & Edit'),
+    'Hardware catalog Tab' => array('No', 'View Only', 'View & Edit'),
+    'Document Catalog Tab' => array('No', 'View Only', 'View & Edit'),
+    'Configuration Management Tab' => array('No', 'View Only', 'View & Edit'),
+    'Trainer' => array('No', 'Yes'),
+    'In Testing Software visible' => array('No', 'Yes'),
+    'Devices Section' => array('No', 'Yes'),
+    'Reports Section' => array('No', 'Yes'),
+  );
+  foreach ($section_access as $key => $val) {
+    foreach ($val as $val1) {
+      $title = 'auto section_access_option ' . $key . '-' . $val1;
+      $section_access_permissions[$key][$val1] = db_result(db_query("select nid from {node} where type='section_access_option' AND title like '" . $title . "'"));
+    }
+  }
+  // Query the values from previously submitted
+  $party_type_val['Business Unit'] = db_result(db_query("select nid from {node} where title like 'Surgical Solutions' and type='party'"));
+  $party_type_val['Administrative'] = db_result(db_query("select nid from {node} where title like 'Administrative' and type='party'"));
+  $party_type_val['Person'] = db_result(db_query("select nid from {node} where title like 'Person' and type='party_type'"));
+  $country_nid = db_result(db_query("select nid from {node} where type='country' and title='United States'"));
+  $plnid_title = array();
+  $pdevicetype = array();
+  foreach ($product_line_title as $key) {
+    $plnid_title[$key] = db_result(db_query("select nid from {node} where title = '%s' and type='product_line'", $key));
+    $qry = db_query("select node.nid,node.title from {node} inner join {content_field_device_product_line} on content_field_device_product_line.vid=node.vid where content_field_device_product_line.field_device_product_line_nid=%d", $plnid_title[$key]);
+    while ($rec = db_fetch_object($qry)) {
+      $pdevicetype[$plnid_title[$key]][] = array($rec->title => $rec->nid);
+    }
+  }
+  //Ventilation', 'Vessel Sealing', 'Compression', 'Infrastructure', 'Ablation', 'Patient Monitoring', 'Stapling'
+  $user_array = array(
+    'name' => 'global.admin@covidien.com',
+    'pass' => 'GLOBALadmin@123',
+    'mail' => 'global.admin@covidien.com',
+    'last_name' => 'Global',
+    'first_name' => 'Admin',
+    'business_unit' => $party_type_val['Business Unit'],
+    'covidien_employee' => 'Yes',
+    'role_nid' => array(
+      array('nid' => $roles_nid_rid[$plnid_title['Ventilation']]['CoT Admin']['nid']),
+      array('nid' => $roles_nid_rid[$plnid_title['Vessel Sealing']]['CoT Admin']['nid']),
+      array('nid' => $roles_nid_rid[$plnid_title['Compression']]['CoT Admin']['nid']),
+      array('nid' => $roles_nid_rid[$plnid_title['Infrastructure']]['CoT Admin']['nid']),
+      array('nid' => $roles_nid_rid[$plnid_title['Ablation']]['CoT Admin']['nid']),
+      array('nid' => $roles_nid_rid[$plnid_title['Patient Monitoring']]['CoT Admin']['nid']),
+      array('nid' => $roles_nid_rid[$plnid_title['Stapling']]['CoT Admin']['nid']),
+    ),
+    'rid_role' => array(
+      array('rid' => $roles_nid_rid[$plnid_title['Ventilation']]['CoT Admin']['rid']),
+      array('rid' => $roles_nid_rid[$plnid_title['Vessel Sealing']]['CoT Admin']['rid']),
+      array('rid' => $roles_nid_rid[$plnid_title['Compression']]['CoT Admin']['rid']),
+      array('rid' => $roles_nid_rid[$plnid_title['Infrastructure']]['CoT Admin']['rid']),
+      array('rid' => $roles_nid_rid[$plnid_title['Ablation']]['CoT Admin']['rid']),
+      array('rid' => $roles_nid_rid[$plnid_title['Patient Monitoring']]['CoT Admin']['rid']),
+      array('rid' => $roles_nid_rid[$plnid_title['Stapling']]['CoT Admin']['rid']),
+    ),
+    'download_level' => 2,
+    'trainee' => '',
+    'default_role' => $roles_nid_rid[$plnid_title['Ventilation']]['CoT Admin']['nid'],
+  );
+  //Create user
+  $uid = db_result(db_query("select uid from {users} where mail='%s'", $user_array['mail']));
+  if (!$uid) {
+    db_query("INSERT INTO {users} (name, pass, mail, created, init, status) values ('%s','%s','%s','%s','%s', '%s')", $user_array['mail'], md5($user_array['pass']), $user_array['mail'], time(), $user_array['mail'], '1');
+    $uid = db_last_insert_id('users', 'uid');
+  }
+  $language = db_result(db_query("select nid from {node} where type='language' and title='English'"));
+  db_query("DELETE FROM users_roles WHERE uid = %d", $uid);
+  foreach ($user_array['rid_role'] as $rid_role) {
+    db_query("REPLACE INTO {users_roles} (uid,rid) VALUES ('%s','%s')", $uid, $rid_role['rid']);
+  }
+  //delete device_notification_subscription
+  $person_nid = db_result(db_query("SELECT nid FROM {node} WHERE title='%s' AND type='person'", $user_array['name']));
+  $device_notification_result = db_query("SELECT nid FROM {node} WHERE title = 'device_notification_subscription_%s'", $person_nid);
+  while ($row = db_fetch_object($device_notification_result)) {
+    node_delete($row->nid);
+  }
+  //delete old global node data
+  $user_node_result = db_query("SELECT nid FROM {node} WHERE title='%s'", $user_array['name']);
+  while ($row = db_fetch_object($user_node_result)) {
+    node_delete($row->nid);
+  }
+
+  //create new gloabl node data
+  //party
+  $party_node = new stdClass();
+  $party_node->uid = $uid;
+  $party_node->type = 'party';
+  $party_node->title = $user_array['name'];
+  $party_node->field_party_type[0]['nid'] = $party_type_val['Person'];
+  node_save($party_node);
+  //person
+  $person_party_id = $party_node->nid;
+  $person_node = new stdClass();
+  $person_node->type = "person";
+  $person_node->title = $user_array['name'];
+  $person_node->uid = $uid;
+  $person_node->field_last_name[0]['value'] = $user_array['last_name'];
+  $person_node->field_first_name[0]['value'] = $user_array['first_name'];
+  $person_node->field_business_unit[0]['nid'] = $user_array['business_unit'];
+  $person_node->field_user_language[0]['nid'] = $language;
+  $person_node->field_covidien_employee[0]['value'] = $user_array['covidien_employee'];
+  $person_node->field_person_party[0]['nid'] = $person_party_id;
+  $person_node->field_person_username[0]['value'] = $user_array['name'];
+  $person_node->field_expiration_datetime[0]['value'] = "0000-00-00 00:00:00";
+  $person_node->field_device_avail_country[] = array('nid' => $country_nid);
+  node_save($person_node);
+  //party_email_address
+  $person_node_id = $person_node->nid;
+  $party_email_node = new stdClass();
+  $party_email_node->type = 'party_email_address';
+  $party_email_node->uid = $uid;
+  $party_email_node->title = $user_array['name'];
+  $party_email_node->field_email_address[0]['value'] = $user_array['mail'];
+  $party_email_node->field_party_email[0]['nid'] = $person_party_id;
+  node_save($party_email_node);
+  $defaultrole = false;
+  //person_application_role
+  $i = 0;
+  foreach ($user_array['role_nid'] as $role_nid) {
+    $person_role_node = new stdClass();
+    $person_role_node->type = 'person_application_role';
+    $person_role_node->uid = $uid;
+    $person_role_node->title = $user_array['name'];
+    $person_role_node->field_person_pk[0]['nid'] = $person_node_id;
+    $person_role_node->field_app_role_pk[0]['nid'] = $role_nid['nid'];
+    $person_role_node->field_max_download_level[0]['value'] = $user_array['download_level'];
+    $i++; //first is default role
+    $person_role_node->field_person_role_default[0]['value'] = ($i == 1 ) ? 1 : 0;
+    node_save($person_role_node);
+  }
+  //user_settings
+  $user_settings_node = new stdClass();
+  $user_settings_node->title = $user_array['name'];
+  $user_settings_node->type = "user_settings";
+  $user_settings_node->uid = $uid;
+  $user_settings_node->language = "en";
+  $user_settings_node->field_email_notifications[0]['nid'] = '';
+  $user_settings_node->field_user_language[0]['nid'] = '';
+  node_save($user_settings_node);
+  //device_notification_subscription
+  $device_notification_node = new stdClass();
+  $device_notification_node->title = 'device_notification_subscription_' . $person_node_id;
+  $device_notification_node->type = "device_notification_subscription";
+  $device_notification_node->uid = $uid;
+  $device_notification_node->language = "en";
+  $device_notification_node->field_person[0]['nid'] = $person_node_id;
+  $device_notification_node->field_device_notification_type[0]['nid'] = '';
+  node_save($device_notification_node);
+  //trainee
+  if ($user_array['trainee'] == 'yes') {
+    $trainer_array = array(
+      'Ventilation' => 'GWagent.admin@covidien.com',
+      'Vessel Sealing' => 'GWagent.admin@covidien.com',
+      'Compression' => 'GWagent.admin@covidien.com',
+      'Infrastructure' => 'GWagent.admin@covidien.com',
+      'Ablation' => 'GWagent.admin@covidien.com',
+      'Patient Monitoring' => 'GWagent.admin@covidien.com',
+      'Stapling' => 'GWagent.admin@covidien.com',
+    );
+    foreach ($plnid_title as $cottitle => $cotnid) {
+      foreach ($pdevicetype[$cotnid] as $devicetype) {
+        $devicetype_arr = array_values($devicetype);
+        $dtitle_nid = $devicetype_arr[0];
+        create_user_privilege($dtitle_nid, $user_array['mail'], $section_access_permissions);
+        $trainer_id = db_result(db_query("select nid,title from {node} where type='person' and title='%s'", $trainer_array[$cottitle]));
+        sample_training_record($dtitle_nid, $user_array['mail'], $trainer_id);
+      }
+    }
+  }
+
+  return true;
+}
+
+/**
+ * covidien_sampledata_update_6015
+ * Used during 2013 Aug 9.16
+ */
+
+/**
+ * covidien_sampledata_update
+ * Used for Phase 2.0.1 patch
+ */
+function covidien_sampledata_update_6100() {
+  $ret = array();
+  $nodetitle_nid = db_result(db_query("select nid from {node} where type='device_notification_type' and title='%s'", 'Device software update'));
+  $node = node_load($nodetitle_nid);
+  $node->title = "Device update";
+  node_save($node);
+  return $ret;
+}
+
+/** V3.0 * */
+function covidien_sampledata_update_6101() {
+  module_load_include('php', 'covidien_ui', 'includes/helper_function');
+  $dtitle_nid = db_result(db_query("select nid from {node} where type='devicetype' and title='Valleylab FT10'"));
+  sample_training_record($dtitle_nid, 'GWagent.admin@covidien.com');
+  return array(array('success' => true, 'update' => 'Add training record for GWagent.admin@covidien.com'));
+}
+
+/**
+ * GATEWAY-2627 add user global.admin@covidien.com
+ * @return type
+ */
+function covidien_sampledata_update_6102() {
+  module_load_include('php', 'covidien_ui', 'includes/helper_function');
+  $product_line_title = array('Ventilation', 'Vessel Sealing', 'Compression', 'Infrastructure', 'Ablation', 'Patient Monitoring', 'Stapling');
+  $roles_nid_rid = user_roles_nid_rid($product_line_title);
+  create_multiuser($product_line_title, $roles_nid_rid);
+  return array(array('success' => true, 'update' => 'Add user global.admin@covidien.com'));
+}
+
+/**
+ * $product_line_title is Array
+ * @param type $product_line_title
+ */
+function user_roles_nid_rid($product_line_title) {
+  $roles_nid_rid = array();
+  $plnid_title = array();
+  module_load_include('php', 'covidien_seeddata', 'data/seeddata_helper');
+  $rolespermission = permissiondata('install');
+  foreach ($product_line_title as $key) {
+    $plnid_title[$key] = db_result(db_query("select nid from {node} where title = '%s' and type='product_line'", $key));
+    foreach ($rolespermission as $role => $sectionpermission) {
+      $roles_nid_rid[$plnid_title[$key]][$role]['nid'] = db_result(db_query("select node.nid from {node} join {content_type_roles} on node.vid=content_type_roles.vid where content_type_roles.field_role_product_line_nid='%d' and node.title='%s'", $plnid_title[$key], $role));
+      $roles_nid_rid[$plnid_title[$key]][$role]['rid'] = db_result(db_query("select rid from {role} where name='%s'", $plnid_title[$key] . '__' . $role));
+    }
+  }
+  return $roles_nid_rid;
+}

@@ -1,0 +1,608 @@
+<?php
+
+/**
+ * @file
+ * This file used to customize the drupal node form based on the covidien UI.
+ * Implements hook_nodeapi() to customize the node form.
+ * To log node details when insert, update or delete actions
+ * Records are not deleted instead setting expiration field for that node. So Delete and update have same node type.
+ * log details are recorded in 'activity_log' table in drupal. It is a custom table
+ * Function logUserActivity() is used to log messages.
+ */
+
+/**
+ * Implements hook_nodeapi
+ * @global type $base_url
+ * @global type $user
+ * @param type $node
+ * @param type $op
+ * @param type $a3
+ * @param type $a4
+ */
+function covidien_activity_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+  global $base_url;
+  global $user;
+  // node types to skip from log
+  $array = array('party_email_address', 'user_settings', 'party', 'app_role_access_policy', 'device_config_hardware', 'device_config_software', 'device_service_history', 'device_log', 'device_log_field', 'device_log_history', 'device_availability');
+  // setting our user readable value to node types to log
+  $type_info = array('person' => array('type' => 'User', 'name' => 'User'), 'roles' => array('type' => 'role', 'name' => 'Role'), 'hardware' => array('type' => 'HW', 'name' => 'Hardware'), 'software' => array('type' => 'SW', 'name' => 'Software'), 'software_reg_approval' => array('type' => 'country approval', 'name' => 'regulatory approval for software'), 'document' => array('type' => 'DOC', 'name' => 'Document'), 'person_training_record' => array('type' => 'Training', 'name' => 'Training Record'), 'device_type_config' => array('type' => 'config', 'name' => 'Device Configuration'), 'device_notification_subscription' => array('type' => 'Email Notification', 'name' => 'Email Notification'));
+  if (!in_array($node->type, $array)) {
+    switch ($op) {
+      case "insert":
+        $variables = array();
+        $device = $node->field_device_type[0]['nid'];
+        $info = node_load($device);
+        if (!empty($info->title)) {
+          $variables['%device_name'] = $info->title;
+        } else {
+          $variables['%device_name'] = '';
+        }
+        $variables['%serial_number'] = '';
+        $desc = ' INSERTED';
+        $activity_name = $type_info[$node->type]['name'];
+        $activity_type = "Add " . $type_info[$node->type]['type'];
+        $title = "'" . $node->title . "'";
+        if ($node->type == "roles") {
+          $url = $base_url . "/covidien/admin/roles/list/#edit/" . $node->nid;
+        } elseif ($node->type == "software_reg_approval") {
+          $sw_nid = $node->field_reg_approved_component[0]['nid'];
+          $sw_name = node_load($sw_nid);
+          $url = $base_url . "/covidien/admin/$sw_nid/sw_regulatory_approval/#edit/" . $node->nid;
+          $activity_name = 'Add ' . $type_info[$node->type]['name'];
+          $activity_type = "Add " . $type_info[$node->type]['type'];
+          $desc = $sw_name->title;
+          $title = '';
+        } else if ($node->type == "device_notification_subscription") {
+          $activity_name = 'Email Notification for user';
+          $desc = ' updated';
+          $activity_type = $type_info[$node->type]['type'];
+        } else {
+          $url = $base_url . "/node/$node->nid/edit";
+        }
+        if (!empty($type_info[$node->type]['type'])) {
+          logUserActivity($activity_type, "$activity_name - $title $desc", serialize($variables), $variables['%device_name'], $variables['%serial_number'], $user->uid, ip_address(), time());
+        }
+        break;
+      case "update":
+        $variables = array();
+        $delete = "0";
+        if ((!$node->op) && ($node->type != 'person')) {
+          $delete = "1";
+        }
+        $device = $node->field_device_type[0]['nid'];
+        $info = node_load($device);
+        if (!empty($info->title)) {
+          $variables['%device_name'] = $info->title;
+        } else {
+          $variables['%device_name'] = '';
+        }
+        $variables['%serial_number'] = '';
+        if ($delete == "1") {
+          $activity_name = $type_info[$node->type]['name'];
+          $activity_type = "Delete " . $type_info[$node->type]['type'];
+          if (!empty($type_info[$node->type]['type'])) {
+            logUserActivity($activity_type, "$activity_name - '$node->title'  DELETED", serialize($variables), $variables['%device_name'], $variables['%serial_number'], $user->uid, ip_address(), time());
+          }
+        } else {
+          if ($node->type != 'person') {
+            $device = $node->field_device_type[0]['nid'];
+            $info = node_load($device);
+            $title = "'" . $node->title . "'";
+            $activity_name = $type_info[$node->type]['name'];
+            $activity_type = "Edit " . $type_info[$node->type]['type'];
+            $desc = ' UPDATED';
+            if ($node->type == "roles") {
+              $url = $base_url . "/covidien/admin/roles/list/#edit/" . $node->nid;
+              $_SESSION['user_activity'][$url] = t("Edit") . " - " . $desc . " - " . $node->title;
+            } elseif ($node->type == "software_reg_approval") {
+              $sw_nid = $node->field_reg_approved_component[0]['nid'];
+              $sw_name = node_load($sw_nid);
+              $url = $base_url . "/covidien/admin/$sw_nid/sw_regulatory_approval/#edit/" . $node->nid;
+              $_SESSION['user_activity'][$url] = t("Edit") . " - " . $desc . " For $sw_name->title - " . $node->title;
+              $activity_name = "Update " . $type_info[$node->type]['name'];
+              $activity_type = "Edit " . $type_info[$node->type]['type'];
+              $desc = $sw_name->title;
+              $title = '';
+            } else {
+              $url = $base_url . "/node/$node->nid/edit";
+              $_SESSION['user_activity'][$url] = t("Edit") . " - " . $desc . " - " . $node->title;
+            }
+            if (!empty($type_info[$node->type]['type'])) {
+              logUserActivity($activity_type, "$activity_name - $title $desc", serialize($variables), $variables['%device_name'], $variables['%serial_number'], $user->uid, ip_address(), time());
+            }
+          }
+        }
+        break;
+      case "delete":
+        $variables = array();
+        $device = $node->field_device_type[0]['nid'];
+        $info = node_load($device);
+        if ($info->title) {
+          $variables[] = array('%device_name' => $info->title);
+          watchdog("Device", $node->type . " - DELETED", $variables, WATCHDOG_INFO);
+        }
+        break;
+    }
+  }
+}
+
+/**
+ * Implements hook_views_default_views(). Import all views related to module on installing
+ */
+function covidien_activity_views_default_views() {
+  $views = array();
+  $files = file_scan_directory(drupal_get_path('module', 'covidien_activity') . '/views', '.inc');
+  foreach ($files as $absolute => $file) {
+    require $absolute;
+    if (isset($view)) {
+      $views[$file->name] = $view;
+    }
+  }
+  return $views;
+}
+
+/**
+ * Implements hook_form_alter(). Alter the form fields in activity list page.
+ */
+function covidien_activity_form_alter(&$form, &$form_state, $form_id) {
+  if ($form_state['view']->name == 'activitylog') {
+    // overrides <All> on the dropdown
+    $form['bid']['#options']['All'] = ''; // overrides <All> on the dropdown
+    $form['lid']['#options']['All'] = ''; // overrides <All> on the dropdown
+    $form['isemp']['#options']['All'] = ''; // overrides <All> on the dropdown
+    $form['role_pk']['#options']['All'] = ''; // overrides <All> on the dropdown
+    $form['last_name']['#default_value'] = t('Enter User Name'); // overrides <All> on the dropdown
+    $form['last_name']['#autocomplete_path'] = 'firstname_lastname/autocomplete'; // overrides <All> on the dropdown
+    $form['customer_name']['#id'] = 'customer_name';
+    $form['customer_name']['#autocomplete_path'] = 'covidien/admin/user/customername/filter';
+    $form['customer_name']['#attributes'] = array('onfocus' => 'covidien_customer_acl("account_number", "customer_name", "customername");', 'class' => 'small_suggest_box');
+    $form['account_number']['#autocomplete_path'] = 'covidien/admin/user/account/filter';
+    $form['account_number']['#id'] = 'account_number';
+    $form['account_number']['#attributes'] = array('onfocus' => 'covidien_customer_acl("customer_name","account_number","account");', 'class' => 'small_suggest_box', 'onblur' => 'get_covidien_customer_name($("#account_number").val(), "customer_name");');
+  }
+  if (($form_id == "views_exposed_form") && ($form['submit']['#id'] == 'edit-submit-activitylog')) {
+    $form['submit']['#value'] = t('Go');
+  }
+}
+
+/**
+ * Implements hook_init(). Log details when user downloaded report.
+ */
+function covidien_activity_init() {
+  global $user;
+  $total_reports = allReportList();
+  $get = filter_xss_arr($_GET);
+  if ((arg(3) == 'pdf' || (arg(3) == 'xls') || (arg(3) == 'csv') || (arg(3) == 'xlsx')) && (empty($get['eid']))) {
+    $report_name = $total_reports[arg(2)];
+    $format = arg(3);
+    $devicetype_nid = node_load($get['devicetype_nid']);
+    $variable = array();
+    if (empty($devicetype_nid)) {
+      $variable['%device_name'] = '';
+    } else {
+      $variable['%device_name'] = $devicetype_nid->title;
+    }
+    $deviceserial = $get['deviceserial'];
+    if (empty($deviceserial)) {
+      $variable['%serial_number'] = '';
+    } else {
+      $variable['%serial_number'] = $deviceserial;
+    }
+    if (!empty($report_name)) {
+      logUserActivity('Download Report', 'User downloaded Report - "' . $report_name, serialize($variable), $variable['%device_name'], $variable['%serial_number'], $user->uid, ip_address(), time());
+    }
+  }
+}
+
+/**
+ * Function to list all reports in content type product line reports.
+ */
+function allReportList() {
+  return array(
+    '1' => 'Device Current Configuration Report',
+    '2' => 'Software Upgrade Report',
+    '3' => 'Component Discrepancy Report', //sprint 7
+    '4' => 'Service Records Report', //sprint 7
+    '5' => 'Audit Trail Report', //sprint 7
+    '6' => 'Training Report', //sprint 8
+    '7' => 'Total Devices Report', //Phase 2.3
+    //'8' => 'SW Configuration Report',
+    // Phase2.1 Reports
+    '9' => 'Alert Event by Device Serial Number & Date Range',
+    //'10' => 'User & Device Serial Number Association',
+    //'11' => 'SW Configuration by Serial Number',
+    '12' => 'Device Historical Configuration',
+    '13' => 'Named Configurations Report',
+    //'14' => 'All SW Catalog Data by Device Type',
+    '15' => 'Device Country Change Report',
+    // Phase3.0 Reports
+    '16' => 'Software Audit Report',
+    '17' => 'Software Versions Report',
+  );
+}
+
+/**
+ * Implements hook_views_api() to define our custom views to drupal views.
+ */
+function covidien_activity_views_api() {
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'covidien_activity'),
+  );
+}
+
+/**
+ * Implements hook_views_data() to define our custom views to drupal views.
+ */
+function covidien_activity_views_data() {
+  $data['activity_log'] = activity_log_data();
+  return $data;
+}
+
+/**
+ * Function to generate a view fields.
+ */
+function activity_log_data() {
+  $activity_log['table'] = array(
+    'base' => array(
+      'field' => 'nid',
+      'title' => t('Activity Log'),
+      'help' => t('nid from activity_log.'),
+      'weight' => 25,
+    ),
+    'group' => t('Activity Log'),
+    'join' => array(
+      'node' => array(
+        'field' => 'nid',
+        'left_field' => 'nid',
+      ),
+    ),
+  );
+  // Table field: activity_log.aid
+  $activity_log['aid'] = array(
+    'title' => t('Aid'),
+    'help' => t('Unique activity_log event ID.'),
+    'field' => array(
+      'handler' => 'views_handler_field_numeric',
+      'click sortable' => TRUE,
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_numeric',
+      'name field' => 'aid',
+      'numeric' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_numeric',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+  );
+  // Table field: watchdog.nid
+  $activity_log['nid'] = array(
+    'title' => t('Node'),
+    'help' => t('The ID of the user who triggered the event.'),
+    'relationship' => array(
+      'handler' => 'views_handler_relationship',
+      'base' => 'node',
+      'base field' => 'nid',
+      'label' => 'activity_log - Users',
+    ),
+  );
+
+  $activity_log['activity_type'] = array(
+    'title' => t('Activity type'),
+    'help' => t("Activity type from activity_log"),
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_string',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort_string',
+    ),
+  );
+  $activity_log['message'] = array(
+    'title' => t('message'),
+    'help' => t("message from activity_log"),
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_string',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort_string',
+    ),
+  );
+  $activity_log['arguments'] = array(
+    'title' => t('arguments'),
+    'help' => t("arguments from activity_log"),
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_string',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort_string',
+    ),
+  );
+  $activity_log['device'] = array(
+    'title' => t('device'),
+    'help' => t("Device from activity_log"),
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_string',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort_string',
+    ),
+  );
+  $activity_log['device_serial'] = array(
+    'title' => t('device_serial'),
+    'help' => t("Device_serial from activity_log"),
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_string',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort_string',
+    ),
+  );
+  $activity_log['ip_address'] = array(
+    'title' => t('ip_address'),
+    'help' => t("ip_address from activity_log"),
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_string',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort_string',
+    ),
+  );
+  $activity_log['logtime'] = array(
+    'title' => t('logtime'),
+    'help' => t("logtime from activity_log"),
+    'field' => array(
+      'handler' => 'views_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_string',
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort_string',
+    ),
+  );
+  return $activity_log;
+}
+
+/**
+ * Function to get all covidien Employee values.
+ */
+function isCovidienEmp() {
+  $val = array('Yes', 'No');
+  $option_arr = array();
+  $option_arr['all'] = '';
+  foreach ($val as $key) {
+    $option_arr[trim($key)] = $key;
+  }
+  return $option_arr;
+}
+
+/**
+ * Function to get all Business unit.
+ */
+function getBusinessUnit() {
+  $option_arr = array();
+  $option_arr['all'] = '';
+  $view = views_get_view('business_unit_dropdown');
+  $view->init_display();
+  $view->pre_execute(array($role));
+  $view->execute();
+  $result = $view->result;
+  if (count($result) > 0) {
+    foreach ($result as $rec) {
+      $option_arr[trim($rec->nid)] = $rec->node_title;
+    }
+  }
+  return $option_arr;
+}
+
+/**
+ * Function to get all Activities types form table activity log.
+ */
+function getActivityTypes() {
+  $option_arr = array();
+  $option_arr['all'] = t('All');
+  $option_res = db_query("select activity_type from {activity_log} group by activity_type");
+  while ($val = db_fetch_object($option_res)) {
+    $option_arr[trim($val->activity_type)] = $val->activity_type;
+  }
+  return $option_arr;
+}
+
+/**
+ * Function to get all Department.
+ */
+function getDepartment() {
+  $option_arr = array();
+  $option_arr['all'] = '';
+  $view = views_get_view('department_party_dropdown');
+  $view->init_display();
+  $view->pre_execute(array($role));
+  $view->execute();
+  $result = $view->result;
+  if (count($result) > 0) {
+    foreach ($result as $rec) {
+      $option_arr[trim($rec->nid)] = $rec->node_title;
+    }
+  }
+  return $option_arr;
+}
+
+/**
+ * Function to log details in table 'activity_log'
+ * @param type $type
+ * @param type $message
+ * @param type $arguments
+ * @param type $device
+ * @param type $serial
+ * @param type $uid
+ * @param type $ip
+ * @param type $time
+ */
+function logUserActivity($type, $message, $arguments, $device, $serial, $uid, $ip, $time) {
+  if (db_table_exists('activity_log') != FALSE) {
+    $nid = db_result(db_query("SELECT nid FROM {node} WHERE uid = '%s' AND type='person'", $uid));
+    if (empty($nid)) {
+      $nid = $uid;
+    }
+    //add product_line_nid
+    $pl_nid = 0;
+    if ($_SESSION['default_cot']) {
+      $pl_nid = $_SESSION['default_cot'];
+    }
+    db_query("INSERT INTO {activity_log} (nid, activity_type, message, arguments, device, device_serial, ip_address, logtime, product_line_nid) 
+      VALUES (%d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', %d)", $nid, $type, $message, $arguments, $device, $serial, $ip, $time, $pl_nid);
+  }
+}
+
+/**
+ * user activity log table
+ */
+function user_activity_log_table() {
+  //url last_name=Neil+Chen&role_pk=141&isemp=Yes&bid=15&customer_name=unknown&account_number=unknown
+  $sql = "SELECT a.aid, a.nid AS nid, a.activity_type AS activity_type, a.message AS activity_message, a.ip_address AS activity_ip_address, 
+    a.device AS activity_device, a.device_serial AS activity_device_serial, a.logtime AS activity_logtime,
+    p.field_last_name_value AS last_name, p.field_first_name_value AS first_name,
+    n.nid AS node_nid, n.vid AS node_vid, n.type AS node_type
+    FROM activity_log a 
+    LEFT JOIN node n ON a.nid = n.nid 
+    LEFT JOIN content_type_person p ON n.vid = p.vid 
+    WHERE 1 ";
+  $get = filter_xss_arr($_GET);
+  $product_line = $_SESSION['default_cot'];
+  $args = array();
+  if ($product_line && $product_line != 'all') {
+    $sql .= " AND (a.product_line_nid = %d OR a.product_line_nid = 0) ";
+    $args[] = $product_line;
+  } else {
+    $sql .= " AND a.product_line_nid = 0 ";
+    $args[] = $product_line;
+  }
+
+  //get user person nid 
+  $user_sql = "SELECT p.nid FROM content_type_person p 
+    LEFT JOIN content_field_person_pk pk ON pk.field_person_pk_nid = p.nid 
+    LEFT JOIN content_field_app_role_pk r ON pk.vid = r.vid 
+    LEFT JOIN node cn ON p.field_company_name_nid = cn.nid 
+    LEFT JOIN node an ON p.field_comp_account_no_nid = an.nid 
+    WHERE 1 ";
+  $user_args = array();
+
+  if ($get['last_name'] && $get['last_name'] != 'All') {
+    $user_name = explode(' ', $get['last_name']);
+    $user_sql .= " AND p.field_last_name_value = '%s' AND p.field_first_name_value = '%s' ";
+    $user_args[] = $user_name[1];
+    $user_args[] = $user_name[0];
+  }
+  if ($get['role_pk'] && $get['role_pk'] != 'All') {
+    $user_sql .= " AND r.field_app_role_pk_nid = %d ";
+    $user_args[] = $get['role_pk'];
+  }
+  if ($get['isemp'] && $get['isemp'] != 'All') {
+    $user_sql .= " AND p.field_covidien_employee_value = '%s' ";
+    $user_args[] = $get['isemp'];
+  }
+  if ($get['bid'] && $get['bid'] != 'All') {
+    $user_sql .= " AND p.field_business_unit_nid = %d ";
+    $user_args[] = $get['bid'];
+  }
+  if ($get['customer_name'] && $get['customer_name'] != 'All') {
+    $user_sql .= " AND cn.title = '%s' ";
+    $user_args[] = $get['customer_name'];
+  }
+  if ($get['account_number'] && $get['account_number'] != 'All') {
+    $user_sql .= " AND an.title = '%s' ";
+    $user_args[] = $get['account_number'];
+  }
+  //if has user filter 
+  if (count($user_args)) {
+    $user_result = db_query($user_sql, $user_args);
+    $persons = array();
+    while ($user_row = db_fetch_object($user_result)) {
+      $persons[$user_row->nid] = $user_row->nid;
+    }
+    //add filter to activity_log
+    if (count($persons)) {
+      $sql .= " AND a.nid IN (" . db_placeholders($persons, 'int') . ")";
+      $args = array_merge($args, $persons);
+    }
+  }
+
+  //Last Name 	First Name 	Activity 	Host Name 	Device Type 	Device Serial Number 	Date & Time
+  $header = array(
+    array('data' => 'Last Name', 'field' => 'p.field_last_name_value'),
+    array('data' => 'First Name', 'field' => 'p.field_first_name_value'),
+    array('data' => 'Activity', 'field' => 'a.activity_type'),
+    array('data' => 'Host Name', 'field' => 'a.ip_address'),
+    array('data' => 'Device Type', 'field' => 'a.device'),
+    array('data' => 'Device Serial Number', 'field' => 'a.device_serial'),
+    array('data' => 'Date & Time', 'field' => 'a.logtime', 'sort' => 'desc'),
+  );
+  //get count 
+  $sql .= tablesort_sql($header);
+
+  $result = pager_query($sql, 10, 0, NULL, $args);
+  $rows = array();
+  while ($row = db_fetch_object($result)) {
+    $rows[$row->aid]['last_name'] = $row->last_name;
+    $rows[$row->aid]['first_name'] = $row->first_name;
+    $rows[$row->aid]['activity_type'] = $row->activity_type . ' - ' . $row->activity_message;
+    $rows[$row->aid]['ip_address'] = $row->activity_ip_address;
+    $rows[$row->aid]['device'] = $row->activity_device;
+    $rows[$row->aid]['device_serial'] = $row->activity_device_serial;
+    //GATEWAY-2909 use timezone America/New_York
+    $rows[$row->aid]['logtime'] = $row->activity_logtime ? format_date($row->activity_logtime, 'custom', 'm/d/Y h:i:s A', '-18000') : '';
+  }
+  $output = theme_table($header, $rows, array('class' => 'views-table cols-7', 'style' => 'margin: 0; width: 100%;'));
+  //$output .= theme('pager', NULL, 10, 0);
+
+  return $output;
+}

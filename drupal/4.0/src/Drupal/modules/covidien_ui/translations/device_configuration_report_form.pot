@@ -1,0 +1,77 @@
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  Theme,v 1 2012/08/21 06:26:03 Covidien
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2009-06-16 19:00+0200\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: device_configuration_report_form.tpl:6
+msgid "Product Line"
+msgstr ""
+
+#:  device_configuration_report_form.tpl:17
+msgid "Device Configuration Report"
+msgstr ""
+
+#: template.php, device_configuration_report_form.tpl:10
+msgid "Software Upgrade Report"
+msgstr ""
+
+#: template.php, device_configuration_report_form.tpl:17
+msgid "Device Configuration Report"
+msgstr ""
+
+#: device_configuration_report_form.tpl:22
+msgid "Device Type:"
+msgstr ""
+
+#: device_configuration_report_form.tpl:31
+msgid "Customer Name:"
+msgstr ""
+
+#: device_configuration_report_form.tpl:37
+msgid "Customer Account Number:"
+msgstr ""
+
+#:device_configuration_report_form.tpl:43
+msgid "Software Name:"
+msgstr ""
+
+#: device_configuration_report_form.tpl:73
+msgid "Software Part #:"
+msgstr ""
+
+#:device_configuration_report_form.tpl:77
+msgid "Software Version:"
+msgstr ""
+
+#: device_configuration_report_form.tpl:61
+msgid "Device Serial Number"
+msgstr ""
+
+#: device_configuration_report_form.tpl:49
+msgid "Hardware Name:"
+msgstr ""
+
+#: device_configuration_report_form.tpl:55
+msgid "Hardware Part #:"
+msgstr ""
+
+#: device_configuration_report_form.tpl:59
+msgid "Hardware Revision:"
+msgstr ""
+#: device_configuration_report_form.tpl:43, software_upgrade_report_form.tpl:43
+msgid "Country:"
+msgstr ""

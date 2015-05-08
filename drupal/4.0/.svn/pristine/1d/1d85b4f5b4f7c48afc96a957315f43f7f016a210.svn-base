@@ -1,0 +1,423 @@
+<?php
+
+/**
+ *  This defines what each url param need to be prefixed with so that we
+ *  include it on the node object when created so that other contrib
+ *  modules can deal with it later via nodeapi
+ */
+define('PLUPLOAD_URL_PARAM_PREFIX', 'drupal_');
+
+/**
+ * Implementation of hook_perm().
+ */
+function plupload_perm() {
+  return array('bulk upload files with plupload', 'administer plupload bulk uploads');
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function plupload_menu() {
+  $items['plupload-pernode'] = array(
+    'title' => 'Upload files',
+    'page callback' => 'plupload_pernode',
+    'access callback' => 'user_access',
+    'access arguments' => array('bulk upload files with plupload'),
+    'type' => MENU_CALLBACK,
+  );
+  $items['file-plupload'] = array(
+    'title' => 'Upload files',
+    'page callback' => 'plupload_upload_page',
+    'access callback' => 'user_access',
+    'access arguments' => array('bulk upload files with plupload'),
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/settings/plupload-bulk'] = array(
+    'title' => 'Plupload integration settings',
+    'description' => 'Configure the Plupload integration module.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('plupload_admin_settings'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer plupload bulk uploads'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;
+}
+
+/**
+ * Admin form.
+ */
+function plupload_admin_settings() {
+  // Figure out which content types have a filefield.
+  $types = content_types();
+  foreach ($types as $key => $type) {
+    foreach ($type['fields'] as $field) {
+      if ($field['type'] == 'filefield') {
+        $available['matches'][$key .':::'. $field['field_name']] = $type['name'] .': '. $field['widget']['label'];
+        $available['keys'][] = $key .':::'. $field['field_name'];
+      }
+    }
+  }
+
+  // Show them a filefield-content-type to use or nag them to create one.
+  if (!empty($available['matches'])) {
+    $form['plupload_import_field_type'] = array(
+      '#type' => 'select',
+      '#title' => t('Target field'),
+      '#description' => t('Select the specific filefield you want to import photos into. During import, nodes of your selected type will be created and the selected field will be populated with the imported image. The image name will be used for the title and all other fields will be blank.'),
+      '#options' => $available['matches'],
+      '#default_value' => variable_get('plupload_import_field_type', $available['keys'][0]),
+    );
+  }
+  else {
+    $form['error_state'] = array(
+      '#value' => t('You must enable a filefield on a content type.'),
+    );
+  }
+
+  return system_settings_form($form);
+}
+
+/**
+ * Page callback for the bulk uploader.
+ */
+function plupload_upload_page($options = array()) {
+  $path = plupload_library_path();
+  // Plupload changed their distro file structure starting with version 1.4.3, but the github repo still uses the old structure
+  // Also, instead of including separate minified js files, all js files in a release are minified.  Only github source is non-minified
+  if (file_exists($path. '/src/javascript')) {
+    $js_dir = $path. '/src/javascript';
+    $queue_dir = $js_dir;
+    $css_file = $path .'/examples/css/plupload.queue.css';
+  }
+  elseif (file_exists($path. '/js')) {
+    $js_dir = $path. '/js';
+    $queue_dir = $js_dir .'/jquery.plupload.queue';
+    $css_file = $queue_dir .'/css/jquery.plupload.queue.css';
+  }
+  else {
+    drupal_set_message(t('Plupload library directory exists at %path, but no src/javascript or js directories were found within it.', array('%path' => $path)), 'error');
+  }
+  drupal_add_js($js_dir . '/plupload.js');
+  drupal_add_js($js_dir . '/plupload.html5.js');
+  drupal_add_js($queue_dir . '/jquery.plupload.queue.js');
+  drupal_add_js($js_dir . '/plupload.flash.js');
+  drupal_add_css($css_file);
+  $query_string = $_GET;
+  unset($query_string['q']);
+  // In case we're not being called via hook_menu, we allow other contrib modules to add query string options
+  $query_string += $options;
+
+  // Let the options array override the variable if it's set
+  if (isset($options['drupal_plupload_import_field_type'])) {
+    $plupload_import_field_type = $options['drupal_plupload_import_field_type'];
+  }
+  else {
+    $plupload_import_field_type = variable_get('plupload_import_field_type', 'photo:::field_photo');
+  }
+  // Get the field and its validators so we can build our extension list.
+  list($type, $field_name) = explode(':::', $plupload_import_field_type);
+  $field = content_fields($field_name, $type);
+  $validators = imagefield_widget_upload_validators($field);
+  $extensions = str_replace(' ', ',', $validators['filefield_validate_extensions'][0]);
+
+  $url = url('plupload-pernode', array('query' => $query_string));
+  $swfurl = url('') . $js_dir .'/plupload.flash.swf';
+
+  $settings = array();
+  $settings['plupload'] = array (
+    'url' => $url,
+    'swfurl' => $swfurl,
+    'extensions' => $extensions
+  );
+
+  drupal_add_js($settings, 'setting');
+   
+  $output .= theme('plupload_uploader');
+
+  return $output;
+}
+
+function plupload_pernode() {
+  $temp_directory = file_directory_temp();
+
+  // Chunk it?
+  $chunk = isset($_REQUEST["chunk"]) ? $_REQUEST["chunk"] : 0;
+  $chunks = isset($_REQUEST["chunks"]) ? $_REQUEST["chunks"] : 0;
+
+  // Get and clean the filename.
+  $file_name = isset($_REQUEST["name"]) ? $_REQUEST["name"] : '';
+
+  // Clean the fileName for security reasons
+  if (module_exists('transliteration')) {
+    $file_name = transliteration_clean_filename($file_name);
+  }
+  else {
+    $file_name = preg_replace('/[^\w\._]+/', '', $file_name);
+  }
+
+
+  // Look for the content type header
+  if (isset($_SERVER["HTTP_CONTENT_TYPE"])) {
+    $content_type = $_SERVER["HTTP_CONTENT_TYPE"];
+  }
+  if (isset($_SERVER["CONTENT_TYPE"])) {
+    $content_type = $_SERVER["CONTENT_TYPE"];
+  }
+
+  // Is this a multipart upload?
+  if (strpos($content_type, "multipart") !== FALSE) {
+    if (isset($_FILES['file']['tmp_name']) && is_uploaded_file($_FILES['file']['tmp_name'])) {
+      // Open temp file
+      $out = fopen($temp_directory . DIRECTORY_SEPARATOR . $file_name, $chunk == 0 ? "wb" : "ab");
+      if ($out) {
+        // Read binary input stream and append it to temp file
+        $in = fopen($_FILES['file']['tmp_name'], "rb");
+
+        if ($in) {
+          while ($buff = fread($in, 4096))
+            fwrite($out, $buff);
+        }
+        else
+          die('{"jsonrpc" : "2.0", "error" : {"code": 101, "message": "Failed to open input stream."}, "id" : "id"}');
+
+        fclose($in);
+        fclose($out);
+        unlink($_FILES['file']['tmp_name']);
+      }
+      else
+        die('{"jsonrpc" : "2.0", "error" : {"code": 102, "message": "Failed to open output stream."}, "id" : "id"}');
+    }
+    else
+      die('{"jsonrpc" : "2.0", "error" : {"code": 103, "message": "Failed to move uploaded file."}, "id" : "id"}');
+  }
+  else {
+    // Open temp file
+    $out = fopen($temp_directory . DIRECTORY_SEPARATOR . $file_name, $chunk == 0 ? "wb" : "ab");
+    if ($out) {
+      // Read binary input stream and append it to temp file
+      $in = fopen("php://input", "rb");
+
+      if ($in) {
+        while ($buff = fread($in, 4096))
+          fwrite($out, $buff);
+      }
+      else
+        die('{"jsonrpc" : "2.0", "error" : {"code": 101, "message": "Failed to open input stream."}, "id" : "id"}');
+
+      fclose($in);
+      fclose($out);
+    }
+    else
+      die('{"jsonrpc" : "2.0", "error" : {"code": 102, "message": "Failed to open output stream."}, "id" : "id"}');
+  }
+
+  if ($chunks > 1 && $chunk < $chunks - 1) {
+    // Don't move the file and add the node yet, we have more chunks coming
+    die('{"jsonrpc" : "2.0", "result" : null, "id" : "id"}');
+  }
+
+  // Move it to it's final home.
+  $path = file_directory_path();
+
+  // Pull off all the options from the query string for later attachment to the node.
+  $options = array();
+  foreach (array_keys($_GET) as $k) {
+    $pos = strpos($k, PLUPLOAD_URL_PARAM_PREFIX);
+    if ($pos === 0) {
+      $options[drupal_substr($k, drupal_strlen(PLUPLOAD_URL_PARAM_PREFIX))] = $_GET[$k];
+    }
+  }
+
+  $image_node = plupload_imagefield_create_node_from($temp_directory . DIRECTORY_SEPARATOR . $file_name, $file_name, $options);
+
+  // @todo check the $image_node and do some error handling.
+
+  // Return JSON-RPC response
+  die('{"jsonrpc" : "2.0", "result" : null, "id" : "id"}');
+}
+
+
+/**
+ * Helper wrapper around the cck code to create a node of this type.
+ * Largely copied from imagefield_import.module
+ * @param $temp_filename
+ *   string path to the file
+ * @param $name
+ *   string name to use for the file
+ * @return $node
+ *   a node object.
+ */
+function plupload_imagefield_create_node_from($temp_filepath, $file_name, $options) {
+  // Only get files from Drupal's tmp directory.
+  $directory = file_directory_temp();
+  if (file_check_location($temp_filepath, $directory)) {
+    // Only get files where we can get some image info.
+    if ($info = image_get_info($temp_filepath)) {
+      // Let the options array override the variable if it's set
+      // The drupal_ prefix is removed at this point
+      if (isset($options['plupload_import_field_type'])) {
+        $plupload_import_field_type = $options['plupload_import_field_type'];
+        unset($options['plupload_import_field_type']);
+      }
+      else {
+        $plupload_import_field_type = variable_get('plupload_import_field_type', 'photo:::field_photo');
+      }
+      // Figure out which node and field to put this into.
+      list($type, $field_name) = split(':::', $plupload_import_field_type);
+
+      // Get the field and its validators.
+      $field = content_fields($field_name, $type);
+      $validators = imagefield_widget_upload_validators($field);
+
+      // make sure that the directory exists
+      $directory = filefield_widget_file_path($field);
+      field_file_check_directory($directory, FILE_CREATE_DIRECTORY);
+
+      // Create some defaults that imagefield expects.
+      $form_state_values = array(
+        'title' => $file_name,
+        'body' => '',
+        'field_photo' => array(0 => array(
+            'fid' => 0,
+            'list' => '1',
+            'filepath' => '',
+            'filename' => '',
+            'filemime' => '',
+            'filesize' => 0,
+            'filefield_upload' => 'Upload',
+            'filefield_remove' => 'Remove',
+            'upload' => 0,
+          ),
+        'node_status' => NULL,
+        )
+      );
+      // Save the file and create a node.
+      if ($file = field_file_save_file($temp_filepath, $validators, $directory)) {
+        $file['original_path'] = $temp_filepath;
+
+        // Add the description if the settings call for it (it can be turned off).
+        if ($field['description_field'] === '1') {
+          $file['data']['description'] = '';
+        }
+
+        // Add the default alt and title text if configured to have defaults (they're always 'on').
+        $file['data']['alt'] = isset($field['widget']['alt']) ? $field['widget']['alt']: '';
+        $file['data']['title'] = isset($field['widget']['title']) ? $field['widget']['title']: '';
+
+        // Set list status to default.
+        $file['list'] = $field['list_field'] === '1' && $field['list_default'] === 0 ? '0' : '1';
+
+        $node = _plupload_imagefield_import_create_node($field, $form_state_values, $file, $options);
+        file_delete($temp_filepath);
+      }
+
+    }
+  }
+
+  return $node;
+}
+
+
+/**
+ * Create a new node with an attached image file.
+ * Largely copied from imagefield_import.
+ */
+function _plupload_imagefield_import_create_node($field, $form_state_values, $file = NULL, $options) {
+  global $user;
+
+  module_load_include('inc', 'node', 'node.pages');
+
+  // Create a basic node object.
+  $node = new stdClass();
+  $node->type = $field['type_name'];
+  $node->uid = $user->uid;
+  $node->name = $user->name;
+  $node->title = $form_state_values['title'];
+  $node->body = $form_state_values['body'];
+
+  node_object_prepare($node);
+
+  // Add the image to the node object.
+  $field_name = $field['field_name'];
+  $node->$field_name = array($file);
+
+  // Make it easy for other modules to add data to imported nodes using
+  // hook_form_alter (see http://drupal.org/node/714550 for details).
+  foreach (array_keys($options) as $key) {
+    if (!isset($node->$key)) {
+      $node->$key = $options[$key];
+    }
+  }
+
+  // Add any additional cck fields set during import.
+  $type = content_types($field['type_name']);
+  if (!empty($type['fields'])) {
+    foreach ($type['fields'] as $name => $field) {
+      if ($field['type'] != 'filefield') {
+        $node->$name = $form_state_values[$name];
+      }
+    }
+  }
+
+  // Pretend we're saving the node from a node form to please modules like filefield_paths.
+  $node->form_id = $node->type .'_node_form';
+
+  $node = node_submit($node);
+
+  module_invoke_all('plupload_node_presave', $node, $options);
+  node_save($node);
+  module_invoke_all('plupload_node_postsave', $node, $options);
+
+  return $node;
+}
+
+/**
+ * Finds the path to the plupload library directory.
+ *  1. Check sites/all/libraries
+ *  2. If the library_api module exists and the appropriate APIs are available, use it.
+ *  3. Look in the module's directory.
+ */
+function plupload_library_path() {
+  static $plupload_dir = NULL;
+  // Short-circuit if we're cached
+  if (isset($plupload_dir) && file_exists($plupload_dir)) {
+    return $plupload_dir;
+  }
+  $dirs = array(
+    'sites/all/libraries/plupload',
+    module_exists('libraries') ? libraries_get_path('plupload') : NULL,
+    drupal_get_path('module', 'plupload'). '/plupload',
+  );
+  foreach ($dirs as $dir) {
+    if (isset($dir) && file_exists($dir)) {
+      $plupload_dir = $dir;
+      return $plupload_dir;
+    }
+  }
+  return FALSE;
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function plupload_theme($existing, $type, $theme, $path) {
+  return array('plupload_uploader' => array(
+    'arguments' => array())
+  );
+}
+
+/**
+ * Theme function to return the uploader. (Once JS has it's way with it.) 
+ */
+function theme_plupload_uploader() {
+  global $language;
+  $path = drupal_get_path('module', 'plupload');
+  drupal_add_css($path.'/plupload.css');
+  drupal_add_js($path .'/plupload.js');
+  $lang_file = plupload_library_path() . '/js/i18n/' . $language->language . '.js';
+  if (file_exists($lang_file)) { 
+    drupal_add_js($lang_file);
+  }
+  return '<div id="uploader">Your browser does not support HTML5 native or flash upload. Try Firefox 3, Safari 4, or Chrome; or install Flash.</div>';
+}

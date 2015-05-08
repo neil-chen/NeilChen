@@ -1,0 +1,58 @@
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  Theme,v 1 2012/08/21 06:26:03 Covidien
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2009-06-16 19:00+0200\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: training_report_form.tpl.php
+msgid "Product Line"
+msgstr ""
+
+#: training_report_form.tpl.php
+msgid "Device Type:"
+msgstr ""
+
+#: training_report_form.tpl.php
+msgid "Customer Name:"
+msgstr ""
+
+#: training_report_form.tpl.php
+msgid "Customer Account Number:"
+msgstr ""
+
+#: training_report_form.tpl.php
+msgid "From Date:"
+msgstr ""
+
+#: training_report_form.tpl.php
+msgid "To Date:"
+msgstr ""
+
+#: training_report_form.tpl.php
+msgid "Status:"
+msgstr ""
+
+#: training_report_form.tpl.php
+msgid "Status:"
+msgstr ""
+
+#: training_report_form.tpl.php
+msgid "Trainer User ID:"
+msgstr ""
+
+#: training_report_form.tpl.php
+msgid "Training Report"
+msgstr ""

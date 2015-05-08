@@ -1,0 +1,30 @@
+<?php
+
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+function covidien_views_install() {
+  covidien_mysql_view_update();
+  covidien_views_update_6000();
+}
+
+function covidien_mysql_view_update() {
+  global $drupal_abs_path;
+  $path = drupal_get_path('module', 'covidien_views');
+  $file_path = $drupal_abs_path . $path . '/covidien_view.sql';
+  //$db_url = 'mysql://covidiendbuser:C0vidi3nDrp@localhost/covidiendb';
+  //$command = 'mysql -ucovidiendbuser -pC0vidi3nDrp covidiendb < ' . $file_path;
+  //exec($command);
+  return array(array('success' => true, 'query' => 'Update all mysql views'));
+}
+
+function covidien_views_update_6000() {
+  $view_named_configuration = "CREATE OR REPLACE VIEW `view_named_configuration` AS (
+select `c`.`nid` AS `nid`,`c`.`type_id` AS `type_id`,`n`.`title` AS `title`,`c`.`device_type_id` AS `device_type_id`,`c`.`version` AS `version`,`n`.`created` AS `create_time`,`n`.`changed` AS `update_time`,if((`c`.`obsolete_time` is null or `c`.`obsolete_time`>unix_timestamp()),0,1) AS `is_obsolete`,`c`.`description` AS `description`, `ncs`.`name` as `status`, `nsubs`.`name` as `substatus` ,`t`.`name` AS `type_name`,`t`.`title` AS `type_title`,`t`.`link_type_id` AS `link_type_id` from ((`named_configuration` `c` join `node` `n` on((`c`.`nid` = `n`.`nid`))) join `named_configuration_status` `ncs` on `c`.`status` = `ncs`.`id` join `named_configuration_substatus` `nsubs` on `nsubs`.`id` = `c`.`substatus` left join `named_configuration_type` `t` on((`c`.`type_id` = `t`.`id`))))";
+  db_query($view_named_configuration);
+
+  return array(array('success' => true, 'query' => 'Add status and substatus to view_named_configuration'));
+}

@@ -1,0 +1,655 @@
+/* 
+    Document   : self_registration
+    Created on : Oct 2, 2014, 11:03:57 AM
+    Author     : Tom
+    Description:
+        Purpose of the stylesheet follows.
+*/
+
+/* 
+   TODO Clean up this page since some of the form layout changes during development
+*/
+#training-dialog {
+  display: none;
+}
+
+.landing-page-steps p {
+  font-size: 14px;
+  color: black;
+}
+
+.next-page {
+  margin-top: 15px;
+}
+
+.next-page .cancel {
+  float: right;
+  height: 29px;
+  margin: 5px;
+}
+.next-page .next-btn {
+  border: 1px solid rgb(72, 153, 194);
+  float: right;
+  margin: 5px;
+  text-align: center;
+  width: 80px;
+}
+
+.self_registration_form_wrapper, .reset-password-form-wrapper, .approving_form_wrapper, .landing-page-wrapper {
+  margin: 0 auto;
+  width: 950px;
+}
+
+.self_registration_header {
+  border-bottom: 5px solid;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  width: 93%;
+}
+.reset-password-header, .landing-page-header {
+  border-bottom: 5px solid;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  width: 100%;
+}
+
+.left_page, .right_page {
+  width: 50%;
+  float: left;
+  position: relative;
+}
+
+.bottom_page {
+  border-top: 1px dashed;
+  clear: both;
+  float: left;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.bottom_page #edit-trainning-date-wrapper {
+  width: 100%;
+}
+
+.bottom_page .form-item label {
+  clear: left;
+}
+
+#edit-covidien-user-wrapper label {
+  float: left;
+  width: 160px;
+}
+
+#edit-covidien-user-wrapper input[type="checkbox"] {
+  float: right;
+}
+
+.left_page .form-item, .right_page .form-item {
+  padding: 15px 5px 5px;
+}
+.self_registration_form_wrapper .form-item label {
+  color: #333333;
+  float: left;
+  font-family: "Arial Bold","Arial";
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 700;
+  width: 30%;
+}
+
+.self_registration_form_wrapper .form-item label.error { 
+  width: 41%;
+  margin-left: 145px !important;
+}
+
+.self_registration_form_wrapper #edit-cov-user-wrapper label {
+  width: 100%;
+  margin-bottom: 15px;
+}
+  
+
+.self_registration_form_wrapper input[type="text"],
+.self_registration_form_wrapper #edit-last-name-wrapper input[type="text"] {
+  width: 210px;
+}
+
+.self_registration_form_wrapper select {
+  width: 218px;
+}
+
+#cot-info-wrapper fieldset {
+  padding: 0px;
+}
+
+
+/*Bottom page with COT table*/
+.columns-wrapper {
+  width: 21%;
+  float: left;
+}
+
+.columns-wrapper .form-item label {
+  width: 100%;
+}
+ 
+
+#training-date-wrapper .form-item {
+  width: 100%;
+}
+
+#devices-wrapper .form-item label {
+  margin: 0 0 12px;
+  text-align: left;
+}
+/*
+.bottom_page .form-item {
+    padding: 0 5px 10px;
+}*/
+
+#trainning-certificate-wrapper .form-item  {
+  padding: 0 5px 8px;
+}
+
+#trainning-certificate-wrapper .form-item input {
+  font-size: 10px;
+    height: 15px;
+    margin: 0;
+}
+
+#cot-info-wrapper .columns-wrapper {
+  text-align: center;
+}
+
+#edit-cot-files-upload {
+   float: right;
+    margin-bottom: 30px;
+    margin-right: 154px;
+    margin-top: 10px;
+}
+
+/*device rows*/
+.devices-row {
+  border-bottom: 1px solid;
+  border-left: 1px solid;
+  border-right: 1px solid;
+  float: left;
+  width: 100%;
+}
+
+.devices-row.first {
+  border-top: 1px solid;
+  margin-top: 15px;
+}
+
+.devices-row.first .form-item {
+  border-left: 1px solid;
+    float: left;
+    font-weight: bold;
+    text-align: center;
+    width: 20%;
+}
+
+.devices-row .form-item .description {
+  display: none;
+}
+
+.devices-row fieldset .form-item {
+ clear: none;
+    float: left !important;
+    padding-bottom: 5px;
+    padding-left: 5px; 
+    padding-top: 5px;
+    width: 20%;
+}
+
+.devices-row .form-item label {
+  width: 100%;
+}
+
+.devices-row .container-inline-date .form-item, .container-inline-date .form-item input[type="text"] {
+  float: left;
+  height: 23px;
+  padding: 0 0 0 15px !important;
+  width: 100%;
+}
+
+.devices-row select {
+    width: 175px;
+}
+
+.form-reset {
+  border-radius: 5px;
+  background: url("../images/blue_up.png") repeat scroll 50% 9% rgba(0, 0, 0, 0);
+}
+
+.form-reset:hover {
+  border: 1px solid;
+}
+
+.files-wrapper-now {
+  margin-top: 15px;
+}
+
+#cot-info-wrapper {
+  margin-top: 15px
+}
+
+/*Complete Page*/
+.complete {
+  color: #333333;
+  font-family: "Arial Regular","Arial";
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  text-align: left;
+}
+
+.submit_wrapper {
+  clear: both; 
+  padding-top: 15px;
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.submit_wrapper #edit-submit {
+  float: none;
+}
+
+.submit_wrapper .form-submit.reset {
+  height: 25px;
+}
+
+#role-wrapper {
+  margin-top: 5px;
+}
+
+#edit-cot-class-of-trade-wrapper label, #role-wrapper label {
+  width: 15%;
+}
+
+#edit-cot-approving-manager-wrapper label {
+  width: 30%;
+}
+
+.self_registration_form_wrapper .form-item label.error {
+  color: red;
+  font-size: 12px;
+  font-style: italic;
+  font-weight: normal;
+  margin-left: 195px;
+}
+
+.devices-row input[type="text"] {
+  width: 85%;
+  text-align: center;
+}
+
+.devices-row fieldset .form-item .form-file {
+  width: 250px;
+}
+
+#edit-cot-device-access-wrapper, #edit-cot-approving-manager-wrapper {
+  float: left;
+  margin-top: 5px;
+  width: 50%;
+}
+ 
+#edit-class-of-trade-wrapper, #proxy-wrapper {
+  width: 50%;
+  float: left;
+}
+
+#edit-class-of-trade-wrapper label {
+  width: 30%;
+  float: left;
+}
+
+#proxy-wrapper label { 
+  float: left;
+}
+
+#proxy-wrapper label.error {
+  margin-left: 45px;
+}
+
+#proxy-config-form input[type="submit"] {
+  margin-top: 20px;
+}
+
+
+/*Pending Registration Page css*/
+#pending-registration-list-form .self_registration_form_wrapper #edit-register-date-to-wrapper label,
+#pending-registration-list-form .self_registration_form_wrapper #edit-register-date-from-wrapper label {
+  color: #333333;
+  float: left;
+  font-family: "Arial Bold","Arial";
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 700;
+  width: 200px;
+}
+
+#pending-registration-list-form .self_registration_form_wrapper #edit-user-wrapper label,
+#pending-registration-list-form .self_registration_form_wrapper #edit-class-of-trade-wrapper label {
+  clear: left;
+  width: 100px;
+}
+
+#pending-registration-list-form .self_registration_form_wrapper .container-inline-date .form-item input[type="text"] {
+    width: 120px;
+}
+
+#pending-registration-list-form .self_registration_form_wrapper input[type="text"] {
+    width: 210px;
+}
+
+#pending-registration-list-form #edit-cov-user-wrapper label {
+  font-weight: bold;
+}
+
+#pending-registration-list-form #edit-class-of-trade-wrapper {
+  float: left;
+  width: 100%;
+}
+
+#pending-registration-list-form .submit_wrapper {
+  clear: both;
+  float: right;
+  margin-bottom: 25px;
+  padding-top: 15px; 
+  width: 82%;
+}
+
+#pending-registration-list-form .sticky-table {
+  width: 93%;
+  margin-left: 0px;
+}
+
+#pending-registration-list-form .bottom_page {
+  border: none;
+}
+
+#pending-registration-list-form .bottom_page table tr th, #pending-registration-list-form .bottom_page table {
+  text-align: center;
+}
+
+#pending-registration-list-form .container-inline-date .description {
+  font-size: 10px;
+}
+
+.self_registration_form_wrapper .left_page .date-clear-block {
+  clear: none !important;
+  width: 35%;
+  float: left;
+}
+
+/*Approving Form*/
+.approving_form_wrapper .form_label {
+  font-weight: bold;
+  margin-bottom: 7px;
+  font-size: 12px;
+}
+
+.approving_form_wrapper .form_label span {
+  color: red;
+  font-weight: normal;
+  font-size: 12px;
+}
+
+.approving_form_wrapper #customer_name-wrapper label, .approving_form_wrapper #account_number-wrapper label{
+  float: left;
+    font-weight: bold;
+    width: 25%;
+    font-size: 12px;
+}
+
+.approving_form_wrapper .left_page .form-item, .approving_form_wrapper .right_page .form-item {
+    padding: 7px 0;
+}
+
+.approving_form_wrapper .training {
+  clear: both;
+  float: left;
+  font-weight: bold;
+  margin-top: 20px;
+  font-size: 12px;
+}
+
+.approving_form_wrapper .bottom_page { 
+    margin-top: 5px;
+}
+
+.approving_form_wrapper .bottom_page .cot { 
+  font-weight: bold;
+  margin-top: 5px;
+  font-size: 12px;
+}
+
+.approving_form_wrapper .bottom_page .cot span { 
+  margin-left: 20px;
+}
+
+.approving_form_wrapper #role-wrapper label, .approving_form_wrapper #edit-device-access-wrapper label {
+    float: left;
+    font-size: 12px;
+    font-weight: bold;
+    width: 25%;
+}
+
+.approving_form_wrapper #role-wrapper, .approving_form_wrapper #edit-device-access-wrapper{
+    float: left; 
+    width: 50%;
+}
+
+.approving_form_wrapper .training_record {
+  clear: both; 
+    margin-top: 20px;
+    padding-top: 20px;
+}
+
+.approving_form_wrapper .training_file, #training-dialog .training_file{
+  float: right;
+}
+
+.tom-dev-note {
+  color: red;
+  margin-top: 15px;
+}
+
+
+/*New Design change css*/ 
+.product-line-header {
+  background-color: #326ca6;
+  border: 1px solid black;
+  clear: both;
+  color: white;
+  float: left;
+  font-weight: bold;
+  width: 100%;
+}
+.product-line-header .device-header,
+.product-line-header .trainer-header,
+.product-line-header .training-date-header,
+.product-line-header .certificate-header { 
+  float: left; 
+  text-align: left;
+  width: 20%;
+}
+
+.product-line-header .device-header {
+  padding-left: 13px;
+}
+
+.product-line-header .trainer-header {
+  padding-left: 60px;
+} 
+
+.container-inline-date .form-item {
+  float: left;
+}
+
+#itemContainer li{
+  list-style: none;
+}
+
+#itemContainer {
+  padding: 0px;
+}
+
+.bottom_page .holder {
+  text-align: center;
+  clear: both; 
+  padding-top: 15px;
+}
+
+.bottom_page #role-wrapper {
+  margin:15px 0px;
+}
+ 
+.devices-row.half-width input[type="checkbox"] {
+    border: 0 none;
+    float: left;
+    margin-top: 3px; 
+    width: 20px;
+}
+.devices-row.half-width fieldset .form-item {
+    width: 100%;
+}
+
+.bottom_page .cot-wrapper.half-width {
+  float: left;
+  margin-left: 1px;
+  width: 35%;
+}
+
+.bottom_page #acknowledge-wrapper{
+  border: 1px solid;
+  float: left;
+  margin-right: 3%;
+  margin-top: 50px;
+  width: 22%;
+  padding-left: 15px;
+}
+.sub_h1{
+  font-weight: normal;
+  display: inline;
+}
+
+.main_h1{
+  line-height: 28px;
+  display: inline;
+}
+
+#acknowledge-wrapper label {
+  width: 100%;
+}
+
+.bottom_page .submit_wrapper .cancel {
+  height: 25px;
+}
+
+.bottom_page .role-selection label {
+  width: 145px;
+}
+
+.bottom_page .role-selection {
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+
+.submit_wrapper .go-back{
+  height: 25px;
+}
+
+/* New Approval page redesign */
+#cotcontainer {
+  margin: 0px;
+  padding: 0px;
+}
+#cotcontainer li {
+  list-style: none;
+}
+
+#cotcontainer table {
+  margin-left: 0px;
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+
+.manual-form-required {
+  color: red;
+  float: left;
+  font-size: 15px;
+  margin-left: -10px;
+  padding-right: 4px;
+}
+
+#customer-name-wrapper .description {
+  float: right;
+  width: 67%;
+}
+
+.approving_form_wrapper #customer-name-wrapper .description {
+  background-color: #dfdfdf;
+  color: red;
+  float: left;
+  margin-top: 5px;
+  padding: 5px;
+  width: 55%;
+}
+
+.bottom_page_reset_password {
+  border-top: 1px dashed;
+  clear: both;
+  float: left;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.role-info {
+  margin-bottom: 30px;
+}
+
+.country-info {
+  margin-left: -100px;
+  position: absolute; 
+  top: 225px;
+}
+
+#self-registration-form .role-selection .form-item {
+  float: left;
+  margin-right: 15px;
+}
+
+.captcha {
+  background: url("../css/images/grey-sandbag.png") repeat scroll 50% 9% rgba(0, 0, 0, 0);
+  display: inline;
+  float: left;
+  font-size: 18px;
+  font-weight: bold;
+  height: 25px;
+  padding: 5px;
+  text-align: center;
+  width: 60px;
+  float: right;
+  margin-top: 2px;
+}
+
+#captcha {
+  width: 50px;
+}
+
+.not-active {
+  pointer-events: none;
+  cursor: default;
+}
+
+.ui-datepicker-header select.ui-datepicker-month {
+  left: 2em;
+  width: 85px;
+}
+.ui-datepicker-header select.ui-datepicker-year {
+  left: 9em;
+  width: 60px;
+} 

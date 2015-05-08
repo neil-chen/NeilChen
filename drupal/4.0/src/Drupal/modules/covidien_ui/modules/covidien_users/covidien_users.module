@@ -1,0 +1,2312 @@
+<?php
+
+/**
+ * @file
+ * This file used to customize the drupal node form based on the covidien UI.
+ * Implements hook_form_alter() to customize the node form.
+ */
+function covidien_users_form_alter(&$form, &$form_state, $form_id) {
+  global $user;
+  if ($form_id == 'user_register') {
+    drupal_add_js(drupal_get_path('module', 'covidien_users') . '/js/newjquery.min.js');
+    drupal_add_js(drupal_get_path('module', 'covidien_users') . '/js/jquery.colorbox-min.js');
+    drupal_add_js(drupal_get_path('module', 'covidien_users') . '/js/jquery-ui.min.js');
+    drupal_add_css(drupal_get_path('module', 'covidien_users') . '/css/colorbox.css');
+    // Alter User Registration form fields
+    foreach (array('name', 'mail', 'pass', 'status', 'roles', 'notify') as $key) {
+      if (isset($form['account'][$key])) {
+        $form[$key] = $form['account'][$key];
+      }
+    }
+    $form['account'] = array();
+    $form['roles']['#type'] = 'select';
+    $form['roles']['#options'] = covidien_users_user_roles();
+    $form['roles'][DRUPAL_AUTHENTICATED_RID] = '';
+    $form['roles']['#required'] = TRUE;
+    $form['roles']['#multiple'] = 'multiple';
+    $form['mail']['#type'] = "hidden";
+    $form['name']['#description'] = "";
+    $form['name']['#title'] = "";
+    $form['name']['#default_value'] = t("Email address");
+    $form['name']['#required'] = FALSE;
+    $form['mail']['#required'] = FALSE;
+    $form['roles']['#required'] = FALSE;
+    $form['pass']['#required'] = FALSE;
+    $form['mail']['#title'] = "";
+    $form['pass']['#size'] = "38";
+    $form['name']['#size'] = "38";
+    $form['mail']['#description'] = "";
+    $form['pass']['#type'] = "password";
+    $form['pass']['#description'] = "";
+    $form['title']['#value'] = "";
+    $form['submit']['#value'] = t("Create New User");
+    $form['destination']['#value'] = 'covidien/admin/users/list';
+  } elseif ($form_id == "person_node_form") {
+    unset($form['field_activation_datetime']);
+    unset($form['field_forgotpass_req_date']);
+    unset($form['field_expiration_datetime']);
+    unset($form['field_person_last_success_login']);
+    unset($form['field_person_last_failed_login']);
+    unset($form['field_locked_until_datetime']);
+    unset($form['field_password_expiration_date']);
+    unset($form['field_person_last_login_attempt']);
+    unset($form['field_person_last_login_attempt']);
+    // Alter User Edit form fields
+    $form['title']['#value'] = "";
+    $form['account']['roles']['#type'] = 'select';
+    $form['account']['roles']['#options'] = covidien_users_user_roles();
+    $form['account']['roles'][DRUPAL_AUTHENTICATED_RID] = '';
+    $form['account']['roles']['#required'] = TRUE;
+    $form['account']['roles']['#multiple'] = 'multiple';
+    $butblock = array(
+      '#type' => 'submit',
+      '#access' => TRUE,
+      '#value' => t('Unlock User'),
+      '#submit' => array('covidien_unblock_user'),
+      '#attributes' => array('onclick' => 'if(!confirm("Are you sure you want to unlock this user?")){return false;}'),
+    );
+
+    $butactivate = array(
+      '#type' => 'submit',
+      '#access' => TRUE,
+      '#value' => t('Activate'),
+      '#submit' => array('covidien_activate_user'),
+      '#attributes' => array('onclick' => 'if(!confirm("Are you sure you want to activate this user?")){return false;}'),
+    );
+    $butdeactivate = array(
+      '#type' => 'submit',
+      '#access' => TRUE,
+      '#value' => t('Deactivate'),
+      '#submit' => array('covidien_deactivate_user'),
+      '#attributes' => array('onclick' => 'if(!confirm("Are you sure you want to deactivate this user?")){return false;}'),
+    );
+    $form['buttons']['training_records'] = array(
+      '#type' => 'submit',
+      '#access' => TRUE,
+      '#value' => t('Training Records'),
+      '#submit' => array('covidien_user_training_records'),
+      '#attributes' => array('class' => 'secondary_submit'),
+    );
+
+    if ($_SESSION['edit_user']['nid'] && ($_SESSION['edit_user']['nid'] == $form['nid']['#value'])) {
+      if ($_SESSION['edit_user']['field_last_name']) {
+        $form['field_last_name'][0]['#default_value']['value'] = $_SESSION['edit_user']['field_last_name'];
+      }
+      if ($_SESSION['edit_user']['field_first_name']) {
+        $form['field_first_name'][0]['#default_value']['value'] = $_SESSION['edit_user']['field_first_name'];
+      }
+      if ($_SESSION['edit_user']['mail']) {
+        $form['account']['name']['#default_value'] = $_SESSION['edit_user']['mail'];
+      }
+      if ($_SESSION['edit_user']['field_device_avail_country']) {
+        $form['field_device_avail_country']['#default_value'][0]['nid'] = $_SESSION['edit_user']['field_device_avail_country'];
+      }
+      if ($_SESSION['edit_user']['field_user_language']) {
+        $form['field_user_language']['#default_value'][0]['nid'] = $_SESSION['edit_user']['field_user_language'];
+      }
+      if ($_SESSION['edit_user']['field_business_unit']) {
+        $form['field_business_unit']['#default_value'][0]['nid'] = $_SESSION['edit_user']['field_business_unit'];
+      }
+      if ($_SESSION['edit_user']['field_covidien_employee']) {
+        $form['field_covidien_employee']['#default_value'][0]['value'] = $_SESSION['edit_user']['field_covidien_employee'];
+      }
+      unset($_SESSION['edit_user']);
+    }
+
+    $form['buttons']['unblock'] = $butblock;
+    $form['buttons']['activate'] = $butactivate;
+    $form['buttons']['deactivate'] = $butdeactivate;
+    $customer_nid = $form['field_company_name']['#default_value'][0]['nid'];
+    $account_nid = $form['field_comp_account_no']['#default_value'][0]['nid'];
+    $customer_name = array(
+      '#type' => 'textfield',
+      '#id' => 'customer_name',
+      '#default_value' => getCustomerNameQuery($customer_nid),
+      '#validator' => FALSE,
+      '#autocomplete_path' => 'covidien/admin/user/customername/filter',
+      '#attributes' => array('onfocus' => 'covidien_customer_acl("account_number","customer_name","customername");'),
+    );
+    $account_number = array(
+      '#type' => 'textfield',
+      '#id' => 'account_number',
+      '#default_value' => getAccountNumberQuery($account_nid),
+      '#validator' => FALSE,
+      '#autocomplete_path' => 'covidien/admin/user/account/filter',
+      '#attributes' => array('onfocus' => 'covidien_customer_acl("customer_name","account_number","account");', 'onblur' => 'get_covidien_customer_name($("#account_number").val(),"customer_name");'),
+    );
+    $form['account_number'] = $account_number;
+    $form['customer_name'] = $customer_name;
+    $default_role = array(
+      '#type' => 'hidden',
+      '#type' => 'hidden',
+      '#required' => TRUE,
+    );
+    $form['default_role'] = $default_role;
+    $productline = getAllProductlineRoles();
+    $pl = array();
+    foreach ($productline as $key => $val) {
+      $pl_roles[$row->title] = array();
+      $roles_arr = array('' => 'None');
+      foreach ($val as $k => $v) {
+        $roles_arr[$v['rid']] = $v['name'];
+      }
+      $pl[$key] = array(
+        '#type' => 'select',
+        '#default_value' => '',
+        '#attributes' => array('class' => 'productline_roles'),
+        '#options' => $roles_arr,
+        '#validator' => FALSE,
+      );
+      $installation_array = array('0' => 'none', '1' => 'Latest version only', '2' => 'All production versions');
+      $privilege_key = str_replace(' ', '-', $key);
+      $pl[$privilege_key . '_privilege'] = array(
+        '#type' => 'select',
+        '#default_value' => '',
+        '#attributes' => array('class' => 'installation_privilege'),
+        '#options' => $installation_array,
+        '#validator' => FALSE,
+      );
+    }
+    $form['productline'] = $pl;
+    // Device type User Privilege, form elements
+    $form['device_type_array'] = array('#type' => 'textfield', '#validator' => FALSE, '#attributes' => array('class' => 'device_type_array_text'));
+    $form['role_access_array'] = array('#type' => 'textfield', '#validator' => FALSE, '#attributes' => array('class' => 'role_access_text'));
+    $form['role_name_array'] = array('#type' => 'textfield', '#validator' => FALSE, '#attributes' => array('class' => 'role_name_text'));
+    unset($form['field_comp_account_no']);
+    unset($form['field_company_name']);
+    unset($form['field_person_party']);
+    unset($form['field_associated_person_party']);
+    unset($form['field_associated_party_type']);
+  }
+  switch ($form_id) {
+    case 'user_login':
+    case 'user_login_block':
+      // Alter Login form validate function and redirect after login
+      // Put login_security first or the capture of the previous login timestamp won't work
+      // and core's validation will update to the current login instance before login_security
+      // can read the old timestamp.
+      $form['#validate'] = array_merge(array('islockedValidate'), $form['#validate']);
+      $form['#validate'][] = 'covidien_users_login_name_validate';
+      unset($form['destination']);
+      $form['#redirect'] = 'covidien/home';
+      break;
+    case 'roles_node_form':
+      // Alter Add Edit roles form.
+      $form['old_role'] = array('#type' => "hidden");
+      $role_pl = array(
+        '#type' => 'textfield',
+        '#default_value' => '',
+        '#validator' => FALSE,
+      );
+      $form['role_pl'] = $role_pl;
+      break;
+    case 'person_training_record_node_form':
+      $users_product_line = UsersProductlineQuery(arg(3));
+      //  array_unshift($users_product_line,array('',''));
+      $user_pl = array(
+        '#type' => 'select', '#id' => 'user_pl', '#default_value' => '', '#options' => $users_product_line, '#validator' => FALSE,
+      );
+      $form['users_product_line'] = $user_pl;
+      $trainer_list = array(
+        '#type' => 'select', '#id' => 'trainer_list', '#default_value' => '', '#options' => array(), '#validator' => FALSE,
+      );
+      $form['trainer_list'] = $trainer_list;
+      $device_type_list = array(
+        '#type' => 'select', '#id' => 'device_type_list', '#default_value' => '', '#options' => array(), '#validator' => FALSE,
+      );
+      $form['device_type_list'] = $device_type_list;
+      break;
+  }
+  if ($form_state['view']->name == 'Users') {
+    $form['name']['#validated'] = TRUE;
+    // overrides <All> on the dropdown
+    $form['bid']['#options']['All'] = ''; // overrides <All> on the dropdown
+    $form['status']['#options']['All'] = ''; // overrides <All> on the dropdown
+    $form['lid']['#options']['All'] = ''; // overrides <All> on the dropdown
+    $form['isemp']['#options']['All'] = ''; // overrides <All> on the dropdown
+    $form['role_pk']['#options']['All'] = ''; // overrides <All> on the dropdown
+    $form['name']['#default_value'] = t('Enter User Name'); // overrides <All> on the dropdown
+    $form['name']['#autocomplete_path'] = 'firstname_lastname/autocomplete'; // overrides <All> on the dropdown
+    $form['customer_name']['#autocomplete_path'] = 'covidien/admin/user/customername/filter';
+    $form['customer_name']['#id'] = 'customer_name';
+    $form['customer_name']['#attributes'] = array('onfocus' => 'covidien_customer_acl("account_number", "customer_name", "customername");',
+      'class' => 'small_suggest_box');
+    $form['account_number']['#autocomplete_path'] = 'covidien/admin/user/account/filter';
+    $form['account_number']['#id'] = 'account_number';
+    $form['account_number']['#attributes'] = array('onfocus' => 'covidien_customer_acl("customer_name", "account_number", "account");',
+      'class' => 'small_suggest_box',
+      'onblur' => 'get_covidien_customer_name($("#account_number").val(),"customer_name");');
+    $form['status']['#options']['0'] = 'Locked'; // overrides <All> on the dropdown
+    $form['status']['#options']['1'] = 'Deactivated'; // overrides <All> on the dropdown
+  } elseif ($form_state['view']->name == 'Roles') {
+    $pl = getUserProductline();
+    if ($pl) {
+      $form['plid']['#value'] = $pl;
+    }
+    $form['plid']['#options']['All'] = ''; // overrides <All> on the dropdown
+    if ($user->uid != 1) {
+      $form['plid']['#attributes'] = array('disabled' => 'disabled');
+    }
+  }
+  if (($form_id == "views_exposed_form") && ($form['submit']['#id'] == 'edit-submit-Users')) {
+    $form['submit']['#value'] = t('Go');
+    $form['#validate'][] = 'search_users_validate';
+  }
+  if (($form_id == "views_exposed_form") && ($form['submit']['#id'] == 'edit-submit-activitylog')) {
+    $form['#validate'][] = 'search_users_validate';
+  }
+}
+
+function search_users_validate(&$form_state) {
+  if (!covidien_ui_input_validate($form_state['#post']['name'])) {
+    form_set_error('name', t('Invalid name'));
+  }
+  if (!covidien_ui_input_validate($form_state['#post']['customer_name'])) {
+    form_set_error('customer_name', t('Invalid Customer Name'));
+  }
+  if (!covidien_ui_input_validate($form_state['#post']['account_number'])) {
+    form_set_error('account_number', t('Invalid Customer Account Number'));
+  }
+}
+
+function covidien_deactivate_user(&$form, &$form_state) {
+  global $user;
+  $nid = $form_state['values']['nid'];
+  $vid = $form_state['values']['vid'];
+  $person = userupdateactivatestatus($nid, $vid, '1');
+  cache_clear_all("content:$nid:$vid", 'cache_content', TRUE);
+  logUserActivity("User Deactivate", "User - " . $person->title . " Dectivated", '', '', '', $user->uid, ip_address(), time());
+  sess_destroy_uid($form_state['values']['uid']);
+  if ($form_state['values']['uid'] == $user->uid) {
+    session_destroy();
+  }
+}
+
+function covidien_activate_user(&$form, &$form_state) {
+  global $user;
+  $nid = $form_state['values']['nid'];
+  $vid = $form_state['values']['vid'];
+  $person = userupdateactivatestatus($nid, $vid, '0');
+  cache_clear_all("content:$nid:$vid", 'cache_content', TRUE);
+  logUserActivity("User Activate", "User - " . $person->title . " Activated", '', '', '', $user->uid, ip_address(), time());
+}
+
+function covidien_user_training_records(&$form, &$form_state) {
+  $_SESSION['edit_user']['nid'] = $form_state['values']['nid'];
+  $_SESSION['edit_user']['mail'] = $form_state['values']['mail'];
+  $_SESSION['edit_user']['field_last_name'] = $form_state['values']['field_last_name'][0]['value'];
+  $_SESSION['edit_user']['field_first_name'] = $form_state['values']['field_first_name'][0]['value'];
+  $_SESSION['edit_user']['field_device_avail_country'] = $form_state['values']['field_device_avail_country'][0]['nid'];
+  $_SESSION['edit_user']['field_user_language'] = $form_state['values']['field_user_language'][0]['nid'];
+  $_SESSION['edit_user']['field_business_unit'] = $form_state['values']['field_business_unit'][0]['nid'];
+  $_SESSION['edit_user']['field_covidien_employee'] = $form_state['values']['field_covidien_employee'][0]['value'];
+  $_SESSION['edit_user']['customer_name'] = $form_state['values']['customer_name'];
+  $_SESSION['edit_user']['account_number'] = $form_state['values']['account_number'];
+  drupal_goto('covidien/admin/user/' . arg(1) . '/training');
+  exit;
+}
+
+/**
+ * Implements First name and Last Name autocomplete function.
+ */
+function firstname_autocomplete($string = '') {
+  $matches = array();
+  global $user;
+  $length = strlen($string);
+  if ($length < 3) {
+    echo drupal_json($matches);
+    exit;
+  }
+  $string = trim($string);
+  $string = str_replace("_", "\_", $string);
+  $matches = autoSuggestionNameQuery($string, $user->product_line);
+  drupal_json($matches);
+}
+
+/**
+ * Implements Username autocomplete function.
+ */
+function username_autocomplete($name, $pl, $string) {
+  $matches = array();
+  global $user;
+  $length = strlen($string);
+  if ($length < 2) {
+    echo drupal_json($matches);
+    exit;
+  }
+  $string = trim($string);
+
+  $string = str_replace("_", "\_", $string);
+  // Check and return only the email id that matches to first name and last name on search filters in Audit log Report page
+  // Check if the given search string is equal to First name and last name - and return only the username i.e email id, that matches to the first and last name
+  $total_count = getTotalRows($string, $name, $user->product_line);
+  if ($total_count == 0) {
+    // if no value matches to first name and last name, then return all the email ids.
+    $matches = getAllUsernameQuery($string, $user->product_line);
+  } else {
+    $matches = getUsernameByNameQuery($name, $string, $user->product_line);
+  }
+  drupal_json($matches);
+  exit;
+}
+
+/**
+ * Function to get Users product line which is concatenated with user role.
+ */
+function getUserProductline() {
+  global $user;
+  $result = $_SESSION['default_cot'];
+  return $result;
+}
+
+/**
+ * Function to get all product line list
+ */
+function Productline() {
+  $result = getAllProductLineQuery();
+  $arr = array();
+  $arr['All'] = '';
+  while ($row = db_fetch_object($result)) {
+    $arr[$row->nid] = $row->title;
+  }
+  return $arr;
+}
+
+/**
+ * Function to get all roles from content_type roles and drupal roles table
+ */
+function covidien_users_user_roles($membersonly = FALSE, $permission = NULL) {
+  global $user;
+  if (!empty($permission)) {
+    $result = getRolesByPermQuery($permission);
+  } else {
+    $product_line = $user->cot_productline;
+    $result = getAllRolesQuery();
+  }
+  $roles = array("" => " ");
+  while ($role = db_fetch_object($result)) {
+    switch ($role->rid) {
+      // We only translate the built in role names
+      case DRUPAL_ANONYMOUS_RID: break;
+      case DRUPAL_AUTHENTICATED_RID: break;
+      default:
+        $rolename = explode("__", $role->name);
+        $roles[$role->rid] = $rolename[1];
+    }
+  }
+  return array_filter($roles);
+}
+
+/**
+ * Function to get all roles associated Product line
+ */
+function getAllProductlineRoles() {
+  global $user;
+  $pl_roles = array();
+//  if($user->uid == 1) {$product_line[] = 'all';}
+//  else { $product_line = $user->cot_productline; }
+  $result = getAllRolesQuery();
+  $pl = getAllProductLineQuery();
+  while ($row = db_fetch_object($pl)) {
+    $pl_title[$row->nid] = $row->title;
+    $pl_roles[$row->title] = array();
+  }
+
+
+  $roles = array("" => " ");
+  while ($role = db_fetch_object($result)) {
+    switch ($role->rid) {
+      // We only translate the built in role names
+      case DRUPAL_ANONYMOUS_RID: break;
+      case DRUPAL_AUTHENTICATED_RID: break;
+      default:
+        $roles = array();
+        $rolename = explode("__", $role->name);
+
+        $pl_details = $pl_title[$rolename[0]];
+        $roles = array('rid' => $role->rid, 'name' => $rolename[1]);
+        if (is_array($pl_roles[$pl_details])) {
+          array_push($pl_roles[$pl_details], $roles);
+        }
+    }
+  }
+  return $pl_roles;
+}
+
+/**
+ * Function to get all Users roles associated Product line
+ */
+function getUserProductlineRoles($uid = '') {
+  $array = array();
+  $skip_roles = array('authenticated user', 'anonymous user');
+
+  //$result = getAllUserRolesQuery($uid);
+  $result = getAllRolesQuery();
+  while ($row = db_fetch_object($result)) {
+    $name = explode("__", $row->name);
+    if (in_array($row->name, $skip_roles)) {
+      continue;
+    }
+    $pl = node_load($name[0]);
+    $array[$pl->title] = $row->rid;
+  }
+  return $array;
+}
+
+/**
+ * Function to get all user default roles
+ */
+function getUserDefaultRole($person_id = '') {
+  $array = array();
+  $result = getUserDefaultRoleQuery($person_id);
+  while ($row = db_fetch_object($result)) {
+    $array['rid'] = getRolesIDQuery($row->nid . '__' . $row->role);
+    $array['plvalue'] = $row->productline;
+    $array['role'] = $row->role;
+  }
+  return $array;
+}
+
+/**
+ * Implement hook_menu
+ */
+function covidien_users_menu() {
+  $items = array();
+  // URL to access add new User
+  $items['covidien/admin/users/add_new'] = array(
+    'title' => t('Add a New User'),
+    'description' => t('Control the new user interface for uploading and managing file attachments.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('user_register'),
+    'access callback' => 'covidien_users_module_check_access',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['covidien/admin/users/add_new/%'] = array(
+    'title' => t('Add a New User'),
+    'description' => t('Control the new user interface for uploading and managing file attachments.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('user_register', 4),
+    'access callback' => 'covidien_users_module_check_access',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['covidien/forgot_password'] = array(
+    'title' => t('Forgot Password'),
+    'description' => t('Forgot Password.'),
+    'page callback' => 'forgot_password_form',
+    'access callback' => true,
+    'file' => 'include/forgot_password.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['covidien/reset_password/%'] = array(
+    'title' => t('Reset Password'),
+    'description' => t('Reset Password.'),
+    'page callback' => 'reset_password_form',
+    'page arguments' => array(2),
+    'access callback' => true,
+    'file' => 'include/forgot_password.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['covidien/register/captcha'] = array(
+    'title' => t(''),
+    'description' => t('For Captcha.'),
+    'page callback' => 'getcaptcha',
+    'access callback' => true,
+    'file' => 'include/new_user_request.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  // URL to access delete Roles
+  $items['covidien/admin/roles/delete'] = array(
+    'title' => t('Delete Role'),
+    'description' => t('Control the new user interface for uploading and managing file attachments.'),
+    'page callback' => 'delete_roles',
+    'access callback' => 'covidien_users_module_check_access',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  // URL to access delete User
+  $items['covidien/admin/users/%/delete'] = array(
+    'title' => t('Delete Users'),
+    'description' => t('Control the new user interface for uploading and managing file attachments.'),
+    'page callback' => 'delete_users',
+    'page arguments' => array(3),
+    'access callback' => 'covidien_users_module_check_access',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  // URL to access Roles permissions with no argument
+  $items['covidien/admin/access_roles'] = array(
+    'title' => t('System Administration'),
+    'description' => t('Access roles.'),
+    'page callback' => 'get_default_access_roles',
+    'access callback' => 'covidien_users_module_check_access',
+    'type' => MENU_LOCAL_TASK,
+  );
+  // URL to access Roles permissions with product line as argument
+  $items['covidien/admin/access_roles/%'] = array(
+    'title' => t('System Administration'),
+    'description' => t('Access roles.'),
+    'page callback' => 'get_default_access_roles',
+    'page arguments' => array(3),
+    'access callback' => 'covidien_users_module_check_access',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  // URL to access Roles permissions with product line and roles id as arguments
+  $items['covidien/admin/access_roles/%/%'] = array(
+    'title' => t('System Administration'),
+    'description' => t('Access roles.'),
+    'page callback' => 'access_roles_function',
+    'page arguments' => array(3, 4),
+    'access callback' => 'covidien_users_module_check_access',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  // URL to access autocomplete function for Company account number in add user, edit user pages
+  $items['covidien/admin/user/account/filter'] = array(
+    'title' => t('Ajax'),
+    'description' => t('Ajax'),
+    'page callback' => 'get_CustomerAccount',
+    'page arguments' => array(5, 6),
+    'access callback' => 'covidien_users_module_check_access',
+    'type' => MENU_CALLBACK,
+  );
+  // URL to access autocomplete function for Company account number in add user, edit user pages
+  $items['covidien/admin/user/customername/filter'] = array(
+    'title' => t('Ajax'),
+    'description' => t('Ajax'),
+    'page callback' => 'get_CustomerName',
+    'page arguments' => array(5, 6),
+    'access callback' => 'covidien_users_module_check_access',
+    'type' => MENU_CALLBACK,
+  );
+  // URL to access autocomplete function for Company account number in add user, edit user pages
+  $items['covidien/admin/user/customername/getname'] = array(
+    'title' => t('Ajax'),
+    'description' => t('Ajax'),
+    'page callback' => 'get_CustomerNamefromAccount',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  // URL to access autocomplete function for user name
+  $items['firstname_lastname/autocomplete'] = array(
+    'title' => t('Name autocomplete'),
+    'page callback' => 'firstname_autocomplete',
+    'access arguments' => array('access content'),
+    'access callback' => 'covidien_users_module_check_access',
+    'type' => MENU_CALLBACK,
+  );
+  // URL to access autocomplete function for username email id
+  $items['username_ajax/autocomplete'] = array(
+    'title' => t('Username autocomplete'),
+    'page callback' => 'username_autocomplete',
+    'access arguments' => array('access content'),
+    'page arguments' => array(2, 3, 4),
+    'access callback' => 'covidien_users_module_check_access',
+    'type' => MENU_CALLBACK,
+  );
+  // URL to access autocomplete function for username email check
+  $items['user_ajax/mail/autocomplete'] = array(
+    'title' => t('User mail autocomplete'),
+    'page callback' => 'user_mail_autocomplete',
+    'access arguments' => array('access content'),
+    'page arguments' => array(3),
+    'type' => MENU_CALLBACK,
+  );
+  $items['user_ajax/captcha/autocomplete'] = array(
+    'title' => t('User captcha autocomplete'),
+    'page callback' => 'user_captcha_autocomplete',
+    'access arguments' => array('access content'),
+    'page arguments' => array(3),
+    'type' => MENU_CALLBACK,
+  );
+  // URL to access Regulatory approval for specific Software
+  $items['covidien/admin/%/sw_regulatory_approval'] = array(
+    'title' => t(''),
+    'description' => t('Software regulatory Approval'),
+    'page callback' => 'regulatory_approval',
+    'page arguments' => array(2),
+    'access arguments' => array('access content'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  // URL to access Training Details from Edit users page
+  $items['covidien/admin/user/%/training'] = array(
+    'title' => t(''),
+    'description' => t('Training Details'),
+    'page callback' => 'training_details',
+    'page arguments' => array(3),
+    'access arguments' => array('access content'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['covidien/admin/user/ahah/privilege_item'] = array(
+    'title' => 'User Privilege form',
+    'page callback' => 'privilege_items',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  $items['covidien/admin/user/ahah/access_lists'] = array(
+    'title' => 'User Privilege form',
+    'page callback' => 'getAccess_lists',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  $items['covidien/admin/user/ahah/allprivilege_item'] = array(
+    'title' => 'User Privilege form',
+    'page callback' => 'getAllPrivilege_items',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  // URL to access ajax dropdown for Trainer form - Product line based Trainers list
+  $items['covidien/admin/user/training/trainer/filter'] = array(
+    'title' => t('Ajax'),
+    'description' => t('Ajax'),
+    'page callback' => 'get_TrainerList',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  // URL to access ajax dropdown for Trainer form - Product line based Trainers list
+  $items['covidien/admin/user/training/devicetype/filter'] = array(
+    'title' => t('Ajax'),
+    'description' => t('Ajax'),
+    'page callback' => 'get_DeviceTypeList',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  // URL to access ajax dropdown for Trainer form - Product line based Trainers list
+  $items['covidien/admin/user/ahah/disabledPrivilege_item'] = array(
+    'title' => t('Ajax'),
+    'description' => t('Ajax'),
+    'page callback' => 'getDisabledPrivilege_items',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  $items['covidien/users/settings/user_profile'] = array(
+    'page callback' => 'covidienuser_profile',
+    'access arguments' => array('access content'),
+    'file' => 'include/user_settings.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['covidien/users/settings/change_password'] = array(
+    'page callback' => 'covidien_user_changepassword',
+    'access arguments' => array('access content'),
+    'file' => 'include/user_settings.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['covidien/users/settings/notification'] = array(
+    'page callback' => 'covidien_user_notification',
+    'access arguments' => array('access content'),
+    'file' => 'include/user_settings.inc',
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * Function to autocomplete a password forget page email input 
+ */
+function user_mail_autocomplete($mail) {
+  $mail = filter_xss(trim($mail));
+  $email_validate_flag = valid_email_address($mail);
+
+//  $user = checkuserstatus($mail);
+//  if (empty($user)) {
+//    echo 0;
+//    exit;
+//  }
+  echo $email_validate_flag;
+  exit;
+}
+
+function user_captcha_autocomplete($captcha) {
+  $captcha = filter_xss(trim($captcha));
+  if (md5($captcha) == $_SESSION['security_code']) {
+    echo 1;
+    exit;
+  }
+  echo 0;
+  exit;
+}
+
+/**
+ * Function to return access permission only for authenticated users
+ */
+function covidien_users_module_check_access() {
+  return covidien_cot_admin_access_callback('users');
+}
+
+/**
+ * Autocomplete function for Company account number with
+ * selected company name in Add user, Edit user pages
+ */
+function get_CustomerAccount($value, $string) {
+  $post = filter_xss($value);
+  $value = trim($post);
+  $matches = array();
+  global $user;
+
+  $length = strlen($string);
+  if ($length < 3) {
+    echo drupal_json($matches);
+    exit;
+  }
+  $string = trim($string);
+  $string = str_replace("_", "\_", $string);
+  $result = autosuggestAccountNumQuery($user->covidien_user, $user->customer_nid, $value, $string);
+  while ($row = db_fetch_object($result)) {
+    $matches[$row->field_bu_customer_account_number_value] = $row->field_bu_customer_account_number_value;
+  }
+  drupal_json($matches);
+  exit;
+}
+
+/**
+ * Autocomplete function for Company account number with
+ * selected company name in Add user, Edit user pages
+ */
+function get_CustomerName($value, $string) {
+  $post = filter_xss($value);
+  $value = trim($post);
+  $matches = array();
+  global $user;
+  $length = strlen($string);
+  if ($length < 3) {
+    echo drupal_json($matches);
+    exit;
+  }
+  $string = trim($string);
+  $string = str_replace("_", "\_", $string);
+  $result = autosuggestCustomerNameQuery($user->covidien_user, $user->customer_nid, $value, $string);
+  while ($row = db_fetch_object($result)) {
+    if ($row->customername != "Unknown") {
+      $matches[$row->customername] = $row->customername;
+    }
+  }
+  drupal_json($matches);
+  exit;
+}
+
+/**
+ * Autocomplete function for Company account number with
+ * selected company name in Add user, Edit user pages
+ */
+function get_CustomerNamefromAccount() {
+  $post = filter_xss($_POST['value']);
+  $value = trim($post);
+  global $user;
+  $result = ajaxCustomerNameQuery($user->covidien_user, $user->customer_nid, $value, $string);
+  $row = db_fetch_object($result);
+  if ($row->customername == 'Unknown') {
+    exit;
+  }
+  if (!$row->field_expiration_datetime_value) {
+    echo $row->customername;
+  }
+  exit;
+}
+
+/**
+ * Function to redirect user to access roles page with user productline
+ */
+function get_default_access_roles($product = '') {
+  global $base_url;
+  global $user;
+  $pl = $_SESSION['default_cot'];
+  if (!empty($pl)) {
+    $product = $pl;
+  }
+  $view = views_get_view('roles_product_line_list');
+  $view->init_display();
+  $view->pre_execute();
+  $view->execute();
+  $result = $view->result;
+  if (count($result) > 0) {
+    foreach ($result as $rec) {
+      if (($rec->node_data_field_role_product_line_field_role_product_line_nid != $product) && (!empty($product))) {
+        continue;
+      }
+      $role = $rec->nid;
+      $product_line = $pl;
+      drupal_goto($base_url . "/covidien/admin/access_roles/$product_line/$role");
+    }
+  }
+}
+
+/**
+ * Function to redirect user to user setting page
+ */
+function user_setting($arg) {
+  global $base_url;
+  $query = getUserSettingIDQuery($arg);
+  drupal_goto($base_url . "/node/$query/edit");
+}
+
+/**
+ * Implements hook_menu_alter for node edit
+ */
+function covidien_users_menu_alter(&$items) {
+  $items['node/%node/edit']['type'] = MENU_CALLBACK;
+}
+
+/**
+ * Function to get Content type Roles form
+ */
+function get_role_form() {
+  module_load_include('inc', 'node', 'node.pages');
+  $node->type = 'roles';
+  node_object_prepare($node);
+  return drupal_get_form('roles_node_form', $node);
+}
+
+/**
+ * Function to delete User,
+ * User is not permenantly deleted,
+ * its expiration datetime is updated to current date and status to Inactive
+ */
+function delete_users($arg) {
+  global $user;
+  $dateSQL = format_date(time(), 'custom', 'Y-m-d H:i:s', 0);
+  if ($arg) {
+    $count = getUserUidFrmNidQuery($arg);
+    UpdateUserExpirationdateQuery($dateSQL, $arg);
+    $account = user_load(array("uid" => $count));
+    deleteUsersRolesQuery($count);
+    // Block account if is active.
+    if ($account->status == 1) {
+      user_save($account, array('status' => 0), NULL);
+      // remove user from site now.
+      sess_destroy_uid($count);
+      // The watchdog alert is set to 'user' so it will show with other blocked user messages.
+    }
+    // For the locked users delete action no need of the above if statement.
+    logUserActivity("Delete user", "User - " . $account->name . " DELETED", '', '', '', $user->uid, ip_address(), time());
+  }
+  global $base_url;
+  drupal_goto($base_url . "/covidien/admin/users/list");
+}
+
+/**
+ * Function to delete Roles,
+ * Roles is not permenantly deleted,
+ * its expiration datetime is updated to current date
+ */
+function delete_roles() {
+  global $user;
+  global $base_url;
+  $dateSQL = format_date(time(), 'custom', 'Y-m-d H:i:s', 0);
+  $product_line = '';
+  $mode = 0;
+  if ($user->uid == 1) {
+    $product_line = "?plid=All";
+  }
+  $post = explode(',', check_plain($_POST['delete_selected']));
+  $is_mapped = array();
+  foreach ($post as $key) {
+    $query = getRoleidQuery($key);
+    $role_id = db_fetch_array($query);
+    $rolename = getRoleNameQuery($role_id['rid']);
+    $details = explode("__", $rolename);
+
+    if (!empty($details[1])) {
+      $is_mapped[] = $details[1];
+    }
+    if ($role_id['pl'] != $user->product_line) {
+      $selected = check_plain($_POST['delete_selected']);
+      drupal_set_message(t('Illegal role selected'));
+      drupal_goto($base_url . "/covidien/admin/roles/list?del=" . $selected);
+    }
+  }
+
+  if (empty($is_mapped)) {
+    if (!empty($post)) {
+      foreach ($post as $key) {
+        $node = node_load($key);
+        $node->field_expiration_datetime[0]['value'] = $dateSQL;
+        node_save($node);
+        $query = getRoleIdQuery($key);
+        $rid = db_fetch_array($query);
+        deleteRoldQuery($rid['rid']);
+        updateUserRoleQuery($rid['rid']);
+        UpdateUserRoleNodeQuery($key);
+        $role_title = node_load($key);
+        $variables = array('%device_name' => '', '%serial_number' => '');
+        logUserActivity("Delete role", "Role - '$role_title->title' DELETED", '', '', '', $user->uid, ip_address(), time());
+      }
+    }
+    global $base_url;
+    drupal_goto($base_url . "/covidien/admin/roles/list$product_line");
+  } else {
+    $selected = check_plain($_POST['delete_selected']);
+    drupal_set_message(t('One or more selected roles are assigned to users. You must disassociate users from the role before you can delete the role'));
+    drupal_goto($base_url . "/covidien/admin/roles/list?del=" . $selected);
+  }
+}
+
+/**
+ * Implement hook_nodeapi for insert,
+ * update and Validate for Add user,
+ * Edit user, Add role, Edit role, Edit User setting
+ */
+function covidien_users_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+  module_load_include('inc', 'covidien_users', 'include/covidien_users_query');
+  global $base_url;
+  global $user;
+  if (($node->type == "person") && $user->uid != 1) {
+    // Redirect to Access denied page when user from different product line tried to access other user profiles
+    $product_line = $pp_line = array();
+    if (arg(2) == "edit") {
+      $id = filter_xss(arg(1));
+      $pl = getallpersonpl($user->name);
+      while ($pl_row = db_fetch_object($pl)) {
+        $product_line[] = $pl_row->frnid;
+      }
+      $ppq = getPersonProductLineQuery($id);
+      while ($pp_row = db_fetch_object($ppq)) {
+        $pp_line[] = $pp_row->rid;
+      }
+      $arr_role = array_intersect($pp_line, $product_line);
+      if ($pp_line && empty($arr_role)) {
+        drupal_goto("covidien/admin/access-denied");
+        exit;
+      }
+    } // End of Redirect
+  }
+
+  $nodearray = array('user_register', 'person_node_form', 'roles_node_form', 'person_training_record_node_form');
+  if (in_array($node->form_id, $nodearray)) {
+    switch ($op) {
+      case "presave":
+        if ($node->form_id == "roles_node_form") {
+          $node->field_role_product_line[0]['nid'] = $node->role_pl;
+        } elseif ($node->form_id == "person_training_record_node_form") {
+          if ($node->nid != '') {
+            $oldnode = node_load($node->nid);
+            $node->field_device_type = $oldnode->field_device_type;
+            $node->field_certificate_image = $oldnode->field_certificate_image;
+            $node->field_trainer_id = $oldnode->field_trainer_id;
+            $node->field_trainee_id = $oldnode->field_trainee_id;
+            $node->field_training_completion_date = $oldnode->field_training_completion_date;
+          }
+        }
+        break;
+      case "insert":
+        if ($node->form_id == "user_register") {
+          // Insert record to content type party, party_email_address, person_application_role and roles table when new user added
+          global $drupal_password_expiration_day;
+          $date = time() + ($drupal_password_expiration_day * (24 * 3600));
+          $dateSQL = format_date($date, 'custom', 'Y-m-d H:i:s', 0);
+          drupal_get_messages();
+          if (($node->form_id == "user_register") && ($node->type != "user_settings")) {
+            // insert to party content type
+            $val = new stdClass();
+            $val->title = $node->name;
+            $val->uid = $node->uid;
+            $val->type = "party";
+            $val->language = "en";
+            $val->field_party_type[] = array('nid' => $node->field_associated_party_type[0]['nid']);
+            node_save($val);
+            $person_node = node_load($node->nid);
+            $person_node->field_person_party[0]['nid'] = $val->nid;
+            $person_node->field_password_expiration_date[0]['value'] = $dateSQL;
+            $person_node->field_person_username[0]['value'] = $node->name;
+            $status = $node->field_covidien_employee[0]['value'];
+            if ($status == 'No') {
+              $customer = get_customerDetails($node->customer_name, $node->account_number);
+              $person_node->field_company_name[0]['nid'] = $customer['name'];
+              $person_node->field_comp_account_no[0]['nid'] = $customer['account'];
+            }
+            node_save($person_node);
+            // insert to party_email_address content type
+            $val2 = new stdClass();
+            $val2->title = $node->name;
+            $val2->uid = $node->uid;
+            $val2->type = "party_email_address";
+            $val2->language = "en";
+            $val2->field_party_email[] = array('nid' => $val->nid);
+            $val2->field_email_address[0]['value'] = $node->name;
+            node_save($val2);
+            $default_value = $node->default_role;
+
+            // insert to person_application_role content type
+            foreach ($node->roles as $key) {
+              $rn = getRolesNameQuery($key);
+              $rname = explode("__", $rn);
+
+              $nid = getRolenidwithTitleQuery($rname[1], $rname[0]);
+              $product_line_name = node_load($rname[0]);
+              $pl_name = str_replace(' ', '-', $product_line_name->title);
+              $val2 = array();
+              $val2 = (object) $val2;
+              $val2->title = $node->name;
+              $val2->type = "person_application_role";
+              $val2->language = "en";
+              $val2->uid = $user->uid;
+              $val2->field_person_pk[] = array('nid' => $node->nid);
+              $default = '0';
+              if ($default_value == $key) {
+                $default = "1";
+              }
+              $val2->field_person_role_default[0]['value'] = $default;
+              $val2->field_max_download_level[0]['value'] = $node->{$pl_name . '_privilege'};
+              $val2->field_app_role_pk[0]['nid'] = $nid;
+              node_save($val2);
+            }
+            $device_array = explode(",", $node->device_type_array);
+            $role_access_array = explode(",", $node->role_access_array);
+            foreach ($device_array as $k => $v) {
+              if ((!empty($v)) && (!empty($role_access_array[$k]))) {
+                $val2 = array();
+                $val2 = (object) $val2;
+                $val2->title = $node->name;
+                $val2->type = "device_user_privileges";
+                $val2->uid = $user->uid;
+                $val2->language = "en";
+                $val2->field_person_pk[] = array('nid' => $node->nid);
+                $val2->field_device_type[] = array('nid' => $v);
+                $val2->field_user_section_access[0]['nid'] = $role_access_array[$k];
+                node_save($val2);
+              }
+            }
+            global $language;
+            $info['name'] = $node->field_first_name[0]['value'] . ' ' . $node->field_last_name[0]['value'];
+            $info['to'] = $node->mail;
+            $info['uid'] = $node->uid;
+            $info['username'] = $node->name;
+            $info['language'] = $language;
+            $mail = new Mail();
+            $status = $mail->newuserregister($info);
+            $info['password'] = $node->pass;
+            //send password to user email 
+            $link = updateforgotstatus($node->mail);
+            $info['link'] = $link;
+            $status = $mail->newuserregisterpwd($info);
+          }
+        }
+        if ($node->form_id == "roles_node_form") {
+          // Insert record to permission table when role added
+          $productline = $node->role_pl;
+          insertRoleQuery($productline, $node->title);
+          $rid = getRolesIDQuery($productline . "__" . $node->title);
+          insertPermissionQuery($rid);
+          echo '<script type="text/javascript">window.top.location.href = "' . $base_url . '/covidien/admin/roles/list" </script>';
+          exit;
+        } elseif ($node->form_id == "person_training_record_node_form") {
+          $id = $node->field_trainee_id[0]['nid'];
+          echo '<script type="text/javascript">window.top.location.href = "' . $base_url . '/covidien/admin/user/' . $id . '/training"; </script>';
+          exit;
+        }
+        break;
+      case "delete": break;
+      case 'update':
+        if ($node->form_id == "roles_node_form") {
+          $productline = getProductlinefrmRoleQuery($node->nid);
+          $old = $node->old_role;
+          updateRoleinfoQuery($productline . "__" . $node->title, $old);
+          echo '<script type="text/javascript">window.top.location.href = "' . $base_url . '/covidien/admin/roles/list" </script>';
+          exit;
+        } elseif ($node->form_id == 'person_training_record_node_form') {
+          $id = $node->field_trainee_id[0]['nid'];
+          echo '<script type="text/javascript">window.top.location.href = "' . $base_url . '/covidien/admin/user/' . $id . '/training"; </script>';
+          exit;
+        }
+        break;
+      case "validate":
+        if (($node->form_id == "person_node_form") && ($node->op == "Save")) {
+          update_registration($node);
+        }
+        if (($node->form_id == "roles_node_form") && (empty($node->nid))) {
+          if ($node->title == "Enter role name" || !covidien_ui_input_validate($node->title, true)) {
+            form_set_error("title", t("Invalid Role Name"));
+          }
+          if ($node->field_roles_description[0]['value'] == "Enter role description" || !covidien_ui_input_validate($node->field_roles_description[0]['value'], true)) {
+            $node->field_roles_description[0]['value'] = "";
+          }
+          if (!covidien_ui_input_validate($node->role_pl, true)) {
+            form_set_error("field_role_product_line", t("Invalid Product Line"));
+          }
+          $searchrole = $node->role_pl . "__" . $node->title;
+          $searchrole = substr($searchrole, 0, 64);
+          $count = db_result(db_query("select rid from {role} where name = '%s'", $searchrole));
+          if ($count) {
+            form_set_error("title", t("Duplicate Role Name"));
+          }
+        } elseif (($node->form_id == "roles_node_form") && (!empty($node->nid))) {
+          $count = checkRoleCountQuery($node->title, $node->nid, $node->role_pl);
+          if ($count) {
+            form_set_error("title", t("Duplicate Role Name"));
+          }
+        } elseif ($node->form_id == "person_training_record_node_form") {
+          form_set_error(NULL, '', TRUE);
+          drupal_get_messages();
+          $device_type = $node->field_device_type[0]['nid'];
+          $device_name = node_load($device_type);
+          $date = $node->field_training_completion_date[0]['value'];
+          $status = $node->field_active_flag[0]['value'];
+          $trainer = $node->field_trainer_id[0]['nid'];
+          $trainee = $node->field_trainee_id[0]['nid'];
+          //drupal_get_messages();
+          if (!covidien_ui_input_validate($device_type, true)) {
+            form_set_error("field_device_type", t("Invalid Device Type"));
+          }
+          if (empty($date)) {
+            form_set_error("field_training_completion_date", t("Invalid Training Date"));
+          } else {
+            $tomorrowMidnight = mktime(23, 59, 59, date('m'), date('d'), date('Y'));
+            $complete_date = strtotime($date);
+            if ($complete_date > $tomorrowMidnight) {
+              form_set_error('field_training_completion_date', t('Invalid Training Date'));
+            }
+          }
+          if (!is_numeric($status)) {
+            form_set_error("field_active_flag", t("Invalid Status"));
+          }
+          if (!$trainer) {
+            form_set_error("field_trainer_id", t("Invalid Trainer ID"));
+          }
+          $istrainer = is_valid_trainer($device_type, $trainer);
+          if (!$istrainer) {
+            form_set_error("field_trainer_id", t("Mismatch in Device type and Trainer ID"));
+          }
+          //check user person training record 
+          $result = checkDuplicateTrainingQuery($trainee, $trainer, $device_type, $node->nid, $date);
+          if ($result) {
+            form_set_error("field_device_type", t("Duplicate Training Record for") . ' ' . $device_name->title);
+          }
+        }
+        if ($node->form_id == "user_register") {
+          validate_registration($node);
+        }
+        break;
+      case 'view':
+        drupal_goto("covidien/admin/access-denied");
+        break;
+    }
+  }
+}
+
+/**
+ * Function for Validate New User registration form
+ */
+function validate_registration($node) {
+  drupal_get_messages();
+  $flag = TRUE;
+  $status = $node->field_covidien_employee[0]['value'];
+  $first = trim($node->field_first_name[0]['value']);
+  $last = trim($node->field_last_name[0]['value']);
+  $default_role = trim($node->default_role);
+  $name = trim($node->mail);
+  $pass = $node->pass;
+  $device_array = explode(",", $node->device_type_array);
+  $device_array_unique = array_unique($device_array);
+  $device_array_count = count($device_array);
+  $device_unique_count = count($device_array_unique);
+  $customer = get_customerDetails($node->customer_name, $node->account_number);
+  $lid = $node->field_user_language[0]['nid'];
+  $country = $node->field_device_avail_country[0]['nid'];
+  $roles = $node->roles;
+  $role_access_array = explode(",", $node->role_access_array);
+  $validate = validateDevicetypewithRoles($device_array, $roles, $role_access_array);
+  if (!valid_email_address($name)) {
+    form_set_error("name", t("Invalid Email address 2"), TRUE);
+    $flag = FALSE;
+  } else {
+    $count = finduserexists($name);
+    if (!empty($count)) {
+      form_set_error("name", t("The e-mail address @name is already registered.", array("@name" => $name)), TRUE);
+      $flag = FALSE;
+    }
+  }
+  if (($first == "First Name") || !covidien_ui_input_validate($first, true)) {
+    form_set_error("field_first_name", t("Invalid First name"), $flag);
+    $flag = FALSE;
+  }
+  if (($last == "Last Name") || !covidien_ui_input_validate($last, true)) {
+    form_set_error("field_last_name", t("Invalid Last name"), $flag);
+    $flag = FALSE;
+  }
+  if (empty($roles)) {
+    form_set_error("roles", t("Invalid Role"), $flag);
+    $flag = FALSE;
+  }
+  if (!valid_pass($pass)) {
+    form_set_error("pass", t("Invalid Password - Must contain at least 8 characters, 1 - Special chars, 1 - Uppercase, 1 - Lowercase, 1 - Number"), $flag);
+    $flag = FALSE;
+  }
+  if ($lid == "") {
+    form_set_error("field_user_language", t("Invalid Language"), $flag);
+    $flag = FALSE;
+  }
+  if ($country == "") {
+    form_set_error("field_device_avail_country", t("Invalid Country"), $flag);
+    $flag = FALSE;
+  }
+  if ($status == "Yes") {
+    $bid = $node->field_business_unit[0]['nid'];
+    /*if ($bid == "") {
+      form_set_error("field_business_unit", t("Invalid Business Unit"), $flag);
+      $flag = FALSE;
+    }*/
+  } else {
+    $comp = $customer['name'];
+    $acc = $customer['account'];
+    $cus_name = $customer['cus_name'];
+
+    if (!covidien_ui_input_validate($cus_name, true) || !covidien_ui_input_validate($comp, true)) {
+      form_set_error("customer_name", t("Invalid Customer Name"), $flag);
+      $flag = FALSE;
+    }
+    if (!covidien_ui_input_validate($acc, true)) {
+      form_set_error("customer_name", t("Invalid Customer Account Number"), $flag);
+      $flag = FALSE;
+    }
+  }
+  if (empty($default_role)) {
+    form_set_error("", t("Set Default Role"), $flag);
+    $flag = FALSE;
+  }
+  if (!$validate) {
+    form_set_error("", t("There is a mismatch in the Roles and the Device Type Privileges.The Device Type Privilege should be given only to the devices of the 'Class of Trade' the user belongs to"), $flag);
+    $flag = FALSE;
+  }
+}
+
+/**
+ * Function for Validate Update User form
+ */
+function update_registration($node) {
+  drupal_get_messages();
+  global $base_url;
+  $flag = TRUE;
+  global $user;
+  $status = $node->field_covidien_employee[0]['value'];
+  $first = trim($node->field_first_name[0]['value']);
+  $last = trim($node->field_last_name[0]['value']);
+  $name = trim($node->mail);
+  $pass = filter_xss($_POST['pass']);
+  $default_role = trim($node->default_role);
+  $roles = $node->roles;
+  $lid = $node->field_user_language[0]['nid'];
+  $country = $node->field_device_avail_country[0]['nid'];
+  $customer = get_customerDetails($node->customer_name, $node->account_number);
+  $device_array = explode(",", $node->device_type_array);
+  $device_array_unique = array_unique($device_array);
+  $device_array_count = count($device_array);
+  $device_unique_count = count($device_array_unique);
+  $role_access_array = explode(",", $node->role_access_array);
+  $validate = validateDevicetypewithRoles($device_array, $roles, $role_access_array);
+
+  if (!valid_email_address($name)) {
+    form_set_error("name", t("Invalid Email address 1"));
+    form_set_error("mail", "");
+    $flag = FALSE;
+  } else {
+    $count = getUserEmailexistQuery($name, $node->uid, 'count(uid)');
+    if (!empty($count)) {
+      form_set_error("name", t("The e-mail address @name is already registered.", array('@name' => $name)), TRUE);
+      form_set_error("mail", "");
+      $flag = FALSE;
+    }
+  }
+  if (empty($roles)) {
+    form_set_error("roles", "Invalid Role", $flag);
+    $flag = FALSE;
+  }
+  if (($first == "First Name") || !covidien_ui_input_validate($first, true)) {
+    form_set_error("field_first_name", t("Invalid First name"), $flag);
+    $flag = FALSE;
+  }
+  if (($last == "Last Name") || !covidien_ui_input_validate($last, true)) {
+    form_set_error("field_last_name", t("Invalid Last name"), $flag);
+    $flag = FALSE;
+  }
+  if ($lid == "") {
+    form_set_error("field_user_language", t("Invalid Language"), $flag);
+    $flag = FALSE;
+  }
+  if ($country == "") {
+    form_set_error("field_device_avail_country", t("Invalid Country"), $flag);
+    $flag = FALSE;
+  }
+  if ($pass != "") {
+    if (!valid_pass($pass)) {
+      form_set_error("pass", t("Invalid Password - Must contain at least 8 characters, 1 - Special chars, 1 - Uppercase, 1 - Lowercase, 1 - Number"), $flag);
+      $flag = FALSE;
+    }
+  }
+  if ($status == "Yes") {
+    $bid = $node->field_business_unit[0]['nid'];
+    /*if ($bid == "") {
+      form_set_error("field_business_unit", t("Invalid Business Unit"), $flag);
+      $flag = FALSE;
+    }*/
+  } else {
+    $comp = $customer['name'];
+    $acc = $customer['account'];
+    $cus_name = $customer['cus_name'];
+
+    if (!covidien_ui_input_validate($cus_name, true) || !covidien_ui_input_validate($comp, true)) {
+      form_set_error("customer_name", t("Invalid Customer Name"), $flag);
+      $flag = FALSE;
+    }
+    if (!covidien_ui_input_validate($acc, true)) {
+      form_set_error("customer_name", t("Invalid Customer Account Number"), $flag);
+      $flag = FALSE;
+    }
+  }
+
+  if (empty($default_role)) {
+    form_set_error("", t("Set Default Role"), $flag);
+    $flag = FALSE;
+  }
+//  if($device_unique_count != $device_array_count) { form_set_error("",t("Duplicate Device Types in Device User Privilege"),$flag); $flag = FALSE; }
+  if (!$validate) {
+    form_set_error("", t("There is a mismatch in the Roles and the Device Type Privileges.The Device Type Privilege should be given only to the devices of the 'Class of Trade' the user belongs to"), $flag);
+    $flag = FALSE;
+  }
+  if ($flag) {
+    $count = getUserEmailexistQuery($name, $node->uid, 'uid');
+    if (empty($count)) {
+      if ($pass) {
+        global $drupal_password_expiration_day;
+        $date = time() + ($drupal_password_expiration_day * (24 * 3600));
+        $dateSQL = format_date($date, 'custom', 'Y-m-d H:i:s', 0);
+        updateUserPasswordQuery(md5($pass), $node->uid);
+        updateUserPasswordExpQuery($dateSQL, $node->nid);
+        global $language;
+        $info['name'] = $first . ' ' . $last;
+        $info['password'] = $pass;
+        $info['uid'] = $node->uid;
+        $info['to'] = $name;
+        $info['language'] = $language;
+        $mail = new Mail();
+        $mailstatus = $mail->changepasswordmail($info);
+      }
+      // Delete all old roles and enter new one
+      deleteUsersRolesQuery($node->uid);
+      $role_nid_val = array();
+      $default_value = '';
+      $pl_name = array();
+      foreach ($node->roles as $key) {
+        insertUsersRolesQuery($key, $node->uid);
+        $rn = getRolesNameQuery($key);
+        $rname = explode("__", $rn);
+        // Store roles in person_application_role content type
+        $nid = getRolenidwithTitleQuery($rname[1], $rname[0]);
+        $product_line_name = node_load($rname[0]);
+        $role_nid_val[] = $nid;
+        $pl_name[$nid] = str_replace(' ', '-', $product_line_name->title);
+        if ($default_role == $key) {
+          $default_value = $nid;
+        }
+      }
+      $person_app_role = getAllPersonRolenidQuery($node->nid);
+      $role_processed = array();
+      while ($res = db_fetch_object($person_app_role)) {
+        $app_role_det = node_load($res->nid);
+        $role = $app_role_det->field_app_role_pk[0]['nid'];
+        if (!in_array($role, $role_nid_val)) {
+          $role_processed[] = $role;
+          node_delete($app_role_det->nid);
+        } else {
+          $disabled_value = $node->{$pl_name[$role] . '_privilege'};
+          //echo $pl_name[$role] . '_privilege' . $disabled_value;
+          if ($default_value == $role) {
+            $app_role_det->field_person_role_default[0]['value'] = '1';
+            if ($disabled_value != "") {
+              $app_role_det->field_max_download_level[0]['value'] = $node->{$pl_name[$role] . '_privilege'};
+            }
+          } else {
+            $app_role_det->field_person_role_default[0]['value'] = '0';
+            if ($disabled_value != "") {
+              $app_role_det->field_max_download_level[0]['value'] = $node->{$pl_name[$role] . '_privilege'};
+            }
+          }
+          $role_processed[] = $role;
+          node_save($app_role_det);
+        }
+      }
+
+      foreach ($role_nid_val as $key) {
+        if (!in_array($key, $role_processed)) {
+          $val2 = new stdClass();
+          $val2->title = $name;
+          $val2->type = "person_application_role";
+          $val2->language = "en";
+          $val2->uid = $user->uid;
+          $val2->field_person_pk[] = array('nid' => $node->nid);
+          $default = '0';
+          if ($default_value == $key) {
+            $default = "1";
+          }
+          $val2->field_person_role_default[0]['value'] = $default;
+          $val2->field_max_download_level[0]['value'] = $node->{$pl_name[$key] . '_privilege'};
+          $val2->field_app_role_pk[0]['nid'] = $key;
+          node_save($val2);
+        }
+      }
+
+      $device_array = explode(",", $node->device_type_array);
+      $role_access_array = explode(",", $node->role_access_array);
+      $privilege_processed[] = array();
+      $person_device_privilege = getAllPersonPrivilegenidQuery($node->nid);
+      while ($res = db_fetch_object($person_device_privilege)) {
+        $user_privilege[] = $res->nid;
+      }
+      foreach ($device_array as $k => $v) {
+        if (!in_array($k, $user_privilege)) {
+          $trimvalue = trim($role_access_array[$k]);
+          if ((!empty($v)) && (!empty($trimvalue))) {
+            $val2 = new stdClass();
+            $val2->title = $name;
+            $val2->type = "device_user_privileges";
+            $val2->uid = $user->uid;
+            $val2->language = "en";
+            $val2->field_person_pk[] = array('nid' => $node->nid);
+            $val2->field_device_type[] = array('nid' => $v);
+            $val2->field_user_section_access[0]['nid'] = $role_access_array[$k];
+            node_save($val2);
+            $privilege_processed[] = $v;
+          }
+        } else {
+          $privilege_det = node_load($v);
+          $privilege_det->field_user_section_access[0]['nid'] = $role_access_array[$k];
+          node_save($privilege_det);
+          $privilege_processed[] = $v;
+        }
+      }
+      $dateSQL = format_date(time(), 'custom', 'Y-m-d H:i:s', 0);
+      foreach ($user_privilege as $key) {
+        if (!in_array($key, $privilege_processed)) {
+          $privi_node = node_load($key);
+          $privi_node->field_expiration_datetime[0]['value'] = $dateSQL;
+          node_save($privi_node);
+          //        node_delete($key);
+        }
+      }
+      drupal_get_messages();
+      updateUserDetailsQuery($node, $first, $last, $bid, $comp, $acc, $name, $lid, $country, $status);
+      $country_title = node_load($country);
+      $language_title = node_load($lid);
+      $business_unit = node_load($bid);
+      global $language;
+      $info = array('first' => $first, 'last' => $last, 'email' => $name, 'covidien_emp' => $status, 'country' => $country_title->title, 'user_lang' => $language_title->title, 'bunit' => $business_unit->title, 'customer_name' => $node->customer_name, 'account' => $node->account_number, 'nid' => $node->nid);
+      $info['to'] = $name;
+      $info['uid'] = $node->uid;
+      $info['language'] = $language;
+      //$info['training_list'] = views_embed_view("training_details_list", "page_1", $node->nid);
+      $info['training_list'] = get_user_training_records($node->nid);
+      $mail = new Mail();
+      $mailstatus = $mail->updateuserdetailsmail($info);
+      logUserActivity("Edit User", "User - $name UPDATED", '', '', '', $user->uid, ip_address(), time());
+      $get = filter_xss_arr($_GET);
+      $url = url($get['q'], array('absolute' => TRUE));
+      $_SESSION['user_activity'][$url] = t("Edited - Person @name", array('@name' => $name));
+      cache_clear_all("content:$node->nid:$node->vid", 'cache_content', TRUE);
+      drupal_goto($base_url . "/covidien/admin/users/list");
+    } else {
+      form_set_error("error", t("Duplicate Entry"));
+    }
+  }
+}
+
+function get_user_training_records_query() {
+  $sql = "SELECT n.nid AS nid,
+      nptr.title AS trainer_title,
+      ptr.field_training_completion_date_value AS training_date,
+      npl.title AS product_line,
+      ndt.title AS device_type,
+      ptr.field_active_flag_value AS active_flag
+      FROM {node} n 
+      JOIN {content_type_person_training_record} ptr ON n.vid = ptr.vid
+      JOIN {node} nptr ON ptr.field_trainer_id_nid = nptr.nid
+      JOIN {content_field_device_type} dt ON n.vid = dt.vid
+      JOIN {node} ndt ON dt.field_device_type_nid = ndt.nid
+      JOIN {content_field_device_product_line} pl ON ndt.vid = pl.vid
+      JOIN {node} npl ON pl.field_device_product_line_nid = npl.nid
+      WHERE (n.type ='person_training_record') AND (ptr.field_trainee_id_nid = %d)";
+  return $sql;
+}
+
+function get_user_training_records($nid) {
+  $sql = get_user_training_records_query();
+  $result = db_query($sql, $nid);
+  while ($row = db_fetch_object($result)) {
+    $records[$row->nid]['nid'] = $row->nid;
+    $records[$row->nid]['trainer_user_id'] = $row->trainer_title;
+    $records[$row->nid]['date_of_training'] = $row->training_date;
+    $records[$row->nid]['class_of_trade'] = $row->product_line;
+    $records[$row->nid]['device_type'] = $row->device_type;
+    $records[$row->nid]['status'] = $row->active_flag ? t('Uncertified') : t('Certified');
+  }
+  return $records;
+}
+
+/**
+ * Function for Validating Email Field
+ */
+function validateEmail($email) {
+  return valid_email_address($mail);
+}
+
+/**
+ * Function for Validating Password Field
+ */
+function valid_pass($pass) {
+  $r1 = '/[A-Z]/';  //Uppercase
+  $r2 = '/[a-z]/';  //lowercase
+  $r3 = '/[!#$%()*+,-.:;=?@\[\]^_{}~]/';  // whatever you mean by 'special char' same as covidien_ui.module line 127 $allowable_characters[3]
+  $r4 = '/[0-9]/';  //numbers
+  $r5 = '/[&<>\'"]/'; //blacklist
+  if (preg_match_all($r1, $pass, $o) < 1)
+    return FALSE;
+  if (preg_match_all($r2, $pass, $o) < 1)
+    return FALSE;
+  if (preg_match_all($r3, $pass, $o) < 1)
+    return FALSE;
+  if (preg_match_all($r4, $pass, $o) < 1)
+    return FALSE;
+  if (strlen($pass) < 8)
+    return FALSE;
+  if (preg_match_all($r5, $pass, $o) > 0) //blacklist
+    return FALSE;
+  return TRUE;
+}
+
+/**
+ * Implements hook_views_default_views().
+ * Install all views related to covidien_users module
+ */
+function covidien_users_views_default_views() {
+  $files = file_scan_directory(drupal_get_path('module', 'covidien_users') . '/views', '.inc');
+  foreach ($files as $absolute => $file) {
+    require $absolute;
+    if (isset($view)) {
+      $views[$file->name] = $view;
+    }
+  }
+  return $views;
+}
+
+/**
+ * Implement hook_login_name_validate() to override
+ * Login error message and login validation
+ */
+function covidien_users_login_name_validate($form, &$form_state) {
+  global $base_url;
+  $flag = FALSE;
+  $pwd = FALSE;
+
+  $message = "";
+  $useraccount = user_load(array('name' => $form_state['values']['name']));
+  $account = user_load(array('name' => $form_state['values']['name'], 'pass' => trim($form_state['values']['pass'])));
+  $deactivate = user_is_deactivated($form_state['values']['name']);
+
+  if (empty($form_state['values']['name']) || ($form_state['values']['name'] == "Username (email address)") || trim($form_state['values']['name']) == "") {
+    drupal_get_messages();
+    form_set_error('name', t('Username field is required', array('%name' => $form_state['values']['name'])), TRUE);
+    $flag = TRUE;
+  } elseif (isset($form_state['values']['name'])) {
+    if (user_is_blocked($form_state['values']['name'])) {
+      // blocked in user administration
+      drupal_get_messages();
+      form_set_error('name', t('The username %name has not been activated or is blocked.', array('%name' => $form_state['values']['name'])), TRUE);
+      $pwd = TRUE;
+      $message = "User loggin attempt failed - " . $form_state['values']['name'];
+    } elseif (drupal_is_denied('user', $form_state['values']['name'])) {
+      // denied by access controls
+      form_set_error('name', t('The name %name is a reserved username.', array('%name' => $form_state['values']['name'])));
+    } else {
+      if ((($account->login == 0) || !$flag) && $deactivate != 1) {
+        drupal_get_messages();
+        $validate_name = user_validate_name($form_state['values']['name']);
+        if ($validate_name) {
+          form_set_error('name', $validate_name, TRUE);
+        }
+        global $user;
+        if ($user->uid == 0) {
+          form_set_error('name', t('Enter username and password correctly.', array('%name' => $form_state['values']['name'])), TRUE);
+          $message = "User loggin attempt failed - " . $form_state['values']['name'];
+        }
+      }
+    }
+  }
+  //GATEWAY-1614 default value change to LOGIN_SECURITY_USER_WRONG_COUNT set on admin/settings/login_security
+  $tot_count = variable_get('login_security_user_wrong_count', LOGIN_SECURITY_USER_WRONG_COUNT);
+  $count = getLoginTrackQuery($form_state['values']['name']);
+  if (!empty($useraccount) && (!$flag)) {
+    if (($tot_count == $count) && (!$flag) && ($deactivate != 1)) {
+      drupal_get_messages();
+      form_set_error('name', t('Your account is now LOCKED OUT. Please contact Help Desk for assistance.', array('%name' => $form_state['values']['name'])), TRUE);
+      $message = "User Account Locked " . $form_state['values']['name'];
+    } elseif (empty($form_state['values']['pass']) && (!$pwd) && ($deactivate != 1)) {
+      drupal_get_messages();
+      form_set_error('pass', t('Enter username and password correctly.', array('%name' => $form_state['values']['name'])), TRUE);
+      $message = "User loggin attempt failed - " . $form_state['values']['name'];
+      $flag = TRUE;
+    }
+  }
+  if ($deactivate == 1) {
+    //   clear_logsectable_activate($form_state['values']['name']);
+  }
+  if (!form_get_errors()) {
+    logUserActivity("Login", "User logged in - " . $form_state['values']['name'], '', '', '', $user->uid, ip_address(), time());
+  } else {
+    if (!empty($message)) {
+      logUserActivity("Login fail", $message, '', '', '', $useraccount->uid, ip_address(), time());
+    }
+  }
+}
+
+/**
+ * Function to validate password for Locked users,
+ * will check password and then for locked status
+ */
+function islockedValidate($form, &$form_state) {
+  $pass = $form_state['values']['pass'];
+  if (user_is_deactivated($form_state['values']['name']) == 1) {
+    drupal_get_messages();
+    global $user;
+    form_set_error('name', t('The username %name has not been activated or is blocked.', array('%name' => $form_state['values']['name'])), TRUE);
+    $message = "User loggin attempt failed - " . $form_state['values']['name'];
+    logUserActivity("Login fail", $message, '', '', '', $useraccount->uid, ip_address(), time());
+    setcookie('deactivate_user', $form_state['values']['name']);
+    drupal_goto();
+    exit;
+  } elseif (preg_match('/\s/i', $pass)) {
+    form_set_error('pass', t('Enter username and password correctly.', array('%name' => $form_state['values']['name'])), TRUE);
+  }
+}
+
+/**
+ * Implement hook_views_pre_view() function to override sort variable for user list
+ */
+function covidien_users_views_pre_view(&$view, &$display_id, &$args) {
+  if ($view->name == 'Users') {
+    /* Get the Sort object */
+    $sort = $view->display['default']->display_options['sorts'];
+    /* Change the sort order */
+    $sort['name']['order'] = 'DESC';
+    /* Set the new sorting object */
+    $view->display_handler->set_option('sorts', $sort);
+  }
+}
+
+/**
+ * Implement hook_views_query_alter() function to override
+ * views query for Users and Activity log
+ */
+function covidien_users_views_query_alter(&$view, &$query) {
+  if ($view->name == 'Users') {
+    // Get the keyword used for the search.
+    $get = filter_xss_arr($_GET);
+    $keyword = isset($get['name']) ? trim($get['name']) : '';
+    $sort = isset($get['sort']) ? $get['sort'] : 'ASC';
+    $order = isset($get['order']) ? $get['order'] : '';
+    $customer_name = isset($get['customer_name']) ? trim($get['customer_name']) : '';
+    $account_number = isset($get['account_number']) ? trim($get['account_number']) : '';
+    $status = isset($get['status']) ? trim($get['status']) : '';
+    if ($keyword != '') {
+      $keyword = str_replace("_", "\_", $keyword);
+      $query->where[0]['clauses'][0] = '(node_data_field_last_name.field_last_name_value LIKE ("%%%s%%") OR node_data_field_last_name.field_first_name_value LIKE ("%%%s%%") OR CONCAT(node_data_field_last_name.field_first_name_value," ",node_data_field_last_name.field_last_name_value) LIKE "%%%s%%") OR (users.mail LIKE ("%%%s%%"))';
+      $query->where[0]['args'][0] = $keyword;
+      array_splice($query->where[0]['args'], 1, 0, $keyword);
+      array_splice($query->where[0]['args'], 2, 0, $keyword);
+      array_splice($query->where[0]['args'], 3, 0, $keyword);
+    }
+    if ($order == "title_5") {
+      $query->add_field('', 'Concat_ws("-", node_node_data_field_business_unit.title,node_node_data_field_company_name.title)', 'business_company_join');
+      $view->query->orderby[0] = "business_company_join $sort";
+    } elseif ($order == "title_6") {
+      $query->add_field('', 'node_node_data_field_comp_account_no_node_data_field_bu_customer_account_number.field_bu_customer_account_number_value', 'business_company_join');
+      $view->query->orderby[0] = "business_company_join $sort";
+    }
+    if ($status == 1) {
+      $count = count($query->where[0]['clauses']) - 1;
+      $query->where[0]['clauses'][] = "(node_data_field_last_name.field_is_active_user_value = '1')";
+    }
+    if (!empty($customer_name)) {
+      $query->where[0]['clauses'][] = "(node_node_data_field_company_name.title) = '%s'";
+      $query->where[0]['args'][] = $customer_name;
+    }
+    if (!empty($account_number)) {
+      $query->where[0]['clauses'][] = "(node_node_data_field_comp_account_no_node_data_field_bu_customer_account_number.field_bu_customer_account_number_value) = '%s'";
+      $query->where[0]['args'][] = $account_number;
+    }
+    $query->where[0]['clauses'][] = "(node_data_field_expiration_datetime.field_expiration_datetime_value = '0000-00-00 00:00:00' OR node_data_field_expiration_datetime.field_expiration_datetime_value IS NULL )";
+  } elseif ($view->name == "activitylog") {
+    $get = filter_xss_arr($_GET);
+    $order = isset($get['order']) ? $get['order'] : '';
+    $sort = isset($get['sort']) ? $get['sort'] : 'ASC';
+    $keyword = isset($get['last_name']) ? trim($get['last_name']) : '';
+    $customer_name = isset($get['customer_name']) ? trim($get['customer_name']) : '';
+    $account_number = isset($get['account_number']) ? trim($get['account_number']) : '';
+    unset($view->query->orderby);
+    $views_join = new views_join();
+    $views_join->extra_type = 'AND';
+    $views_join->table = '(SELECT aid FROM activity_log ORDER BY aid DESC)';
+    $views_join->left_table = 'activity_log';
+    $views_join->left_field = 'aid';
+    $views_join->field = 'aid';
+    $views_join->type = 'INNER';
+    $views_join->adjusted = true;
+    //GATEWAY-2578 Use Join Buffer
+    //$query->table_queue['activity_log_order']['join'] = $views_join;
+    //$query->table_queue['activity_log_order']['alias'] = 'activity_log_order';
+    if ($order == 'logtime_1') {
+      $query->add_field('', 'concat_ws(HOUR(FROM_UNIXTIME(activity_log.logtime))," ",MINUTE(FROM_UNIXTIME(activity_log.logtime)))', 'hour_time');
+      //$view->query->orderby[0] = "hour_time $sort";
+    }
+    if (!empty($customer_name)) {
+      $query->where[0]['clauses'][] = "node_node_data_field_company_name.title = '%s'";
+      $query->where[0]['args'][] = $customer_name;
+    }
+    if (!empty($account_number)) {
+      $query->where[0]['clauses'][] = "(node_node_data_field_comp_account_no_node_data_field_bu_customer_account_number.field_bu_customer_account_number_value) = '%s'";
+      $query->where[0]['args'][] = $account_number;
+    }
+    if ($keyword != '') {
+      $keyword = str_replace("_", "\_", $keyword);
+      $query->where[0]['clauses'][0] = '((node_activity_log_node_data_field_last_name.field_last_name_value) LIKE ("%%%s%%") OR (node_activity_log_node_data_field_last_name.field_first_name_value) LIKE ("%%%s%%") OR CONCAT(node_activity_log_node_data_field_last_name.field_first_name_value," ",node_activity_log_node_data_field_last_name.field_last_name_value) LIKE "%%%s%%")';
+      $query->where[0]['args'][0] = $keyword;
+      array_splice($query->where[0]['args'], 0, 0, $keyword);
+      array_splice($query->where[0]['args'], 2, 0, $keyword);
+    } else {
+      unset($query->where[0]['clauses'][0]);
+      unset($query->where[0]['args'][0]);
+      $query->where[0]['clauses'][0] = " 1";
+    }
+    //GATEWAY-1540  duplicate records 
+    //$query->add_groupby('activity_log_logtime');
+    //var_dump($query->groupby);
+  }
+}
+
+/**
+ * Function to generate form for access roles and for specific roles
+ */
+function access_roles_function($product_line, $role) {
+  $output = drupal_get_form('access_roles', filter_xss($role));
+  return $output;
+}
+
+/**
+ * Function to generate form for access roles
+ */
+function access_roles($form_id, $passed_variable) {
+  global $base_url;
+  $count = 0;
+  $prefix = '';
+  $sections1 = getAccessSectionsQuery();
+  $form['roles_list'] = array('#type' => 'item', '#prefix' => '<table width="100%">', '#suffix' => '</table>');
+  $form['roles_list']['role_value'] = array(
+    '#type' => 'hidden',
+    '#value' => $passed_variable,
+  );
+  $form['roles_list']['permission'] = array(
+    '#type' => 'item',
+    '#value' => "Permission",
+    '#prefix' => "<h4>",
+    '#suffix' => "</h4>",
+  );
+  $c = 0;
+
+  while ($row = db_fetch_object($sections1)) {
+    $section['name'] = $row->field_section_name_value;
+    $description = $row->field_app_section_description_value;
+    $form['roles_list'][$section['name']] = array(
+      '#type' => 'item',
+      '#value' => $section['name'],
+      '#prefix' => '<tr><td colspan="2"><div class="access" id="select-catalog-' . $row->nid . '">',
+      '#suffix' => '</div><em>' . $description . '</em></td>',
+    );
+    $sel = getSelectedAccessValue($row->nid, $passed_variable);
+    $all_options = getAccessOptions($row->nid);
+    $selected_id = strtolower(str_replace(" ", "_", $section['name']));
+    // For training role we dont need heading 'Access' so we need to ignore only for Training
+    $prefix = '<tr><td valign="top" align="right"><div style="padding-top:3px;*padding_top:5px;">' . t("Access") . '</div></td><td valign="top">';
+    if ($section['name'] == 'Trainer') {
+      $prefix = '<tr><td valign="top" align="right"><div style="padding-top:3px;*padding_top:5px;"></div></td><td valign="top">';
+    }
+    if ($section['name'] == 'Catalog Management Section') {
+      $prefix = '<tr><td valign="top" align="right"><div style="padding-top:3px;*padding_top:5px;"></div></td><td valign="top">';
+    }
+    $form['roles_list']['options' . $count] = array(
+      '#type' => 'radios',
+      '#options' => $all_options,
+      '#default_value' => ($sel != '') ? $sel : '',
+      '#attributes' => array(
+        'class' => "div_disabled",
+        'class' => $selected_id . '_options'),
+      '#prefix' => $prefix,
+    );
+    $form['roles_list'][$selected_id . '_text'] = array(
+      '#type' => 'hidden',
+      '#value' => $all_options[$sel],
+      '#attributes' => array("class" => $selected_id . '_text'),
+    );
+    $sel = '';
+    $count++;
+    $section2 = getChildAccessSections($row->nid);
+    $form['roles_list']['hideshow1'] = array('#type' => 'item', '#prefix' => '<div id="hideshow">');
+    while ($row2 = db_fetch_object($section2)) {
+      $disabled = array();
+      $section['name'] = $row2->field_section_name_value;
+      $form['roles_list'][$section['name']] = array(
+        '#type' => 'item',
+        '#value' => $section['name'],
+        '#prefix' => '<div style="width:175px; float:left" id="disable_this_' . $row2->nid . '">',
+      );
+      $sel2 = getSelectedAccessValue($row2->nid, $passed_variable);
+      if (empty($sel2)) {
+        $disabled = array("disabled" => "disabled");
+      }
+      $form['roles_list']['options' . $count] = array(
+        '#type' => 'radios',
+        '#options' => getAccessOptions($row2->nid),
+        '#default_value' => ($sel2 != '') ? $sel2 : '',
+        '#value' => ($sel2 != '') ? $sel2 : '',
+        '#suffix' => '</div>',
+      );
+      $sel2 = '';
+      $count++;
+    }
+    $form['roles_list']['hideshow2'] = array('#type' => 'item', '#suffix' => '</div>');
+    $form['roles_list' . $c++] = array('#type' => 'item', '#suffix' => '</td></tr>');
+    $count++;
+  }
+  $form['roles_list']['total_roles'] = array(
+    '#type' => 'hidden',
+    '#value' => $count,
+  );
+  global $user;
+  $form['roles_list']['cancel'] = array(
+    '#type' => 'item',
+    '#prefix' => '<tr><td colspan="2"><table width="100%"><tr><td align="right" width="75%"><a id="secondary_submit" href="' . $base_url . '/covidien/admin/access_roles/' . arg(3) . '/' . $passed_variable . '">' . t("Cancel") . '</a>',
+    '#suffix' => '</td>',
+  );
+  if (in_array('edit', $user->devices_access['users'])) {
+    $form['roles_list']['sys_admin'] = array(
+      '#type' => 'submit',
+      '#value' => t('Save Changes'),
+      '#attributes' => array('onclick' => 'if(!confirm(Drupal.t("This will change the access policy for all the users assigned to the selected Role.\n\nAre you sure you want to change the access policy?"))) {return false;}', 'class' => 'secondary_submit'),
+      '#prefix' => '<td align="right" width="25%">',
+      '#suffix' => '</td></tr></table></td></tr>',
+    );
+  }
+  return $form;
+}
+
+/**
+ * Function to get all Access options related to content_type app_section
+ */
+function getAccessOptions($nid) {
+  $options = getAccessOptionQuery($nid);
+  while ($val = db_fetch_object($options)) {
+    $section[$val->nid] = $val->field_access_option_name_value;
+  }
+  return $section;
+}
+
+/**
+ * Function to get selected value from access roles if it present in table
+ */
+function getSelectedAccessValue($nid, $role) {
+  $options = getSelectedAccessOptionQuery($nid, $role);
+  return $options;
+}
+
+/**
+ * Function to submit access roles form values to app_role_access_policy
+ */
+function access_roles_submit($form, &$form_state) {
+  global $user;
+  $count = $form_state['clicked_button']['#post']['total_roles'];
+  $role = $form_state['clicked_button']['#post']['role_value'];
+  $query = getAccessPolicyQuery($role);
+  while ($row = db_fetch_object($query)) {
+    $node = node_load($row->nid);
+    $dateSQL = format_date(time(), 'custom', 'Y-m-d H:i:s', 0);
+    $node->field_expiration_datetime[0]['value'] = $dateSQL;
+    node_save($node);
+  }
+  for ($i = 0; $i < $count; $i++) {
+    $id = $form_state['clicked_button']['#post']['options' . $i];
+    if ($id) {
+      $node = new stdClass();
+      $node->type = 'app_role_access_policy';
+      $node->uid = $user->uid;
+      $node->format = 0;
+      $node->title = 'Roles Access';
+      $node->field_app_role[] = array('nid' => $role);
+      $node->field_section_access_option[] = array('nid' => $id);
+      node_save($node);
+    }
+  }
+  $role_details = node_load($role);
+  $product_line = getProductlineRoleQuery($role_details->nid);
+  logUserActivity("Assign permission", "Permissions for $product_line $role_details->title  UPDATED", '', '', '', $user->uid, ip_address(), time());
+  $get = filter_xss_arr($_GET);
+  $url = url($get['q'], array('absolute' => TRUE));
+  $_SESSION['user_activity'][$url] = t("Edited - Role @title", array('@title' => $role_details->title));
+}
+
+/**
+ * Template function for access roles
+ */
+function template_preprocess_access_roles(&$variables) {
+  drupal_get_messages();
+  global $user;
+  global $base_url;
+  $id = $_SESSION['default_cot'];
+  $role = arg(4);
+  drupal_add_js(drupal_get_path('theme', 'covidien_theme') . '/js/covidien.js');
+  $product_line = getRoleProductLineQuery();
+  while ($val = db_fetch_object($product_line)) {
+    $product_arr[$val->nid] = $val->title;
+  }
+  $roles_details = getRoleDetailsQuery($role[3]);
+  while ($roles = db_fetch_object($roles_details)) {
+    $variables['role_name'] = $roles->title;
+    $variables['desc'] = $roles->field_roles_description_value;
+    $sel = $roles->field_role_product_line_nid;
+  }
+
+  $variables['roles_list'] = getAllrolesfromnodes($role, $id);
+}
+
+/**
+ * Implements hook_theme()
+ */
+function covidien_users_theme() {
+  return array(
+    'access_roles' => array(
+      'template' => 'access-role',
+      'arguments' => array('form' => NULL, 'get' => NULL),
+    ),
+    'training_details_list' => array(
+      'template' => 'training-details-list',
+      'arguments' => array('form' => NULL, 'get' => NULL),
+    ),
+    'privilege_item' => array(
+      'arguments' => array('form' => NULL),
+    ),
+    'forgot_passwordfrm' => array(
+      'template' => 'template/forgot-passwordfrm',
+      'arguments' => array('form' => NULL),
+      'file' => 'include/forgot_password.inc',
+    ),
+    'reset_passwordfrm' => array(
+      'template' => 'template/reset-passwordfrm',
+      'arguments' => array('form' => NULL),
+      'file' => 'include/forgot_password.inc',
+    ),
+    'user_notificationfrm' => array(
+      'template' => 'template/user-notifications',
+      'arguments' => array('form' => NULL),
+      'file' => 'include/user_settings.inc',
+    ),
+    'user_changepasswordfrm' => array(
+      'template' => 'template/user-password',
+      'arguments' => array('form' => NULL),
+      'file' => 'include/user_settings.inc',
+    ),
+    'covidienuser_profile' => array(
+      'template' => 'template/user-profile',
+      'arguments' => array('form' => NULL),
+    ),
+  );
+}
+
+/**
+ * Function to get all roles from content type roles
+ */
+function getAllrolesfromnodes($role = '', $id = '') {
+  global $base_url;
+  global $wordwraplength, $wordwrapchar;
+  $view = views_get_view('roles_product_line_list');
+  $view->init_display();
+  $view->pre_execute(array($role));
+  $view->execute();
+  $result = $view->result;
+  if (count($result) > 0) {
+    foreach ($result as $rec) {
+      $style = "";
+      if ($rec->nid == $role) {
+        $style = "style='color:#000000'";
+      }
+      if ($rec->node_data_field_role_product_line_field_role_product_line_nid != $id) {
+        continue;
+      }
+      $roles .= "<a href='$base_url/covidien/admin/access_roles/$rec->node_data_field_role_product_line_field_role_product_line_nid/$rec->nid' $style>" . wordwrap($rec->node_title, $wordwraplength, $wordwrapchar, TRUE) . "</a><br />";
+    }
+  }
+  return $roles;
+}
+
+/**
+ * Function to get all access policy related to the user roles
+ */
+function getUserAccessDetails($rolename) {
+  module_load_include('inc', 'covidien_users', 'include/covidien_users_query');
+
+  $rname = explode('__', $rolename);
+  $nid = getRolenidwithExpQuery($rname[1], $rname[0]);
+  $query = getUsersAccessOptions($nid);
+  while ($row = db_fetch_object($query)) {
+    $access[$row->field_section_name_value] = $row->field_access_option_name_value;
+  }
+  return $access;
+}
+
+/**
+ * Function to unblock users
+ */
+function covidien_unblock_user($form, &$form_state) {
+  global $user;
+  $uid = $form_state['values']['uid'];
+  blockUserQuery($uid, $form_state['values']['name']);
+  //GATEWAY-1951
+  if ($user->uid == 1) {
+    logUserActivity("User Unlock", "User " . $form_state['values']['name'] . " Unlocked", '', '', '', $uid, ip_address(), time());
+  } else {
+    logUserActivity("User Unlock", "User " . $form_state['values']['name'] . " Unlocked", '', '', '', $user->uid, ip_address(), time());
+  }
+}
+
+/**
+ * Function get User id value from url and redirect to list page
+ */
+function training_details($id) {
+  $output = theme('training_details_list', $id);
+  return $output;
+}
+
+/**
+ * Alter fields for list training details list page, included js files for colorbox
+ */
+function template_preprocess_training_details_list(&$variables) {
+  drupal_add_js(drupal_get_path('module', 'covidien_users') . '/js/newjquery.min.js');
+  drupal_add_js(drupal_get_path('module', 'covidien_users') . '/js/jquery.colorbox-min.js');
+  drupal_add_js(drupal_get_path('module', 'covidien_users') . '/js/editor.js');
+  drupal_add_js(drupal_get_path('module', 'covidien_users') . '/js/jquery-ui.min.js');
+  drupal_add_css(drupal_get_path('module', 'covidien_users') . '/css/colorbox.css');
+  $variables['uid'] = filter_xss(trim(arg(3)));
+  $id = filter_xss(trim(arg(3)));
+  $result = node_load($id);
+  $variables['id'] = $id;
+  $variables['first_name'] = $result->field_first_name[0]['value'];
+  $variables['last_name'] = $result->field_last_name[0]['value'];
+  $variables['user_email'] = $result->name;
+  //$variables['training_list'] = views_embed_view("training_details_list", "page_1", $id);
+  $variables['training_list'] = get_user_training_records_table($id);
+}
+
+function get_user_training_records_table($id) {
+  //header
+  $header = array(
+    array('data' => t('Trainer User ID'), 'field' => 'nptr.title', 'sort' => 'asc'),
+    array('data' => t('Date of Training'), 'field' => 'ptr.field_training_completion_date_value', 'sort' => 'asc'),
+    array('data' => t('Class of Trade'), 'field' => 'npl.title', 'sort' => 'asc'),
+    array('data' => t('Device Type'), 'field' => 'ndt.title', 'sort' => 'asc'),
+    array('data' => t('Status'), 'field' => 'ptr.field_active_flag_value', 'sort' => 'asc'),
+  );
+  $sql = get_user_training_records_query();
+  $sql .= check_plain($_GET['sort']) ? tablesort_sql($header) : " ORDER BY n.changed DESC ";
+  $args[] = $id;
+  $result = db_query($sql, $args);
+  //row
+  $rows = array();
+  while ($row = db_fetch_object($result)) {
+    $rows[$row->nid]['trainer_user_id'] = $row->trainer_title;
+    $date = date('m/d/Y', strtotime($row->training_date));
+    $href = 'node/' . $row->nid . '/edit/' . $id . '/mcot';
+    $rows[$row->nid]['date_of_training'] = l($date, $href, array('attributes' => array('class' => 'iframe cboxElement')));
+    $rows[$row->nid]['class_of_trade'] = $row->product_line;
+    $rows[$row->nid]['device_type'] = $row->device_type;
+    $rows[$row->nid]['status'] = $row->active_flag ? t('Uncertified') : t('Certified');
+  }
+  return theme_table($header, $rows);
+}
+
+function covidien_users_init() {
+  module_load_include('inc', 'covidien_users', 'include/covidien_users');
+  module_load_include('inc', 'covidien_users', 'include/covidien_users_query');
+  module_load_include('inc', 'covidien_users', 'include/covidien_users_mail');
+  module_load_include('install', 'covidien_users');
+}
+
+function theme_privilege_item($item_form) {
+  // You can do more fancy layout/HTML formatting here
+  return drupal_render($item_form);
+}
+
+function get_DeviceTypeList() {
+  $post = filter_xss_arr($_POST);
+  $array = array();
+  $product_line = $post['value'];
+  $rec = PLbasedDeviceType($product_line);
+  foreach ($rec as $k => $v) {
+    $array[] = $k . "__" . $v;
+  }
+  if (!empty($array)) {
+    echo implode("^", $array);
+  }
+  exit;
+}
+
+function get_TrainerList() {
+  $post = filter_xss_arr($_POST);
+  $device_type_nid = $post['device_type_nid'];
+  $persion_name = $post['person_email'];
+  $rec = DeviceTypebasedUsers($device_type_nid, $persion_name);
+  $array = array();
+  foreach ($rec as $k => $v) {
+    $array[] = $k . "__" . $v;
+  }
+  if (!empty($array)) {
+    echo implode("^", $array);
+  }
+  exit;
+}
+
+function PLbasedDeviceType($product_line = '') {
+  $array = array();
+  $dtype_res = getDevicesonPLQuery($product_line);
+  while ($rec = db_fetch_object($dtype_res)) {
+    $nid = $rec->devicetype_nid;
+    $array[$nid] = $rec->device_type;
+  }
+  return $array;
+}
+
+function DeviceTypebasedUsers($device_type_nid = '', $persion_name = '') {
+  $sql = "SELECT ppn.nid, ppn.title 
+    FROM {node} n 
+    JOIN {content_type_device_user_privileges} dup ON n.vid = dup.vid
+    JOIN {node} an ON dup.field_user_section_access_nid = an.nid
+    JOIN {content_type_section_access_option} sao ON an.vid = sao.vid
+    JOIN {node saoan} ON sao.field_access_option_nid = saoan.nid AND saoan.title = 'Yes'
+    JOIN {content_field_person_pk} pp ON n.vid = pp.vid
+    JOIN {node} ppn ON pp.field_person_pk_nid = ppn.nid
+    JOIN {content_field_device_type} dt ON n.vid = dt.vid 
+    WHERE n.type='device_user_privileges' ";
+  $args = array();
+  if ($device_type_nid && $device_type_nid != 'All') {
+    $sql .= " AND dt.field_device_type_nid = %d ";
+    $args[] = $device_type_nid;
+  }
+  if ($persion_name && $persion_name != 'All') {
+    $sql .= " AND ppn.title <> '%s' ";
+    $args[] = $persion_name;
+  }
+  $sql .= " GROUP BY n.nid ";
+  $result = db_query($sql, $args);
+  $rows = array();
+  while ($row = db_fetch_object($result)) {
+    $rows[$row->nid] = $row->title;
+  }
+  return $rows;
+}
+
+function getUserPrivilegeValues($nid) {
+  $array = array();
+  $pl = getUsersAllPrevilegeQuery($nid);
+  while ($rec = db_fetch_object($pl)) {
+    $array[$rec->title] = $rec->field_max_download_level_value;
+  }
+  return $array;
+}
+
+function validateDevicetypewithRoles($device_array, $role_array, $role_access_array) {
+  $productline = array();
+  foreach ($role_array as $k) {
+    $role_name = getRolesNameQuery($k);
+    $pl = explode('__', $role_name);
+    $productline[] = $pl[0];
+  }
+  foreach ($device_array as $key => $val) {
+    $role_access_value = trim($role_access_array[$key]);
+    if (!empty($role_access_value)) {
+      $access = getTitleUserAccessOptionQuery($role_access_value);
+      if ((!empty($val)) && ($access != 'No')) {
+        $device_pl = getDevicetypePLQuery($val);
+        if (!in_array($device_pl, $productline)) {
+          return FALSE;
+        }
+      }
+    }
+  }
+  return TRUE;
+}
+
+function get_customerDetails($customer_name, $customer_account) {
+  if (strtolower($customer_name) == 'unknown') {
+    $customer['name'] = '';
+    $customer['account'] = '';
+    return $customer;
+  }
+  $customer['cus_name'] = getCIDCustomerNameQuery($customer_name);
+  $customer['name'] = getBUCustomerIDQuery($customer_name, $customer_account);
+  $customer['account'] = getAccountIDQuery($customer_account);
+  return $customer;
+}
+
+/**
+ * hook_cron send expire mail, every day before 5 days.
+ */
+function covidien_user_cron() {
+  covidien_update_log('Run Start ' . __FUNCTION__);
+
+  global $language;
+  $result = db_query("SELECT nid, CONCAT(field_first_name_value, ' ', field_last_name_value) AS name, field_password_expiration_date_value, field_person_username_value, field_forgotpass_req_date_value FROM {content_type_person}");
+
+  $info['link'] = l(t("User Profile"), 'covidien/users/settings/change_password');
+  $info['language'] = $language;
+  $info['message_id'] = 'user_password_expire';
+  module_load_include('inc', 'covidien_users', 'include/covidien_users_mail');
+  $mail = new Mail();
+  while ($row = db_fetch_object($result)) {
+    $exp = strtotime($row->field_password_expiration_date_value);
+    $exp5 = strtotime('-5 day', $exp);
+    $now = time();
+    $sent = strtotime($row->field_forgotpass_req_date_value);
+    $yesday = strtotime('-1 day', $now);
+    if ($now > $exp5 && $yesday > $sent) {
+      $info['uid'] = $row->nid;
+      $info['to'] = $row->field_person_username_value;
+      $info['name'] = $row->name;
+      $info['body'] = expire_notice_time($row->field_password_expiration_date_value);
+      $status = $mail->password_about_to_expire($info);
+      if ($status) {
+        db_query("UPDATE {content_type_person} SET field_forgotpass_req_date_value = NOW() WHERE nid = %d", $row->nid);
+      }
+    }
+  }
+  covidien_update_log('Finished ' . __FUNCTION__);
+}
+
+function expire_notice_time($result) {
+  global $expire_notice, $base_url;
+  $end = strtotime($result);
+  $time = time();
+  $compare = $time + ($expire_notice * (24 * 3600));
+  $link = l(t("User Profile"), $base_url . '/covidien/users/settings/change_password');
+  if ($end < $compare) {
+    $diff = $end - time();
+    $dl = floor($diff / (24 * 3600));
+    $day = ($dl == 0) ? "" : $dl . " " . t("Days");
+    $hl = floor(($diff - $dl * 60 * 60 * 24) / 3600);
+    $hour = ($hl == 0) ? "" : "$hl " . t("Hours");
+    $ml = floor(($diff - $dl * 60 * 60 * 24 - $hl * 60 * 60) / 60);
+    $min = ($ml == 0) ? "" : "$ml " . t("Minutes");
+    $sl = floor(($diff - $dl * 60 * 60 * 24 - $hl * 60 * 60 - $ml * 60));
+    $sec = ($sl == 0) ? "" : "$sl " . t("Seconds");
+    if ((!empty($hour) || !empty($min) || !empty($sec))) {
+      $day = $dl + 1;
+    }
+    if (empty($dl)) {
+      $day = $day . " " . t("Day");
+    } else {
+      $day = $day . " " . t("Days");
+    }
+    return t("Password is going to Expire in !day. To change password go to !link", array("!day" => $day, "!link" => $link));
+  } else {
+    return '';
+  }
+}

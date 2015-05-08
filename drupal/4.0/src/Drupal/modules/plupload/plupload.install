@@ -1,0 +1,42 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the plupload module.
+ *
+ */
+
+function plupload_requirements($phase) {
+  if (defined('MAINTENANCE_MODE') && MAINTENANCE_MODE == 'install') {
+   return;
+  }
+  $t = get_t();
+  $requirements['plupload'] = array();
+  module_load_include('module', 'plupload');
+  if (!plupload_library_path()) {
+    $requirements['plupload'][] = array(
+      'title' => 'Plupload',
+      'description' => $t('The plupload library files are either missing or not readable.  Please follow the directions <a href="!link">in the README.txt file</a> regarding module installation.', array('!link' => url(drupal_get_path('module', 'plupload') .'/README.txt'))),
+      'severity' => REQUIREMENT_ERROR,
+    );
+    if ($phase == 'runtime') {
+      // If we do this at install time, we get a misworded "currently using..." message from core.
+      // See drupal_check_module in install.inc.
+      $requirements['plupload']['value'] = 'Plupload libraries not found.';
+    }
+  }
+
+  if (file_exists(plupload_library_path() . '/examples/upload.php')) {
+    $requirements['plupload_examples'] = array(
+      'title' => $t('Plupload example folder'),
+      'value' => $t('Example folder found'),
+      'description' => $t('Plupload library contains example files, these could constitute a security risk to your site as per <a href="!url">PSA-2011-02</a>. Please remove the !path folder immediately.', array(
+        '!url' => 'http://drupal.org/node/1189632',
+        '!path' => plupload_library_path() . '/examples'
+      )),
+      'severity' => REQUIREMENT_ERROR
+    );
+  }
+
+  return $requirements['plupload'];
+}

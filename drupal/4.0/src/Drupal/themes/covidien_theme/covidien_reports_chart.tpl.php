@@ -1,0 +1,1 @@
+<img src="<?php print $chart_lib_path . '/piechart.php?pass=' . $pass_per . '&fail=' . $fails_per; ?>" />
