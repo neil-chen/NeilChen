@@ -90,7 +90,7 @@
  */
 $db_url = 'mysql://username:password@localhost/databasename';
 $db_prefix = '';
-
+//admin user: admin admin123
 /**
  * Database default collation.
  *
