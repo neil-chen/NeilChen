@@ -159,7 +159,6 @@ $(document).ready(function() {
     });
   });
 
-
   $('#views-exposed-form-softwarelist-page-1 #edit-field-hw-type-nid').trigger('change');
 
 // For Button blur/Active state
@@ -364,16 +363,16 @@ function check_input_text() {
 
 function check_relation() {
   // For checkbox
+  //GATEWAY-2877 not display config selection and not check 3.0 version relation 
+  var deviceTypeName = $.trim($('#edit-field-device-type-nid-nid').find('option:selected').text());
+  var gatewaySupportVersion = deviceTypeRelation[deviceTypeName];
+
   var n = $("#right_hc_table input[type='checkbox']").length + $("#right_hardware_table input[type='checkbox']").length;
-  if (n == 0) {
+  //check 2.0 relation and check software type 
+  if ((n == 0 && (gatewaySupportVersion <= '2.0')) || ($('#edit-field-sw-type-nid-nid > option:selected').val() == 0)) {
     //$('#hardware-message').html('You must select/add hardware/HW configuration.');
     return false;
   } else {
-    if ($('#edit-field-sw-type-nid-nid > option:selected').val() == 0) {
-      return false;
-    } else {
-      return true;
-    }
     return false;
   }
 }
@@ -640,10 +639,11 @@ function switch_display_area() {
     $('#hardware_selection_header').css('display', 'none');
     $('#hardware_selection_body').css('display', 'none');
     $('#hardware_selection_footer').css('display', 'none');
-    $('#hw_cfg_selection_header').css('display', '');
-    $('#hw_cfg_selection_footer').css('display', '');
-    $('#fw_cfg_selection_header').css('display', '');
-    $('#fw_cfg_selection_footer').css('display', '');
+    //GATEWAY-2877 not display config selection 
+    $('#hw_cfg_selection_header').css('display', 'none');
+    $('#hw_cfg_selection_footer').css('display', 'none');
+    $('#fw_cfg_selection_header').css('display', 'none');
+    $('#fw_cfg_selection_footer').css('display', 'none');
   } else {
     $('#hardware_selection_header').css('display', 'none');
     $('#hardware_selection_body').css('display', 'none');

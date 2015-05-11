@@ -1,5 +1,5 @@
 <?php
-
+    
 /**
  * @file
  * Reports functionality defined here.
@@ -769,182 +769,9 @@ function get_device_with_sw_version_query() {
  */
 function covidien_reports_views_pre_render(&$view, &$display_id = 'default', &$args = array()) {
   $view->covidien_reports_header_thh = 0;
-  if ($view->name == 'report_1' || $view->name == 'report_1_scd' || $view->name == 'report_1_emerald') {
-    $view->base_table = str_replace('_software_version_view', '_software_version_table', $view->base_table);
-    $subqry = '';
-    $covidien_reports_sub = array();
+  //SubReport have been moved to the inc file already
+  if ($view->name == 'report_1' || $view->name == 'report_1_scd' || $view->name == 'report_1_emerald') { 
     drupal_set_title('<span class="title_bold">' . t('Device Current Configuration Report') . '</span>');
-    $get = filter_xss_arr($_GET);
-    $report['covidien_reports_filter'] = get_report_filter($get);
-    $report_op = theme('covidien_reports_filter', $report);
-    $row = count($report['covidien_reports_filter']) + 1;
-    $row = ($row / 2) + 1;
-    $view->covidien_reports_header = theme('covidien_reports_header', array('report_v' => 1));
-    $view->covidien_reports_footer = theme('covidien_reports_footer', array('report_v' => 1));
-    $view->covidien_reports_header_dh = 4.85 * 7;
-    //used to increase title header height
-    $view->covidien_reports_header_thh = 5;
-    $view->covidien_reports_filter = $report_op;
-    $view->covidien_reports_filter_dh = $view->covidien_reports_header_dh + (4.85 * $row);
-    //Reports Sub result where condition logic
-    $covidien_reports_subval = array();
-    $covidien_reports_subkey = array(t('Customer Name'), t('S/W  Version'), t('Total'));
-    $subwhere_arr = $view->display['page_1']->handler->handlers['field']['customername']->query->where;
-    $subwhere_valid = array();
-    $subargs = array();
-    if (count($subwhere_arr[0]['args']) > 0) {
-      $post = filter_xss_arr($_GET);
-      $subqry = "select alltable.customername, alltable.software_version, count(alltable.software_version) as total
-                from 
-                (SELECT device_service_history_view.customername AS customername,  
-                view_software.VERSION AS software_version 
-                FROM ( select * from device_service_history_view order by service_date desc ) device_service_history_view 
-                LEFT JOIN view_software on view_software.nid = device_service_history_view.to_component_nid 
-                LEFT JOIN content_field_hw_list on content_field_hw_list.nid = view_software.nid 
-                AND content_field_hw_list.vid = view_software.vid 
-                LEFT JOIN view_hardware on view_hardware.nid = content_field_hw_list.field_hw_list_nid 
-                LEFT JOIN content_field_device_type on content_field_device_type.nid = view_hardware.nid and content_field_device_type.field_device_type_nid = device_service_history_view.devicetype_nid 
-                LEFT JOIN content_type_hardware on content_type_hardware.nid = view_hardware.nid 
-                AND content_type_hardware.vid = view_hardware.vid ";
-
-      $sub_where = " WHERE (device_service_history_view.productline_nid = %d)
-                     AND device_service_history_view.to_component_nid <> '' 
-                     AND view_software.nid <> '' ";
-
-      $subargs[] = $post['productline_nid'];
-      //required field no matter what
-      if (isset($post['devicetype_nid']) && !empty($post['devicetype_nid'])) {
-        $sub_where .= " AND device_service_history_view.devicetype_nid = %d ";
-        $subargs[] = $post['devicetype_nid'];
-      }
-      //CASE I , if serial, then customer is optional. related GATEWAY-2189 
-      if (isset($post['deviceserial']) && !empty($post['deviceserial'])) {
-        $sub_where .= " AND device_service_history_view.deviceserial = '%s' ";
-        $subargs[] = $post['deviceserial'];
-        //If user selects the serial number to view the report then other mandatory field Customer should be made optional.
-        if (isset($post['customer_nid']) && !empty($post['customer_nid'])) {
-          $sub_where .= " AND device_service_history_view.customername = '%s' ";
-          $subargs[] = $post['customer_nid'];
-        }
-      } else {
-        //CASE II, if not serial #, then (Customer AND/OR Country). related GATEWAY-2189
-        if (isset($post['customer_nid']) && !empty($post['customer_nid'])) {
-          $sub_where .= " AND device_service_history_view.customername = '%s' ";
-          $subargs[] = $post['customer_nid'];
-        }
-        //And or Or Condition
-        $condition = " AND ";
-        if ($post['hid_condition'] == 'or') {
-          $condition = " OR ";
-        }
-        if (isset($post['country']) && !empty($post['country'])) {
-          $sub_where .= $condition . " device_service_history_view.country_nid = %d ";
-          $subargs[] = $post['country'];
-        }
-      }
-
-      $group_by = " group by device_service_history_view.deviceserial
-                    order by device_service_history_view.servicehistory_nid desc
-                    ) alltable
-                    group by alltable.software_version,alltable.customername
-                    order by alltable.customername desc";
-      $subqry = $subqry . $sub_where . $group_by;
-      /**
-       * Used in helper report_sub_result_session
-       * xls, csv report
-       */
-      if (!$get['eid'] > 0) {
-        variable_set('report_sub_qry', $subqry);
-        variable_set('report_sub_arg', $subargs);
-      }
-    }
-    $qarr = explode('/', $get['q']);
-    $qarr_count = count($qarr);
-    $is_chk1 = (($qarr[$qarr_count - 2] == 'pdf') && ($qarr[$qarr_count - 1] != ''));
-    $is_chk2 = ($qarr[$qarr_count - 1] == 'xls');
-    $is_chk3 = ($qarr[$qarr_count - 1] == 'xlsx');
-    $is_chk4 = ($qarr[$qarr_count - 1] == 'csv');
-    if ($is_chk1 || $is_chk2 || $is_chk3 || $is_chk4) {
-      if (variable_get('report_sub_qry', '') != '') {
-        $subqry = variable_get('report_sub_qry', '');
-        $subargs = variable_get('report_sub_arg', '');
-      } else {
-        drupal_goto('/covidien/reports/filter');
-      }
-    }
-    if ($subqry != '') {
-      $subres = db_query($subqry, $subargs);
-      while ($subrec = db_fetch_object($subres)) {
-        //note: software_version can be empty, HW without SW
-        array_push($covidien_reports_sub, array(
-          $subrec->customername,
-          $subrec->software_version,
-          $subrec->total,
-        ));
-      }
-    }
-    $view->covidien_reports_subline = t('Total at each SW version by Account');
-    $view->covidien_reports_subkey = $covidien_reports_subkey;
-    $view->covidien_reports_subval = $covidien_reports_sub;
-    if (count($covidien_reports_sub) == 0) {
-      $view->covidien_reports_noresult = t('Total at each SW version by Account');
-      $view->covidien_reports_noresult .= '</br>';
-      $view->covidien_reports_noresult .= t('No Results');
-    }
-    //get report sub2 result by query
-    $covidien_reports_sub2key = array(t('Device Type'), t('S/W  Version'), t('Country'), t('Total'));
-    $covidien_reports_sub2val = array();
-    $prepra_sub2args = Array(
-      'productline_nid' => $get['productline_nid'],
-      'devicetype_nid' => $get['devicetype_nid'],
-      'customer_nid' => $get['customer_nid'],
-      'country' => $get['country'],
-      'deviceserial' => $get['deviceserial']);
-
-    $sub2args = Array($get['productline_nid'], $get['devicetype_nid']);
-
-    if ($get['customer_nid']) {
-      $sub2args[] = $get['customer_nid'];
-    }
-    if ($get['country']) {
-      $sub2args[] = $get['country'];
-    }
-    if ($get['deviceserial']) {
-      $sub2args[] = $get['deviceserial'];
-    }
-    //$sub2qry = get_device_category_by_customer_report_query();
-    //$sub2qry = get_device_with_sw_version_query($prepra_sub2args,$view->base_table);
-    $sub2qry = get_device_with_sw_version_query();
-    if ($sub2qry['query'] != '') {
-      /**
-       * Used in helper report_sub2_result_session
-       * xls, csv report
-       */
-      if ($get['productline_nid'] != '') {
-        variable_set('report_sub2_qry', $sub2qry['query']);
-        variable_set('report_sub2_arg', $sub2qry['args']);
-      }
-      //change table name from view to physical table for faster performance
-      //$sub2qry = str_replace('_software_version_view', '_software_version_table', $sub2qry);  
-      $subres = db_query($sub2qry['query'], $sub2qry['args']);
-      while ($subrec = db_fetch_object($subres)) {
-        //note: software_version can be empty, HW without SW
-        array_push($covidien_reports_sub2val, array(
-          $subrec->devicetype,
-          $subrec->software_version,
-          $subrec->country,
-          $subrec->total,
-        ));
-      }
-    }
-    $view->covidien_reports_sub2line = t('Total at each SW version for each country by device type');
-    $view->covidien_reports_sub2key = $covidien_reports_sub2key;
-    $view->covidien_reports_sub2val = $covidien_reports_sub2val;
-    if (count($covidien_reports_sub2val) == 0) {
-      $view->covidien_reports_sub2noresult = t('Total at each SW version for each country by device type');
-      $view->covidien_reports_sub2noresult .= '</br>';
-      $view->covidien_reports_sub2noresult .= t('No Results');
-    }
   } elseif ($view->name == 'report_2') {
     $subqry = '';
     drupal_set_title('<span class="title_bold">' . t('Software Upgrade Report') . '</span>');
@@ -1274,6 +1101,7 @@ function covidien_reports_views_query_alter(&$view, &$query) {
     }
     $remove = array();
     //object clear end
+    /*
     if ($view->name == 'report_1' || $view->name == 'report_1_emerald') {
       //For two Hardwares and One Software
       $view_base_table = $view->base_table;
@@ -1310,16 +1138,16 @@ function covidien_reports_views_query_alter(&$view, &$query) {
         $remove = array();
         //object clear end
       }
-    }
+    }*/
     if (count($query->where[0]['clauses']) == 0) {
       array_push($query->where[0]['clauses'], '1=1');
     }
   }
-
+  /*
   if ($view->name == 'report_1') {
     module_load_include('inc', 'covidien_reports', 'includes/covidien_reports_edit_view_query');
     device_current_configuration_report_query(check_plain($_GET['hid_condition']), $query);
-  }
+  }*/
 
   if ($view->name == 'report_3') {
     unset($query->where[0]['clauses'][4]);
@@ -1504,88 +1332,79 @@ function covidien_reports_views_pre_execute(&$view) {
       $view->build_info['query'] = $view_query;
       $view->build_info['count_query'] = $view_query;
     }
-  }
-  if ($view->name == 'report_1' || $view->name == 'report_1_scd' || $view->name == 'report_1_emerald') {
-
+  }  
+    
+  
+  if ($view->name == 'report_1') { 
     $query = '';
     $post = filter_xss_arr($_GET);
     $extra_join = '';
-    if ($view->name == 'report_1') {
       //$view->base_table = str_replace('device_software_version_view', 'device_software_version_table', $view->base_table);
-      $query = "SELECT 
-                device_service_history_view.productline,
-                device_service_history_view.devicetype_nid AS device_software_version_view_device_nid,
-                device_service_history_view.customername AS device_software_version_view_customername,
-                device_service_history_view.deviceserial AS device_software_version_view_deviceserial,
-                content_type_hardware.field_hw_version_value AS device_software_version_view_hardware_version,
-                view_hardware.VERSION AS device_software_version_view_hardware1_version,
-                view_software.VERSION AS device_software_version_view_software_version,
-                device_service_history_view.service_date AS device_software_version_view_lastest_sw_update,
-                device_service_history_view.technician_email AS device_software_version_view_service_person ";
-    } elseif ($view->name == 'report_1_scd') {
-      $query = "SELECT device_service_history_view.productline AS productline,
-                device_service_history_view.devicetype_nid AS device_scd700_software_version_view_device_nid,
-                device_service_history_view.customername AS device_scd700_software_version_view_customername,
-                device_service_history_view.deviceserial AS device_scd700_software_version_view_deviceserial,
-                view_hardware.VERSION AS device_scd700_software_version_view_hardware_version,
-                view_software.VERSION AS device_scd700_software_version_view_software_version,
-                device_service_history_view.service_date AS device_scd700_software_version_view_lastest_sw_update,
-                device_service_history_view.technician_email AS device_scd700_software_version_view_service_person ";
-    } else {
-      $query = "SELECT device_service_history_view.productline AS productline,
-                device_service_history_view.devicetype_nid AS device_emerald_software_version_view_device_nid,
-                device_service_history_view.customername AS device_emerald_software_version_view_customername,
-                device_service_history_view.deviceserial AS device_emerald_software_version_view_deviceserial,
-                device_service_history_view.country_name AS device_emerald_software_version_view_country_name,
-                config_hw_sw_view.hw_version AS device_emerald_software_version_view_hardware_version,
-                config_hw_sw_view1.hw_version AS device_emerald_software_version_view_hardware1_version,
-                view_software.NAME AS device_emerald_software_version_view_software_name,
-                view_software.VERSION AS device_emerald_software_version_view_software_version,
-                device_service_history_view.service_date AS device_emerald_software_version_view_lastest_sw_update,
-                device_service_history_view.technician_email AS device_emerald_software_version_view_service_person ";
-      $extra_join = " LEFT JOIN config_hw_sw_view as config_hw_sw_view on config_hw_sw_view.devicetype_nid = device_service_history_view.devicetype_nid
-                      LEFT JOIN config_hw_sw_view as config_hw_sw_view1 on config_hw_sw_view1.devicetype_nid = device_service_history_view.devicetype_nid 
-                      and config_hw_sw_view1.hw_name = 'VIBE' ";
-    }
-    $query .= " FROM 
-                (
-                  select * from
-                  device_service_history_view
-                  order by service_date desc
-                )
-                device_service_history_view
-                LEFT JOIN view_software on view_software.nid = device_service_history_view.to_component_nid
-                LEFT JOIN content_field_hw_list on content_field_hw_list.nid = view_software.nid 
-                AND content_field_hw_list.vid = view_software.vid 
-                LEFT JOIN view_hardware on view_hardware.nid = content_field_hw_list.field_hw_list_nid
-                LEFT JOIN content_field_device_type on content_field_device_type.nid = view_hardware.nid
-                and content_field_device_type.field_device_type_nid =  device_service_history_view.devicetype_nid
-                LEFT JOIN content_type_hardware on content_type_hardware.nid = view_hardware.nid
-                AND content_type_hardware.vid =  view_hardware.vid " . $extra_join;
-
-    $query .= ' where (device_service_history_view.productline_nid = %d) ';
+      $query = " SELECT Device_VW.productline AS productline,
+                Device_VW.productline_nid AS productline_nid,
+                Device_VW.devicetype AS device_software_version_view_device_nid,
+                Device_VW.devicetype_nid AS devicetype_nid,
+                Device_VW.device_nid AS device_nid,
+                Device_VW.deviceserial AS device_software_version_view_deviceserial,
+                 
+                Customer_VW.accountnumber AS accountnumber,
+                Customer_VW.customername AS device_software_version_view_customername,
+                Customer_VW.customer_nid AS customer_nid, 
+                GROUP_CONCAT(case when hardware.field_hw_version_value is not null then  componet_node.title end separator '<br>') as device_software_version_view_hardware_version,  
+                GROUP_CONCAT(hardware.field_hw_version_value separator '<br>') AS device_software_version_view_hardware1_version,
+                GROUP_CONCAT(case when software.field_sw_part_value != 'NA' then software.field_sw_version_value end )  AS device_software_version_view_software_version,
+ 
+                Country_VW.country_name AS country_name,  
+                device_service_history_VW.service_person as device_software_version_view_service_person,
+                device_service_history_VW.field_service_datetime_value as device_software_version_view_lastest_sw_update
+                FROM
+                Device_VW
+                    LEFT JOIN
+                Country_VW ON Country_VW.device_nid = Device_VW.device_nid
+                    JOIN
+                Customer_VW ON Device_VW.device_owner = Customer_VW.account_nid
+                    JOIN
+                content_type_device_component_history device_component ON Device_VW.device_nid = device_component.field_component_device_nid
+                    join
+                content_field_expiration_datetime expiration ON device_component.nid = expiration.nid
+                    and device_component.vid = expiration.vid
+                    and expiration.field_expiration_datetime_value is null
+                    join
+                node componet_node ON device_component.field_device_component_nid = componet_node.nid
+                   left join 
+                content_type_software 
+                     as software ON software.nid = componet_node.nid 
+                left join
+                content_type_hardware hardware ON hardware.nid = componet_node.nid
+                    and hardware.vid = componet_node.vid
+                    
+                left join
+                device_service_history_VW ON device_service_history_VW.field_to_device_component_nid = device_component.field_device_component_nid
+                    AND device_service_history_VW.service_device_nid = Device_VW.device_nid " ;
+    $query .= ' where (Device_VW.productline_nid = %d) ';
     $args = array();
     $args[] = $post['productline_nid'];
-
+    
+    
     $view->base_table = str_replace('_software_version_view', '_software_version_table', $view->base_table);
     //required field no matter what
     if (isset($post['devicetype_nid']) && !empty($post['devicetype_nid'])) {
-      $query_where .= " AND device_service_history_view.devicetype_nid = %d ";
+      $query_where .= " AND Device_VW.devicetype_nid = %d ";
       $args[] = $post['devicetype_nid'];
     }
     //CASE I , if serial, then customer is optional. related GATEWAY-2189 
     if (isset($post['deviceserial']) && !empty($post['deviceserial'])) {
-      $query_where .= " AND device_service_history_view.deviceserial = '%s' ";
+      $query_where .= " AND Device_VW.deviceserial = '%s' ";
       $args[] = $post['deviceserial'];
       //If user selects the serial number to view the report then other mandatory field Customer should be made optional.
       if (isset($post['customer_nid']) && !empty($post['customer_nid'])) {
-        $query_where .= " AND device_service_history_view.customername = '%s' ";
+        $query_where .= " AND Customer_VW.customername = '%s' ";
         $args[] = $post['customer_nid'];
       }
     } else {
       //CASE II, if not serial #, then (Customer AND/OR Country). related GATEWAY-2189
       if (isset($post['customer_nid']) && !empty($post['customer_nid'])) {
-        $query_where .= " AND device_service_history_view.customername = '%s' ";
+        $query_where .= " AND Customer_VW.customername = '%s' ";
         $args[] = $post['customer_nid'];
       }
       //And or Or Condition
@@ -1594,17 +1413,43 @@ function covidien_reports_views_pre_execute(&$view) {
         $condition = " OR ";
       }
       if (isset($post['country']) && !empty($post['country'])) {
-        $query_where .= $condition . " device_service_history_view.country_nid = %d ";
+        $query_where .= $condition . " Country_VW.country_nid = %d ";
         $args[] = $post['country'];
       }
     }
+    
+    //additional
+    /**/
+    if ($post['hardware_name'] && $post['hardware_name'] != 'All') {
+      $query_where .= " AND componet_node.title = '%s' ";
+      $args[] = $post['hardware_name'];
+    }
+    if ($post['hardware_version'] && $post['hardware_version'] != 'All') {
+      $query_where .= " AND hardware.field_hw_version_value = '%s' ";
+      $args[] = $post['hardware_version'];
+    }
+    if ($post['hardware_part'] && $post['hardware_part'] != 'All') {
+      $query_where .= " AND hardware.field_hw_part_value = '%s' ";
+      $args[] = $post['hardware_part'];
+    }
+    if ($post['software_name'] && $post['software_name'] != 'All') {
+      $query_where .= " AND componet_node.title  = '%s' ";
+      $args[] = $post['software_name'];
+    }
+    if ($post['software_version'] && $post['software_version'] != 'All') {
+      $query_where .= " AND  software.field_sw_version_value = '%s' ";
+      $args[] = $post['software_version'];
+    }
+    if ($post['software_part'] && $post['software_part'] != 'All') {
+      $query_where .= " AND software.field_sw_part_value = '%s' ";
+      $args[] = $post['software_part'];
+    }
+    
+    
     $query .= $query_where;
     //AND content_type_hardware.nid <> '' removed for GATEWAY-2220
-    $query .= " AND device_service_history_view.to_component_nid <> ''
-                AND view_software.nid <> ''    
-                group by device_service_history_view.deviceserial 
-                order by device_service_history_view.servicehistory_nid desc";
-
+    $query .= " group by device_vw.deviceserial";
+    
     $view->build_info['query'] = $query; // wrapped for legibility
     $view->build_info['query_args'] = $args;
     $view->build_info['count_query'] = $query;
@@ -2096,6 +1941,9 @@ function device_configuration_report_form_submit(&$form, &$form_state) {
   $url = "/covidien/report/1?v=1&page=0";
   if ($filter['product_line'] != 'all') {
     $url .= "&productline_nid=" . $filter['product_line'];
+  }
+  if ($filter['device_type'] != '') {
+    $url .= "&devicetype_nid=" . $filter['device_type'];
   }
   if ($filter['customer_name'] != '') {
     $url .= "&customer_nid=" . $filter['customer_name'];
