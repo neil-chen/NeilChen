@@ -112,7 +112,7 @@ if (arg(0) == 'node' && arg(1) == 'add') {
             </div>
           </td>
         </tr>
-         -->
+        -->
         <tr>
           <td align="right">
             <table width="100%" style="border:none">
@@ -201,10 +201,10 @@ if (arg(0) == 'node' && arg(1) == 'add') {
                             <!-- GATEWAY-2443
                             <tr>
                               <td>
-                                <div class="without_label_left"><label><?php echo t('Device Serial Number:'); ?></label></div>
+                                <div class="without_label_left"><label><?php //echo t('Device Serial Number:');           ?></label></div>
                               </td>
                               <td>
-                                <div><?php echo $device_serial_number; ?></div>
+                                <div><?php //echo $device_serial_number;            ?></div>
                               </td>
                             </tr>
                             -->
@@ -227,8 +227,5 @@ if (arg(0) == 'node' && arg(1) == 'add') {
                             </div>
                             </table>
                           <?php } ?>
-                          <script type="text/javascript">
-                            $(document).ready(function() {
-                              $('#global_product_line').attr("disabled", "disabled");
-                            });
-                          </script>
+
+                          <input type="hidden" name="hardware_id" id="hardware_id" value="<?php echo $hardware_id; ?>"/>

@@ -362,8 +362,8 @@
 }
 
 #pending-registration-list-form .sticky-table {
-  width: 93%;
-  margin-left: 0px;
+  width: 98%;
+  margin-left: -20px;
 }
 
 #pending-registration-list-form .bottom_page {

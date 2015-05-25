@@ -246,3 +246,28 @@ select `c`.`nid` AS `nid`,`c`.`type_id` AS `type_id`,`n`.`title` AS `title`,`c`.
 
   return array(array('success' => true, 'query' => 'Add status and substatus to view_named_configuration'));
 }
+
+/**
+ * Invalid HW Combination
+ * incompatible HW/SW Combination
+ * invalid SW Combination
+ * Upgrade-forbidden HW/SW combination 
+ */
+function covidien_named_config_update_6104() {
+  $warning_status = array(
+    'Invalid-Hardware' => array('name' => 'Invalid HW Combination', 'type' => 'Named System Configuration'),
+    'Incompatible-Software' => array('name' => 'Invalid SW Combination', 'type' => 'Named System Configuration'),
+    'Upgrade-Forbidden' => array('name' => 'Upgrade-forbidden HW/SW combination', 'type' => 'Named System Configuration'),
+    'Incompatible HW/SW Combination' => array('name' => 'Incompatible HW/SW Combination', 'type' => 'Named System Configuration'),
+  );
+  foreach ($warning_status as $k => $v) {
+    $status_id = db_result(db_query("SELECT id FROM named_configuration_substatus WHERE name = '%s'", $k));
+    if ($status_id) {
+      db_query("UPDATE named_configuration_substatus SET name = '%s' WHERE id = %d", $v['name'], $status_id);
+    } else {
+      $type_id = db_result(db_query("SELECT id FROM named_configuration_type WHERE title = '%s'", $v['type']));
+      db_query("INSERT INTO named_configuration_substatus (name, type_id) VALUES ('%s', %d)", $v['name'], $type_id);
+    }
+  }
+  return array(array('success' => true, 'query' => 'Configuration update warning status'));
+}

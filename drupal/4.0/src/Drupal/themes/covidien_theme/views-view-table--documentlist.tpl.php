@@ -1,5 +1,5 @@
 <?php
-echo covidien_document_table_list();
+//echo covidien_document_table_list();
 ?>
 <table class="<?php print $class; ?>"<?php print $attributes; ?>>
   <?php if (!empty($title)) : ?>

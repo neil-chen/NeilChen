@@ -302,7 +302,7 @@ function device_current_configuration_report_sw_version_by_account() {
                     AND device_service_history_VW.service_device_nid = Device_VW.device_nid 
                     WHERE  ";
   $sql .= device_current_configuration_report_where($args);
-  $sql .= "group by device_vw.deviceserial
+  $sql .= "group by Device_VW.deviceserial
                     ) alltable
                     group by alltable.device_software_version_view_software_version,alltable.device_software_version_view_customername";
   $filter = device_current_configuration_report_filter($args);
@@ -405,7 +405,7 @@ function device_current_configuration_report_sw_version_country_by_device_type()
                     AND device_service_history_VW.service_device_nid = Device_VW.device_nid 
                     WHERE   ";
   $sql .= device_current_configuration_report_where($args);
-  $sql .= "group by device_vw.deviceserial
+  $sql .= "group by Device_VW.deviceserial
             ) alltable
             group by alltable.device_software_version_view_software_version,alltable.country_name";
   $filter = device_current_configuration_report_filter($args);

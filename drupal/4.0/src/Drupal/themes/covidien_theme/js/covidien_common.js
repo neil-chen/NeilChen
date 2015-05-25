@@ -200,3 +200,54 @@ function no_display_product_line(product_line) {
   }
   return false;
 }
+
+//GATEWAY-2934 check parent status
+//new popup function
+var modal = (function() {
+  // Generate the HTML and add it to the document
+  var $wapper = $('<div id="cboxOverlay"><div id="modal"></div></div>');
+  var $modal = $wapper.find('#modal');
+  var $content = $('<div id="modal-content"></div>');
+  var $close = $('<a id="close" href="#"></a>');
+  $modal.append($content, $close);
+  $(document).ready(function() {
+    $wapper.hide();
+    $('body').append($wapper);
+    $wapper.hide();
+  });
+  $close.click(function(e) {
+    e.preventDefault();
+    $wapper.hide();
+    $content.empty();
+  });
+  // Open the modal
+  return function(content) {
+    $content.html(content);
+    // Center the modal in the viewport
+    $modal.css({
+      top: ($(window).height() - $modal.outerHeight()) / 2,
+      left: ($(window).width() - $modal.outerWidth()) / 2 - 250
+    });
+    $wapper.show();
+  };
+}());
+
+//GATEWAY-2934 check parent status
+function check_parent_status(status_obj, item_id) {
+  if (!item_id || item_id == 0) {
+    return true;
+  }
+  var status = status_obj.find('option:selected').text();
+  var url = Drupal.settings.basePath + 'named-config/validate-item-status/' + status + '/' + item_id;
+  $.get(url, function(response) {
+    var data = Drupal.parseJson(response);
+    if (data.data.check.length > 0) {
+      var message = 'Should change status of below parent configurations which depend on current one :';
+      $.each(data.data.check, function(index, value) {
+        message += ('<li>' + value + '</li>');
+      });
+      modal(message);
+      return false;
+    }
+  });
+}

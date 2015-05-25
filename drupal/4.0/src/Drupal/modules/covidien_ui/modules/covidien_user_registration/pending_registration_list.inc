@@ -1,6 +1,6 @@
 <?php 
 function pending_registration_list_form(&$form_state) {    
-  
+    
   $from_date = '';
   $to_date = '';
   $user_name = '';
@@ -12,6 +12,7 @@ function pending_registration_list_form(&$form_state) {
   $format = 'm/d/Y';
   $class_of_trade_options = array('all' => 'All');
   ahah_helper_register($form, $form_state);
+  $show_archived = 0;
   
   if(isset($form_state['values']['register_date_from'])){
     $from_date = $form_state['values']['register_date_from']; 
@@ -47,8 +48,13 @@ function pending_registration_list_form(&$form_state) {
     $status = $form_state['values']['status'];
   } elseif ($_GET['status'] != ''){
     $status = $_GET['status'];
+  } 
+  if(isset($form_state['values']['show_archived'])){
+    $show_archived = $form_state['values']['show_archived'];
+  } elseif ($_GET['show_archived'] != ''){
+    $show_archived = $_GET['show_archived'];
   }
-  
+   
   if(isset($form_state['values']['covidien_user'])){
     $is_covidien_user = $form_state['values']['covidien_user'];
   } elseif ($_GET['covidien_user'] != ''){
@@ -93,11 +99,20 @@ function pending_registration_list_form(&$form_state) {
       'all' => 'All',
       'pending' => 'Pending',
       'completed' => 'Completed',
-      'active' => 'Active'
+      'active' => 'Active' 
     ), 
     '#default_value' => $status,
   ); 
     
+  $form['show_archived'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Show Archieved'),
+    '#default_value' => $show_archived, 
+    '#attributes' => array(
+      'title' => t("Show Archived"),
+    )
+  );
+      
   //Get class of trade
   $class_of_trades = getadminproductline();
   while ($class = db_fetch_object($class_of_trades)) {
@@ -135,7 +150,7 @@ function pending_registration_list_form(&$form_state) {
   $sql = "SELECT DISTINCT(user.id), user.first_name, user.last_name, user.active_code, 
           user.email, user.is_covidien_user, 
           user.customer_name, user.account_number, user.create_time, user.status, 
-          user.approve_result, user.approving_user
+          user.approve_result, user.approving_user, user.user_id
           FROM {registrant} AS user ";
   $args = array(); 
   $where = array(); 
@@ -168,14 +183,25 @@ function pending_registration_list_form(&$form_state) {
       $args[] = $_GET['class_of_trade'] ;
     }
   } 
-    
-  if(isset($form_state['values']['status']) && $form_state['values']['status'] != 'all') {
-    $where[] = " user.status = '%s' ";
-    $args[] = $form_state['values']['status'];
-  } elseif (!empty($_GET['status']) && $_GET['status'] != 'all') { 
-    $where[] = " user.status = '%s' ";
-    $args[] = $_GET['status'];
+  
+if($status != 'all'){ 
+  if($show_archived != 1){
+    $where[] = " (user.status = '%s') ";  
+  } else {
+    $where[] = " (user.status = '%s' and user.status = 'archived') ";  
   }
+  if(isset($form_state['values']['status']) && $form_state['values']['status'] != ''){
+    $args[] = $form_state['values']['status'];
+  } else {
+    $args[] = $_GET['status'];  
+  }
+} else {
+    if($show_archived == 1){
+      $where[] = " (user.status != '') ";    
+    } else {
+      $where[] = " (user.status != 'archived') ";      
+    }
+}
   
   if(isset($form_state['values']['trainer']) && $form_state['values']['trainer'] != 'all') {
     $sql .= ' left join {registrant_training} on registrant_training.registrant_id = user.id ';
@@ -186,7 +212,7 @@ function pending_registration_list_form(&$form_state) {
     $where[] = " registrant_training.trainer_uid = %d ";
     $args[] = $_GET['trainer'];
   } 
-  
+   
   $where_query = implode(' and ' , $where);
   if($where_query){
     $sql .= " Where " . $where_query;
@@ -194,6 +220,7 @@ function pending_registration_list_form(&$form_state) {
   
   $sql .= " group by user.email
             ORDER BY id DESC";
+    
   $header = array(
     array('data' => t('First Name')),
     array('data' => t('Last Name')),
@@ -205,12 +232,13 @@ function pending_registration_list_form(&$form_state) {
     array('data' => t('Status')),
     array('data' => t('Approving User')),
     array('data' => t('Approved')),
+    array('data' => t('Others')),
   );
   
   $pageSize = 10;
-  $rows = array(); 
-  $result = pager_query($sql, $pageSize, 0, NULL, $args);
-  // 0 == ‘pending’, 1==‘approved’, 2==‘denied’
+  $rows = array();  
+  $count_query = 'SELECT COUNT(*) as total FROM (' . $sql . ') AS result' ;
+  $result = pager_query($sql, $pageSize, 0, $count_query, $args); 
   while ($row = db_fetch_object($result)) { 
     $rows[$row->id]['first_name'] = $row->first_name; 
     $rows[$row->id]['last_name'] = $row->last_name; 
@@ -247,11 +275,37 @@ function pending_registration_list_form(&$form_state) {
         //'name' => $approved,
       );
     }
+    $archive_link = '';
+    if($row->status != 'archived'){
+        $archive_link = l('archive this', $row->id,array(
+          'attributes' => array(
+          'class' => 'archived',
+          'data' => $row->id,
+        )
+      ));
+    }
+    
+    $resend_link = '';
+    //send email to approved user that had not been reset his/her password yet
+    if($row->approve_result == 'approved' && $row->user_id == 0){
+        $resend_link = l('resend email', $row->id,array(
+          'attributes' => array(
+          'class' => 'resend_email',
+          'data' => $row->id,
+        )
+      ));
+    }
+    
+    $active = '';
+    if($row->user_id > 0){
+      $active = '<br>In GDMP';
+    }
+    $rows[$row->id]['resend_email'] = $resend_link . '  ' . $archive_link . ' ' . $active; 
   }
   $table_list = '';
   $table_list = theme('table',$header, $rows);
   $table_list .= theme('pager', NULL, 10, 0);
-  
+ 
   $form['#pending_list'] = $table_list;
   $vars['registration_pending_list'] = $table_list;
   //system_settings_form_submit

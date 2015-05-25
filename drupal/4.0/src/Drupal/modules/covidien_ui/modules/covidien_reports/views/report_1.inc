@@ -184,7 +184,7 @@ $handler->override_option('fields', array(
     'relationship' => 'none',
   ),
   'software_version' => array(
-    'label' => 'S/W  Version',
+    'label' => 'S/W Name & Version',
     'alter' => array(
       'alter_text' => 0,
       'text' => '',

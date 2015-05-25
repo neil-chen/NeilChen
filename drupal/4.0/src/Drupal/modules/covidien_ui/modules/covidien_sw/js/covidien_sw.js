@@ -37,20 +37,27 @@ $(document).ready(function() {
   }
 
   //click the upload file 
-  $('#no_file').change(function(e) {
-    var required_div = $(this).parent().parent().parent().parent().prev().prev();
-    var required_span = required_div.find('.form-required');
-    required_div.attr('style', 'width:8px; height:16px;');
+  $('#no_file').change(function() {
+    var uploader = $('#uploader');
+    var remover = $('#remover');
     if ($(this).attr('checked')) {
-      required_span.hide();
+      uploader.hide();
+      remover.hide();
     } else {
-      required_span.show();
+      if ($('#file_name').html().length > 0) {
+        remover.show();
+      } else {
+        uploader.show();
+      }
     }
   });
+
   if (Drupal.settings.covidien_sw) {
     if (Drupal.settings.covidien_sw.nid) {
-      if ($('#edit-field-sw-file-0-upload') && $('#edit-field-sw-file-0-upload').val() == '') {
+      if ($('#edit-field-sw-file-0-fid').val() == 0) {
         $('#no_file').attr('checked', 'checked');
+        $('#uploader').hide();
+        $('#remover').hide();
       }
     }
   }
@@ -76,7 +83,7 @@ $(document).ready(function() {
     }
   });
 
-// Trigger Calls	
+  // Trigger Calls	
   $('#edit-field-device-type-nid-nid').change(function() {
     $.ajax({
       type: "POST",
@@ -108,6 +115,8 @@ $(document).ready(function() {
     //GATEWAY-1733 VLEX Client not use Business Rules
     vlex_business_rules();
     filter_view();
+    //GATEWAY-3158 fix device type value
+    $('[name="field_device_type[nid][nid]"]').val($(this).val());
   });
 
   $('#edit-go').click(function() {
@@ -311,11 +320,12 @@ $(document).ready(function() {
 
   //if status is Archived show a box
   $('#edit-field-sw-status-nid-nid').change(function() {
-    if ($('#edit-field-sw-status-nid-nid option:selected').text() == Drupal.t('Archived')) {
-      if (confirm(Drupal.t('Archived software will be removed from appearing in \nthe search results. However, you can check the \n"Show Software with Archived Status" check box to see it in the list.\nAre you sure you want to Archive this software?'))) {
-        return true;
-      }
-    }
+    /*if ($('#edit-field-sw-status-nid-nid option:selected').text() == Drupal.t('Archived')) {
+     if (confirm(Drupal.t('Archived software will be removed from appearing in \nthe search results. However, you can check the \n"Show Software with Archived Status" check box to see it in the list.\nAre you sure you want to Archive this software?'))) {
+     }
+     }*/
+    //GATEWAY-2934 check parent status
+    check_parent_status($(this), $('#software_id').val());
   });
 
   //GATEWAY-1040
@@ -328,6 +338,8 @@ $(document).ready(function() {
     $('form #edit-submit').attr('class', 'non_active_blue');
     $('form #edit-submit').hide();
   });
+
+
 });
 //document ready end
 
@@ -366,14 +378,13 @@ function check_relation() {
   //GATEWAY-2877 not display config selection and not check 3.0 version relation 
   var deviceTypeName = $.trim($('#edit-field-device-type-nid-nid').find('option:selected').text());
   var gatewaySupportVersion = deviceTypeRelation[deviceTypeName];
-
   var n = $("#right_hc_table input[type='checkbox']").length + $("#right_hardware_table input[type='checkbox']").length;
   //check 2.0 relation and check software type 
-  if ((n == 0 && (gatewaySupportVersion <= '2.0')) || ($('#edit-field-sw-type-nid-nid > option:selected').val() == 0)) {
+  if ((n == 0 && (gatewaySupportVersion <= '2.0'))) {
     //$('#hardware-message').html('You must select/add hardware/HW configuration.');
     return false;
   } else {
-    return false;
+    return true;
   }
 }
 
@@ -503,7 +514,7 @@ Drupal.behaviors.covidien_sw = function(context) {
 };
 
 Drupal.covidien_sw = Drupal.covidien_sw || {};
-/**
+/**  
  * An ajax responder that accepts a packet of JSON data and acts appropriately.
  *
  * The following fields control behavior.
@@ -532,7 +543,7 @@ Drupal.covidien_sw.Ajax = function(target, response) {
 };
 
 function hw_retainchecked() {
-  /**
+  /**    
    * To Retain the check
    */
   var refname = 'hw_list';

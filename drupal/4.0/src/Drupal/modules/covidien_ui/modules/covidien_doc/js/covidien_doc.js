@@ -51,6 +51,8 @@ $(document).ready(function() {
   filter_show_item_check_table();
   $('#edit-field-device-type-nid-nid').change(function() {
     filter_show_item_check_table();
+    //GATEWAY-3158 fix device type value
+    $('[name="field_device_type[nid][nid]"]').val($(this).val());
   });
 
   $('#edit-go').click(function() {

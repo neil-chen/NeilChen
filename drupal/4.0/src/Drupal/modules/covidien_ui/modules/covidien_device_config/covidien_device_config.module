@@ -227,7 +227,7 @@ function covidien_device_config_form_alter(&$form, &$form_state, $form_id) {
   }
   if ($form_id == 'views_exposed_form' && $form['submit']['#id'] == 'edit-submit-Configlist') {
     drupal_add_js(drupal_get_path('module', 'covidien_device_config') . '/js/ajaxtooltip.js');
-    $form['field_device_type_nid']['#options']['All'] = t('All');
+    $form['field_device_type_nid']['#options'][0] = t('All');
     $form['submit']['#value'] = t('Go');
     drupal_set_title(t('System Administration'));
   }

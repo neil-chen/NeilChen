@@ -1,4 +1,6 @@
 $(document).ready(function() {
+  $('#global_product_line').attr("disabled", "disabled");
+
   $('#views-exposed-form-Hardwarelist-page-1 #edit-field-device-type-nid').change(function() {
     $.ajax({
       type: "POST",
@@ -70,6 +72,12 @@ $(document).ready(function() {
     $('form #edit-submit').attr('class', 'non_active_blue');
     $('form #edit-submit').hide();
   });
+
+  //GATEWAY-2934 check parent status
+  $('#hardware_status').change(function() {
+    check_parent_status($(this), $('#hardware_id').val());
+  });
+
 });
 //document ready end
 

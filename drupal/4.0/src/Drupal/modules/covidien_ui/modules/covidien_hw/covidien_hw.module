@@ -164,7 +164,7 @@ function covidien_hw_form_alter(&$form, &$form_state, $form_id) {
     $form['submit']['#value'] = t('Filter');
     drupal_set_title(t('System Administration'));
     $form['field_hw_type_nid']['#options']['All'] = 'All';
-    $form['field_device_type_nid']['#options']['All'] = 'All';
+    $form['field_device_type_nid']['#options'][0] = 'All';
     array_unshift($form['#submit'], 'hw_manage_custom_filters');
     $form['title']['#autocomplete_path'] = 'covidien/hardware/autocomplete';
     $form['title']['#validated'] = TRUE;
@@ -184,17 +184,18 @@ function covidien_hw_devicetype() {
 }
 
 function hardware_form_validate(&$form_state) {
-  //GATEWAY-3020 Add check status when change  
+  //GATEWAY-3020 GATEWAY-2934 Add check status when change  
   if ($form_state['nid']['#value']) {
     $status = db_result(db_query("SELECT title FROM node WHERE nid = %d", $form_state['#post']['hardware_status']));
     if ($status != 'In Production') {
       module_load_include('module', 'covidien_named_config');
-      $rows = named_config_check_status_change($form_state['nid']['#value']);
-      if (count($rows) > 0) {
-        form_set_error('hardware_status', 'Please first change status ' . implode(',', $rows));
+      $parents = covidien_get_status_not_match_parent($status, $form_state['nid']['#value']);
+      if (count($parents) > 0) {
+        form_set_error('config_status', 'Should change status of below parent configurations which depend on current one:<br/>' . implode(', ', $parents));
       }
     }
   }
+
   if (!covidien_ui_input_validate($form_state['#post']['title'])) {
     form_set_error('title', t('Invalid Hardware Name'));
   }

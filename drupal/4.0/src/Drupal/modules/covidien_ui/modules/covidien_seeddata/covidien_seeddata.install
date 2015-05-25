@@ -2093,12 +2093,12 @@ function create_device_current_configuration_table() {
     customername VARCHAR(128) NOT NULL DEFAULT '',
     customer_nid INT(11) NOT NULL DEFAULT '0',
     hardware_nid INT(11) NOT NULL DEFAULT '0',
-    hardware_part INT(11) DEFAULT NULL,
+    hardware_part varchar(128) DEFAULT NULL,
     hardware_name VARCHAR(128) NOT NULL DEFAULT '',
     hardware_version VARCHAR(128) DEFAULT NULL,
     software_nid INT(11) NOT NULL DEFAULT '0',
     software_name VARCHAR(128) NOT NULL DEFAULT '',
-    software_part INT(11) DEFAULT NULL,
+    software_part varchar(128) DEFAULT NULL,
     software_version VARCHAR(128) DEFAULT NULL,
     software_component INT(11) DEFAULT NULL,
     lastest_sw_update DATETIME DEFAULT NULL,
@@ -2124,7 +2124,7 @@ function covidien_seeddata_update_6344() {
  * @return type
  */
 function covidien_seeddata_update_6345() {
-  db_query("UPDATE permission SET perm = CONCAT(perm, ' ,bulk upload files with plupload')");
+  db_query("UPDATE permission SET perm = CONCAT(perm, ', bulk upload files with plupload')");
   return array(array('success' => true, 'query' => 'Add plupload permession'));
 }
 
@@ -2135,4 +2135,19 @@ function covidien_seeddata_update_6345() {
 function covidien_seeddata_update_6346() {
   variable_set('file_directory_temp', 'sites/default/files/tmp');
   return array(array('success' => true, 'query' => 'Update file directory temp'));
+}
+
+/**
+ * GATEWAY-3169
+ * the perm string suppose to be perm, perm, perm. However, in update_6345 the string is perm ,perm.
+ * Therefore, the function user_access can't explode the string correct to get the correct permission.
+ * 
+ * Also, update_6345 should only need to set it to an authenticated user only, should not have this set for all user such as anynomous use as well.
+ * 
+ * rid = 2 mean it is for authenticate user
+ * @return type
+ */
+function covidien_seeddata_update_6347() {
+  db_query("UPDATE permission SET perm = REPLACE (perm, 'administer users ,bulk upload files with plupload', 'administer users, bulk upload files with plupload') where rid = 2");
+  return array(array('success' => true, 'query' => 'Correct the permission for administer users'));
 }

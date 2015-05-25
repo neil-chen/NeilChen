@@ -458,6 +458,7 @@ function covidien_theme_preprocess_hardware_node_form(&$vars) {
   $vars['hardware_cancel'] = drupal_render($vars['form']['buttons']['cancel']);
   $vars['hardware_submit'] = drupal_render($vars['form']['buttons']['submit']);
   $vars['hardware_render'] = drupal_render($vars['form']);
+  $vars['hardware_id'] = $vars['form']['#node']->nid ? $vars['form']['#node']->nid : 0;
 }
 
 /**
@@ -479,14 +480,17 @@ function covidien_theme_preprocess_software_node_form(&$vars) {
   } else {
     drupal_set_title(t('Add New Software to Catalog'));
   }
-  $vars['form']['field_device_type']['nid']['nid']['#options']['All'] = t('All');
+  $vars['form']['field_device_type']['nid']['nid']['#options'][0] = t('All');
   arsort($vars['form']['field_device_type']['nid']['nid']['#options']);
   $field_device_type_select = field_device_type_select($vars['form']['field_device_type']['#value'][0]['nid']);
   $field_device_type = $field_device_type_select['select_device_type'];
   $field_device_type['#id'] = 'edit-field-device-type-nid-nid';
-  $field_device_type['#name'] = 'field_device_type[nid][nid]';
+  $field_device_type['#name'] = 'field_device_type_nid';
   if (arg(2) == 'edit') {
     $field_device_type['#attributes'] = array('disabled' => 'disabled');
+  }
+  if (arg(0) == 'node') {
+    unset($field_device_type['#options'][0]);
   }
   //$vars['sw_device_type'] = drupal_render($vars['form']['field_device_type']);
   $vars['sw_device_type'] = drupal_render($field_device_type);
@@ -558,9 +562,12 @@ function covidien_theme_preprocess_document_node_form(&$vars) {
   $field_device_type_select = field_device_type_select($vars['form']['field_device_type']['#value'][0]['nid']);
   $field_device_type = $field_device_type_select['select_device_type'];
   $field_device_type['#id'] = 'edit-field-device-type-nid-nid';
-  $field_device_type['#name'] = 'field_device_type[nid][nid]';
+  $field_device_type['#name'] = 'field_device_type_nid';
   if (arg(2) == 'edit') {
     $field_device_type['#attributes'] = array('disabled' => 'disabled');
+  }
+  if (arg(0) == 'node') {
+    unset($field_device_type['#options'][0]);
   }
   //$vars['doc_device_type'] = drupal_render($vars['form']['field_device_type']);
   $vars['doc_device_type'] = drupal_render($field_device_type);
@@ -934,6 +941,8 @@ function covidien_theme_preprocess_person_node_form(&$vars) {
   if ($user_status == "1") {
     $vars['form']['buttons']['unblock']['#attributes'] = array('disabled' => 'disabled', 'class' => 'non_active_blue');
   }
+  //Not sure why this mail field need to be hidden, and name field get used to replace the mail field
+  //Fix for 3168
   $vars['form']['account']['mail']['#type'] = "hidden";
   $vars['form']['account']['name']['#description'] = "";
   $vars['form']['account']['name']['#title'] = "";
@@ -942,6 +951,13 @@ function covidien_theme_preprocess_person_node_form(&$vars) {
   if (!empty($vars['form']['account']['name']['#post'])) {
     $vars['form']['account']['name']['#value'] = $vars['form']['account']['name']['#post']['mail'];
   }
+   
+  //If the account doesn't have name value, then use the value from the mail for the name.
+  if(empty($vars['form']['account']['name']['#value']) && (!empty($vars['form']['account']['mail']['#value']))){
+    $vars['form']['account']['name']['#value'] = $vars['form']['account']['mail']['#value'];  
+  }
+  //Also added in field type as textfield
+  $vars['form']['account']['name']['#type'] = 'textfield';
   $vars['form']['account']['mail']['#value'] = $vars['form']['account']['name']['#value'];
   $vars['form']['account']['mail']['#title'] = "";
   $vars['form']['account']['pass']['#size'] = "38";
@@ -951,7 +967,7 @@ function covidien_theme_preprocess_person_node_form(&$vars) {
   $vars['form']['account']['pass']['#description'] = "";
   $vars['form']['account']['pass']['#attributes'] = array('style' => 'width:100px', 'readonly' => 'readonly', 'onfocus' => 'this.blur()');
   $vars['form']['buttons']['delete']['#value'] = "Delete this User";
-  $vars['form']['buttons']['submit']['#value'] = "Save Changes";
+  $vars['form']['buttons']['submit']['#value'] = "Save Changes"; 
   $vars['mail'] = drupal_render($vars['form']['account']['mail']);
   $vars['name'] = drupal_render($vars['form']['account']['name']);
   $vars['pass'] = drupal_render($vars['form']['account']['pass']);
@@ -973,7 +989,7 @@ function covidien_theme_preprocess_person_node_form(&$vars) {
   $vars['timezone'] = drupal_render($vars['form']['account']['timezone']);
   $vars['other_company'] = drupal_render($vars['form']['customer_name']);
   $vars['company_account_number'] = drupal_render($vars['form']['account_number']);
-  $vars['country'] = drupal_render($vars['form']['field_device_avail_country']);
+  $vars['country'] = drupal_render($vars['form']['field_device_avail_country']); 
   if (empty($vars['form']['#post'])) {
     $vars['form']['default_role']['#value'] = $default_values['rid'];
   }
@@ -1434,7 +1450,7 @@ function user_acccess_custom_menu($check_show = true) {
     'alert' => array('href' => 'alert/config/list', 'title' => 'Alerts'),
     'trade_embargo' => array('href' => 'trade_embargo/list', 'title' => 'Trade Embargo'),
     'firmware' => array('href' => 'firmware/list', 'title' => 'Firmware Catalog'),
-    //'feature' => array('href' => 'feature_license/list', 'title' => 'Feature Catalog'), //hide Feature Catalog
+    'feature' => array('href' => 'feature_license/list', 'title' => 'Feature Catalog'), //hide Feature Catalog
   );
 
   if ($user->uid == 1) {

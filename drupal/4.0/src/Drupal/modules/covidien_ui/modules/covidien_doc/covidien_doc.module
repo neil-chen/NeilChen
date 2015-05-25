@@ -289,7 +289,7 @@ function covidien_doc_form_alter(&$form, &$form_state, $form_id) {
     $request = filter_xss_arr($_REQUEST);
     $form['submit']['#value'] = t('Filter');
     drupal_set_title(t('System Administration'));
-    $form['field_device_type_nid']['#options']['All'] = t('All');
+    $form['field_device_type_nid']['#options'][0] = t('All');
     $form['field_hw_type_nid']['#options']['All'] = t('All');
     $confnid = trim($request['field_config_value']);
     if ($confnid != 'All' && $confnid != '') {
@@ -394,7 +394,7 @@ function covidien_doc_form_alter(&$form, &$form_state, $form_id) {
     //Title based version search
     global $user;
     $field_device_type_nid = $request['field_device_type_nid']; //Device type based version
-    if ($field_device_type_nid == 'All') {
+    if (!$field_device_type_nid || $field_device_type_nid == 'All') {
       $devicenid = $user->devices_nid;
       $tmp = explode(',', $devicenid);
       $devicenid = implode('+', $tmp);
@@ -539,6 +539,12 @@ function covidien_doc_form_cancel() {
  * customized the node validation error message.
  */
 function covidien_doc_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+  //GATEWAY-3158 fix device type value
+  if ($node->type == 'document') {
+    if ($_POST['field_device_type_nid']) {
+      $node->field_device_type[0]['nid'] = $_POST['field_device_type_nid'];
+    }
+  }
   if ($node->type == 'document' && $op == 'validate') {
     drupal_add_js(drupal_get_path('module', 'covidien_doc') . '/js/covidien_doc.js');
     if ($node->op == $node->cancel) {
@@ -897,11 +903,19 @@ function covidien_doc_views_query_alter(&$view, &$query) {
         $query->where[0]['clauses'][] = 'node.nid =0';
       }
     }
-    //GATEWAY-2544 Add product line filter
-    $query->where[0]['clauses'][] = " (node.nid IN (SELECT content_field_device_type.nid FROM content_field_device_product_line 
+    //GATEWAY-2544 414Add product line filter
+    if ($_SESSION['default_cot'] && is_numeric($_SESSION['default_cot'])) {
+      $query->where[0]['clauses'][] = " (node.nid IN (SELECT content_field_device_type.nid FROM content_field_device_product_line 
       JOIN content_field_device_type ON content_field_device_product_line.nid = content_field_device_type.field_device_type_nid
       WHERE field_device_product_line_nid = '%s')) ";
-    $query->where[0]['args'][] = $_SESSION['default_cot'];
+      $query->where[0]['args'][] = $_SESSION['default_cot'];
+    }
+    //fix device type is 0 not get result    
+    $device_type_key = array_search('0', $query->where[0]['args']);
+    if ($device_type_key && strpos($query->where[0]['clauses'][$device_type_key + 1], 'device_type') !== false) {
+      unset($query->where[0]['clauses'][$device_type_key + 1]);
+      unset($query->where[0]['args'][$device_type_key]);
+    }
   }
 }
 
@@ -1284,7 +1298,7 @@ function get_swversion($post) {
   global $user;
   $field_config_value = $post['field_config_value'];
   $field_device_type_nid = $post['field_device_type_nid'];
-  if ($field_device_type_nid == 'All') {
+  if (!$field_device_type_nid || $field_device_type_nid == 'All') {
     $devicenid = $user->devices_nid;
     $devicenid = str_replace(",", "+", $devicenid);
   } else {

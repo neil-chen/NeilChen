@@ -166,7 +166,7 @@ if (arg(0) == 'node' && arg(1) == 'add') {
                     <div class="form-item-div">
                       <div><label>Please select associate type:</label></div>
                       <div class="form-item-left">
-                        <?php echo $doc_assoicate_type_selection; ?>
+                        <?php //echo $doc_assoicate_type_selection; ?>
                       </div>											
                     </div>
                   </td>
@@ -325,7 +325,7 @@ if (arg(0) == 'node' && arg(1) == 'add') {
               <div class="form-item-div">
                 <div><label>Please select associate type:</label></div>
                 <div class="form-item-left">
-                  <?php echo $doc_assoicate_type_selection; ?>
+                  <?php //echo $doc_assoicate_type_selection; ?>
                 </div>											
               </div>
             </td>

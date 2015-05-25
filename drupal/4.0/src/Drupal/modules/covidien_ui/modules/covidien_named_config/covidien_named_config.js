@@ -1,34 +1,3 @@
-//new popup function
-var modal = (function() {
-  // Generate the HTML and add it to the document
-  var $wapper = $('<div id="cboxOverlay"><div id="modal"></div></div>');
-  var $modal = $wapper.find('#modal');
-  var $content = $('<div id="modal-content"></div>');
-  var $close = $('<a id="close" href="#"></a>');
-  $modal.append($content, $close);
-  $(document).ready(function() {
-    $wapper.hide();
-    $('body').append($wapper);
-    $wapper.hide();
-  });
-
-  $close.click(function(e) {
-    e.preventDefault();
-    $wapper.hide();
-    $content.empty();
-  });
-  // Open the modal
-  return function(content) {
-    $content.html(content);
-    // Center the modal in the viewport
-    $modal.css({
-      top: ($(window).height() - $modal.outerHeight()) / 2,
-      left: ($(window).width() - $modal.outerWidth()) / 2 - 250
-    });
-    $wapper.show();
-  };
-}());
-
 //document ready 
 $(document).ready(function() {
   $('#global_product_line').attr('disabled', 'disabled');
@@ -63,12 +32,21 @@ $(document).ready(function() {
     validateComplete();
     //update system table
     get_config_table_list_by_device_type();
+
+    //GATEWAY-2934 check parent status
+    check_parent_status($(this), $('#config_id').val());
+
   });
 
-  if ($('#config_id').val() == '' || $('#config_id').val() == '0') {
+  if ($('#config_id').val() == '' || $('#config_id').val() == 0) {
     nc_filter_device_type('edit-field-device-type-nid');
     //update status 
     update_config_status_by_type();
+    //GATEWAY-3149 remove check warning configuration on edit page
+    show_hide_warning_configuration();
+    //GATEWAY-2655 check warning status on add page
+    show_table_list_by_warning_status();
+    show_warning_status_option_by_is_warning();
   } else {
     //disable all input 
     $('input:text').attr('disabled', true);
@@ -89,9 +67,9 @@ $(document).ready(function() {
   validateComplete();
 
   // show warning status item
-  show_hide_warning_configuration();
   $("#select_substatus").change(function() {
     show_hide_warning_configuration();
+    show_table_list_by_warning_status();
     validateComplete();
   });
 
@@ -106,15 +84,14 @@ $(document).ready(function() {
       }
     });
   }
+
   //is warning checkbox change event
   $('#is_warning').change(function() {
-    if ($(this).attr('checked')) {
-      $('#warning_status').show();
-    } else {
-      $('#warning_status').hide();
-    }
+    show_warning_status_option_by_is_warning();
     //hide warning 
     show_hide_warning_configuration();
+    show_table_list_by_warning_status();
+    validateComplete();
   });
   //warning status checkbox end
 
@@ -152,14 +129,6 @@ $(document).ready(function() {
   //bing change on system configuration only select one 
   sys_config_only_check_one();
 
-  // show select config_type
-  $("#config_type").change(function() {
-    update_config_status_by_type();
-    choose_display_type();
-    validateComplete();
-    get_config_table_list_by_device_type();
-  });
-
   // check required
   sw_list_table_radio();
 
@@ -183,6 +152,11 @@ $(document).ready(function() {
 
   //GATEWAY-2841 Add New Configuration page should default to whatever type of configuration was selected in previous page
   $('#config_type').change(function() {
+    update_config_status_by_type();
+    choose_display_type();
+    validateComplete();
+    get_config_table_list_by_device_type();
+
     var type_id = $(this).val();
     if (type_id) {
       $.get(Drupal.settings.basePath + 'named-config/global-config-type/ajax/' + type_id, function(response) {
@@ -277,7 +251,8 @@ function enableSubmit() {
 }
 
 function validate_checklist() {
-  if ($('#config_id').val() != 0) {
+  //GATEWAY-2655 if edit page or is warning config, not check list 
+  if ($('#config_id').val() != 0 || $('#is_warning:checked').val()) {
     return true;
   }
   var valid_rel = false;
@@ -607,48 +582,13 @@ function get_config_table_list_by_device_type() {
   $('#regulatory_exp_list tbody').html('');
   switch ($("#config_type").find("option:selected").text()) {
     case 'Named System Configuration':
-      var url = Drupal.settings.basePath + 'named-config/ajax/get-system-config-table/' + dt_nid + '/' + status_id + '/' + config_id;
-      $.get(url, function(res) {
-        var response = Drupal.parseJson(res);
-        if (response.status == 'success') {
-          $('#div_system').html(response.data);
-          //bind validate
-          validateComplete();
-          $("#div_table_choose").find("input:checkbox").bind("change", validateComplete);
-          // bind function to system configuration to show regulatory exceptions from software cfg and firmware cfg.
-          $('#sys_software_configuration :checkbox').bind("click", {"type": "software_cfg"}, displayRegulatoryExp);
-          $('#sys_firmware_configuration :checkbox').bind("click", {"type": "firmware_cfg"}, displayRegulatoryExp);
-          if ($('#config_id').val() != '' && $('#config_id').val() != '0') {
-            $('#sys_software_configuration :checked').click();
-            $('#sys_firmware_configuration :checked').click();
-          }
-          //bing change on system configuration only select one 
-          sys_config_only_check_one();
-        }
-      });
+      get_system_table_list_by_device_type();
       break;
     case 'Named Hardware Configuration':
-      var url = Drupal.settings.basePath + 'named-config/ajax/get-hardware-config-table/' + dt_nid + '/' + status_id + '/' + config_id;
-      $.get(url, function(res) {
-        var response = Drupal.parseJson(res);
-        if (response.status == 'success') {
-          $('#div_hardware').html(response.data);
-          validateComplete();
-          $("#div_table_choose").find("input:checkbox").bind("change", validateComplete);
-        }
-      });
+      get_hardware_table_list_by_device_type();
       break;
     case 'Named Software Configuration':
-      var url = Drupal.settings.basePath + 'named-config/ajax/get-software-config-table/' + dt_nid + '/' + status_id + '/' + config_id;
-      $.get(url, function(res) {
-        var response = Drupal.parseJson(res);
-        if (response.status == 'success') {
-          $('#div_software').html(response.data);
-          validateComplete();
-          $("#div_table_choose").find("input:checkbox").bind("change", validateComplete);
-          sw_list_table_radio();
-        }
-      });
+      get_software_table_list_by_device_type();
       break;
     case 'Named Firmware Configuration':
       var url = Drupal.settings.basePath + 'named-config/ajax/get-firmware-config-table/' + dt_nid + '/' + status_id + '/' + config_id;
@@ -698,6 +638,119 @@ function checkbox_only_check_one(input_box) {
       } else {
         $('#' + input_box + ' :checkbox').removeAttr('disabled');
       }
+    }
+  });
+}
+
+function show_warning_status_option_by_is_warning() {
+  if ($('#is_warning').attr('checked')) {
+    $('#warning_status').show();
+  } else {
+    $('#warning_status').hide();
+  }
+}
+
+//show table list by warning status
+function show_table_list_by_warning_status() {
+  if (!$('#is_warning').attr('checked')) {
+    $('.system-table-header li').show();
+    $('.system-table-body li').show();
+    return false;
+  }
+  var warning_status = $("#select_substatus :selected").text();
+  switch (warning_status) {
+    case 'Invalid HW Combination':
+      //show hardware configuration
+      $('.system-table-header li:eq(0)').show();
+      $('.system-table-header li:eq(1)').hide();
+      $('.system-table-header li:eq(2)').hide();
+      $('.system-table-body li:eq(0)').show();
+      $('.system-table-body li:eq(1)').hide();
+      $('.system-table-body li:eq(2)').hide();
+      break;
+    case 'Invalid SW Combination':
+      //show software configuration
+      $('.system-table-header li:eq(0)').hide();
+      $('.system-table-header li:eq(1)').show();
+      $('.system-table-header li:eq(2)').hide();
+      $('.system-table-body li:eq(0)').hide();
+      $('.system-table-body li:eq(1)').show();
+      $('.system-table-body li:eq(2)').hide();
+      break;
+    default:
+      //show all configuration
+      $('.system-table-header li').show();
+      $('.system-table-body li').show();
+      break;
+  }
+  return false;
+}
+
+function get_hardware_table_list_by_device_type() {
+  var dt_nid = $('#edit-field-device-type-nid').val();
+  var status_id = $('#config_status').val();
+  var config_id = $('#config_id').val();
+  if (config_id != 0) {
+    return false;
+  }
+  disableSubmit();
+  var url = Drupal.settings.basePath + 'named-config/ajax/get-hardware-config-table/' + dt_nid + '/' + status_id + '/' + config_id;
+  $.get(url, function(res) {
+    var response = Drupal.parseJson(res);
+    if (response.status == 'success') {
+      $('#div_hardware').html(response.data);
+      validateComplete();
+      $("#div_table_choose").find("input:checkbox").bind("change", validateComplete);
+    }
+  });
+}
+
+function get_software_table_list_by_device_type() {
+  var dt_nid = $('#edit-field-device-type-nid').val();
+  var status_id = $('#config_status').val();
+  var config_id = $('#config_id').val();
+  if (config_id != 0) {
+    return false;
+  }
+  var url = Drupal.settings.basePath + 'named-config/ajax/get-software-config-table/' + dt_nid + '/' + status_id + '/' + config_id;
+  $.get(url, function(res) {
+    var response = Drupal.parseJson(res);
+    if (response.status == 'success') {
+      $('#div_software').html(response.data);
+      validateComplete();
+      $("#div_table_choose").find("input:checkbox").bind("change", validateComplete);
+      sw_list_table_radio();
+    }
+  });
+}
+
+function get_system_table_list_by_device_type() {
+  var dt_nid = $('#edit-field-device-type-nid').val();
+  var status_id = $('#config_status').val();
+  var config_id = $('#config_id').val();
+  if (config_id != 0) {
+    return false;
+  }
+  var url = Drupal.settings.basePath + 'named-config/ajax/get-system-config-table/' + dt_nid + '/' + status_id + '/' + config_id;
+  $.get(url, function(res) {
+    var response = Drupal.parseJson(res);
+    if (response.status == 'success') {
+      $('#div_system').html(response.data);
+      show_hide_warning_configuration();
+      //bind validate
+      validateComplete();
+      $("#div_table_choose").find("input:checkbox").bind("change", validateComplete);
+      // bind function to system configuration to show regulatory exceptions from software cfg and firmware cfg.
+      $('#sys_software_configuration :checkbox').bind("click", {"type": "software_cfg"}, displayRegulatoryExp);
+      $('#sys_firmware_configuration :checkbox').bind("click", {"type": "firmware_cfg"}, displayRegulatoryExp);
+      if ($('#config_id').val() != '' && $('#config_id').val() != '0') {
+        $('#sys_software_configuration :checked').click();
+        $('#sys_firmware_configuration :checked').click();
+      }
+      //bing change on system configuration only select one 
+      sys_config_only_check_one();
+      //check warning configuration
+      show_table_list_by_warning_status();
     }
   });
 }

@@ -7,9 +7,10 @@ $topic = filter_xss($_GET['topic']);
   $(document).ready(function() {
     $('#hw_sw_table tr:first').before('<tr><th colspan="3" style="text-align:center"><?php echo t('Hardware'); ?></th><th colspan="4" style="text-align:center"><?php echo t('Software'); ?></th></tr>');
     $('#hw_sw_fw_table tr:first').before('<tr><th colspan="3" style="text-align:center"><?php echo t('Hardware'); ?></th><th colspan="2" style="text-align:center"><?php echo t('Software'); ?></th><th colspan="2" style="text-align:center"><?php echo t('Firmware'); ?></th></tr>');
-	//As in HW/SW Configuration tab, colorbox functin will impact ajax callback function. Temporally override it.
-    if (!jQuery.fn.colorbox){
-        jQuery.fn.colorbox = function(){}
+    //As in HW/SW Configuration tab, colorbox functin will impact ajax callback function. Temporally override it.
+    if (!jQuery.fn.colorbox) {
+      jQuery.fn.colorbox = function() {
+      }
     }
     $(".iframe").colorbox({
       iframe: true, width: "500px", height: "500px", scrolling: false, onClosed: function() {
@@ -46,7 +47,7 @@ $topic = filter_xss($_GET['topic']);
     $("#div_device_config_preview").css("left", event.offset().left);
     $("#div_device_config_preview").css("top", event.offset().top + 20);
     var url = '<?php echo $base_url; ?>/covidien/device/component/view';
-    var data = {'comp_id':comp_id,'device_id':'<?php echo $device_id; ?>'};
+    var data = {'comp_id': comp_id, 'device_id': '<?php echo $device_id; ?>'};
     $.get(url, data, function(response) {
       response = Drupal.parseJson(response);
       if (response.status == 'success') {
@@ -78,18 +79,18 @@ $topic = filter_xss($_GET['topic']);
     <td valign="top"><label><?php echo t('Location:'); ?></label></td>
     <td valign="top" colspan="3"><label><b><?php echo $location; ?></b></label></td>
   </tr>
-  <?php if (!empty($device_facility)): ?>	
+<?php if (!empty($device_facility)): ?>	
     <tr>
       <td valign="top"><label><?php echo t('User Entered Facility:'); ?></label></td>
       <td valign="top" colspan="5"><label><b><?php echo $device_facility; ?></b></label></td>
     </tr>
   <?php endif; ?>	
-  <?php if (!empty($device_address)): ?>	
+<?php if (!empty($device_address)): ?>	
     <tr>
       <td valign="top"><label><?php echo t('User Entered Facility Address:'); ?></label></td>
       <td valign="middle" colspan="5"><label><b><?php echo $device_address; ?></b></label></td>
     </tr>
-  <?php endif; ?>	
+<?php endif; ?>	
 </table>
 <div id="tabs_container" class="tabs_wrapper">
   <ul id="uitabs">
@@ -113,7 +114,7 @@ $topic = filter_xss($_GET['topic']);
       echo 'class="active"';
     }
     ?>><a class="icon_accept" href="<?php echo $base_url; ?>/covidien/device/<?php echo $device_id; ?>/<?php echo $sno; ?>?topic=log_viewer"><?php echo t('Log Viewer'); ?></a></li>
-    <!-- hide feature list
+
     <li <?php
     if ($topic == "feature_list") {
       echo 'class="active"';
@@ -124,7 +125,7 @@ $topic = filter_xss($_GET['topic']);
       echo 'class="active"';
     }
     ?>><a class="icon_accept" href="<?php echo $base_url; ?>/covidien/device/<?php echo $device_id; ?>/<?php echo $sno; ?>?topic=last_known_features_list"><?php echo t('Last Known Features List'); ?></a></li>
-    -->
+
   </ul>
 </div>
 <div  class="device_tabs">
@@ -133,7 +134,7 @@ $topic = filter_xss($_GET['topic']);
     echo 'style="display: block;"';
   }
   ?>>
-         <?php echo $device_history; ?>
+<?php echo $device_history; ?>
   </div>
   <div id="tab2" class="tab_content" <?php
   if ($topic == "config") {
@@ -144,12 +145,12 @@ $topic = filter_xss($_GET['topic']);
          echo $messages;
          if ($device_type_version >= '3.0') {
            ?>
-      <!-- <div class="table_title"><?php echo t('The device applied Named System Configuration is : '); ?><b style="color:red;"><?php echo $applied_config['name']; ?></b></div>  -->
+        <!-- <div class="table_title"><?php echo t('The device applied Named System Configuration is : '); ?><b style="color:red;"><?php echo $applied_config['name']; ?></b></div>  -->
       <?php
     }
     ?>
     <div class="table_title"><?php echo t('Current Hardware/Software components on this device:'); ?></div>
-    <?php echo $device_config; ?>
+<?php echo $device_config; ?>
   </div>
   <div id="tab3" class="tab_content" <?php
   if ($topic == "discrepancy") {
@@ -200,6 +201,6 @@ $topic = filter_xss($_GET['topic']);
 </div>
 <div style="margin-top:50px; clear:both" align="right">
   <a id="secondary_submit" href="<?php echo $base_url; ?>/covidien/devices">
-    <?php echo t('Find Another Device'); ?>
+<?php echo t('Find Another Device'); ?>
   </a>
 </div>

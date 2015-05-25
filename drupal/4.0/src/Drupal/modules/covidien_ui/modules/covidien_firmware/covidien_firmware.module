@@ -220,6 +220,18 @@ function covidien_firmware_form($id) {
 }
 
 function covidien_firmware_form_validate($values) {
+  //GATEWAY-3020 GATEWAY-2934 Add check status when change  
+  if ($values['firmware_id']) {
+    $status = db_result(db_query("SELECT name FROM firmware_status WHERE id = %d", $values['firmware_status']));
+    if ($status != 'In Production') {
+      module_load_include('module', 'covidien_named_config');
+      $parents = covidien_get_status_not_match_parent($status, $values['firmware_id']);
+      if (count($parents) > 0) {
+        form_set_error('config_status', 'Should change status of below parent configurations which depend on current one:<br/>' . implode(',', $parents));
+      }
+    }
+  }
+
   if (!covidien_ui_input_validate($values['firmware_name'], true)) {
     form_set_error('firmware_name', 'Invalid firmware name.');
   }

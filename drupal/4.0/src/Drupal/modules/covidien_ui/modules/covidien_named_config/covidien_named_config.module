@@ -398,11 +398,12 @@ function covidien_named_config_form_validate($config) {
     if (!covidien_ui_input_validate($config['name'])) {
       form_set_error('txt_name', 'Invalid Named Configration Name.');
     }
-    //GATEWAY-3020 Add check status when change  
-    if (_covidien_named_get_status_name($config['status']) != 'In Production') {
-      $rows = named_config_check_status_change($config['id']);
-      if (count($rows) > 0) {
-        form_set_error('config_status', 'Please first change status ' . implode(',', $rows));
+    //GATEWAY-3020 GATEWAY-2934 Add check status when change  
+    $status = _covidien_named_get_status_name($config['status']);
+    if ($status != 'In Production') {
+      $parents = covidien_get_status_not_match_parent($status, $config['id']);
+      if (count($parents) > 0) {
+        form_set_error('config_status', 'Should change status of below parent configurations which depend on current one:<br/>' . implode(', ', $parents));
       }
     }
   } else {
@@ -1058,11 +1059,27 @@ function get_hsf_config_list_table($product_line = 0, $device_type_id = 0, $conf
   $header = array();
   while ($row = db_fetch_object($result)) {
     $header[$row->id] = $row->title;
-    $data['table'][$row->id]['data'] = get_configuration_list_table($product_line, $device_type_id, $row->id, $config_id, $config_status);
-    $data['table'][$row->id]['valign'] = 'top';
+    $data[$row->id] = get_configuration_list_table($product_line, $device_type_id, $row->id, $config_id, $config_status);
   }
+  $output = '<div class="hsf-configuration-list-table">';
+  //header start 
+  $output .= '<div class="system-table-header">';
+  foreach ($header as $th) {
+    $required = ($th != 'Named Firmware Configuration') ? '<span class="form-required" title="This field is required.">*</span>' : '';
+    $output .= '<li>' . $required . $th . '</li>';
+  }
+  $output .= '</div>';
+  //header end 
+  //body start
+  $output .= '<div class="system-table-body">';
+  foreach ($data as $td) {
+    $output .= '<li>' . $td . '</li>';
+  }
+  $output .= '</div>';
+  //body end
+  $output .= '</div>';
 
-  $output = theme_table($header, $data, array('class' => 'hsf-configuration-list-table', 'valign' => 'top'));
+  //$output = theme_table($header, $data, array('class' => 'hsf-configuration-list-table', 'valign' => 'top'));
   return $output;
 }
 
@@ -1457,7 +1474,36 @@ function covidien_nc_golbal_config_type() {
 /**
  * named-config/validate-item-status/%/%
  */
-function covidien_validate_item_status() {
-  $type = arg(2);
-  $item_id = arg(3);
+function covidien_validate_item_status($status = '', $item_id = 0) {
+  $status = $status ? $status : arg(2);
+  $item_id = $item_id ? $item_id : arg(3);
+  $rows = covidien_get_status_not_match_parent($status, $item_id);
+  drupal_json(array('status' => 'success', 'data' => array('status' => $status, 'check' => array_values($rows))));
+}
+
+function covidien_get_status_not_match_parent($status = '', $item_id = 0) {
+  if (!$item_id || !$status) {
+    return array();
+  }
+  $result = db_query("SELECT n.nid, n.title, s.id, s.name AS status
+    FROM named_configuration nc 
+    JOIN node n ON nc.nid = n.nid 
+    JOIN named_configuration_status s ON nc.status = s.id	
+    JOIN named_configuration_relation r ON n.nid = r.left_nid 
+    WHERE r.right_nid = %d", $item_id);
+  $rows = array();
+  while ($row = db_fetch_object($result)) {
+    if ($status == 'Limited Release') {
+      //if change to limited release, check in production
+      if ($row->status == 'In Production') {
+        $rows[$row->nid] = l($row->title, 'named-config/edit/' . $row->nid);
+      }
+    } elseif ($status == 'Archived') {
+      //if change to archived, check in production and limited release 
+      if ($row->status == 'In Production' || $row->status == 'Limited Release') {
+        $rows[$row->nid] = l($row->title, 'named-config/edit/' . $row->nid);
+      }
+    }
+  }
+  return $rows;
 }

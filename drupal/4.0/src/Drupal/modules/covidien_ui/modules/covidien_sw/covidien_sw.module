@@ -209,7 +209,7 @@ function covidien_sw_form_alter(&$form, &$form_state, $form_id) {
     } else {
       $arg = '';
     }
-    $form['field_device_type_nid']['#options']['All'] = t('All');
+    $form['field_device_type_nid']['#options'][0] = t('All');
     array_unshift($form['#submit'], 'sw_manage_custom_filters');
     $post['field_device_type_nid'] = $request['field_device_type_nid'];
     $swversion_arr = get_hwrevision($post);
@@ -255,17 +255,18 @@ function software_list_validate(&$form_state) {
  *  validate software add & edit 
  */
 function software_form_validate(&$form_state) {
-  //GATEWAY-3020 Add check status when change  
+  //GATEWAY-3020 GATEWAY-2934 Add check status when change  
   if ($form_state['nid']['#value']) {
     $status = db_result(db_query("SELECT title FROM node WHERE nid = %d", $form_state['#post']['field_sw_status']['nid']['nid']));
     if ($status != 'In Production') {
       module_load_include('module', 'covidien_named_config');
-      $rows = named_config_check_status_change($form_state['nid']['#value']);
-      if (count($rows) > 0) {
-        form_set_error('field_sw_status', 'Please first change status ' . implode(',', $rows));
+      $parents = covidien_get_status_not_match_parent($status, $form_state['nid']['#value']);
+      if (count($parents) > 0) {
+        form_set_error('config_status', 'Should change status of below parent configurations which depend on current one:<br/>' . implode(', ', $parents));
       }
     }
   }
+
   //validate filesize 
   if ($form_state['#post']['field_sw_file'][0]['fid']) {
     $file_size = db_result(db_query("SELECT filesize FROM files WHERE fid = %d", $form_state['#post']['field_sw_file'][0]['fid']));
@@ -387,6 +388,12 @@ function is_agent_software($device_type_nid, $sw_type) {
  * customized the node validation error message.
  */
 function covidien_sw_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+  //GATEWAY-3158 fix device type value
+  if ($node->type == 'software') {
+    if ($_POST['field_device_type_nid']) {
+      $node->field_device_type[0]['nid'] = $_POST['field_device_type_nid'];
+    }
+  }
   if ($node->type == 'software' && $op == 'validate') {
     drupal_add_js(drupal_get_path('module', 'covidien_sw') . '/js/covidien_sw.js');
     if ($node->op == $node->cancel) {
@@ -450,6 +457,10 @@ function covidien_sw_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
     }
   }
   if ($node->type == 'software' && $op == 'presave') {
+    $post = filter_xss_arr($_POST);
+    if ($post['no_file']) {
+      unset($node->field_sw_file);
+    }
     if ($node->field_sw_integrity_check[0]['value'] == t('Enter Software Integrity Check')) {
       $node->field_sw_integrity_check[0] = array('value');
     }
@@ -470,13 +481,6 @@ function covidien_sw_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
     if ($node->field_sw_description[0]['value'] == t('Enter Software Description')) {
       $node->field_sw_description[0]['value'] = '';
     }
-    //GATEWAY-2971 use plupload 
-    //rename file GATEWAY-1994
-    /*
-      $old_fid = db_result(db_query("SELECT field_sw_file_fid FROM {content_type_software} WHERE vid=%d AND nid=%d", $node->vid, $node->nid));
-      if ($node->field_sw_file[0]['fid'] != $old_fid) {
-      rename_upload_file($node->field_sw_file[0]['filepath'], $node->field_sw_file[0]['fid']);
-      } */
   }
 
   if ($node->type == 'software' && ($op == 'insert' || $op == 'update')) {
@@ -989,10 +993,19 @@ function covidien_sw_views_query_alter(&$view, &$query) {
       }
     }
     //GATEWAY-2544 Add product line filter
-    $query->where[0]['clauses'][] = " (node.nid IN (SELECT content_field_device_type.nid FROM content_field_device_product_line 
+    if ($_SESSION['default_cot'] && is_numeric($_SESSION['default_cot'])) {
+      $query->where[0]['clauses'][] = " (node.nid IN (SELECT content_field_device_type.nid FROM content_field_device_product_line 
       JOIN content_field_device_type ON content_field_device_product_line.nid = content_field_device_type.field_device_type_nid
       WHERE field_device_product_line_nid = '%s')) ";
-    $query->where[0]['args'][] = $_SESSION['default_cot'];
+      $query->where[0]['args'][] = $_SESSION['default_cot'];
+    }
+
+    //fix device type is 0 not get result
+    $device_type_key = array_search('0', $query->where[0]['args']);
+    if ($device_type_key && strpos($query->where[0]['clauses'][$device_type_key + 1], 'device_type') !== false) {
+      unset($query->where[0]['clauses'][$device_type_key + 1]);
+      unset($query->where[0]['args'][$device_type_key]);
+    }
   }
   //GATEWAY-2754 Add status filter
   if ($view->name == 'hw_list') {
@@ -1007,7 +1020,7 @@ function get_hwrevision($post = array()) {
   //Title based version search
   global $user;
   $field_device_type_nid = $post['field_device_type_nid']; //Device type based version
-  if ($field_device_type_nid == 'All') {
+  if (!$field_device_type_nid || $field_device_type_nid == 'All') {
     $devicenid = $user->devices_nid;
     $tmp = explode(',', $devicenid);
     $devicenid = implode('+', $tmp);

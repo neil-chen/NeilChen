@@ -942,3 +942,37 @@ a#alert_notification_history_cancel {
 #relation-item-table td {
   padding: 5px;
 }
+.clear_div {
+  clear: both;
+}
+
+/* pop up class */
+#cboxOverlay {
+  cursor: auto;
+  display: block;
+  left: 0;
+  top: 0;
+  /*opacity: 0.9;*/
+  background: none repeat scroll 0 0 rgba(0, 0, 0, 0.5);
+  height: 100%;
+  width: 100%;
+  position: fixed;
+  z-index: 9999;
+  text-align: center;
+}
+#modal {
+  position: absolute;
+  background: gray;
+  border: 3px solid #ccc;
+  width: 500px;
+}
+#modal-content {
+  background: white;
+  padding: 20px;
+}
+#modal-content li {
+  background: white;
+  padding: 0;
+  margin-left: 70px;
+  text-align: left;
+}

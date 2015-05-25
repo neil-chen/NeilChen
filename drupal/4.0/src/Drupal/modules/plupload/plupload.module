@@ -158,8 +158,9 @@ function plupload_pernode() {
   }
 
   //check file rename 
+  file_check_directory($temp_directory, FILE_CREATE_DIRECTORY);
   $time = check_plain($_GET['time']);
-  $filepath = $temp_directory . DIRECTORY_SEPARATOR . $time . '_' . $file_name;
+  $filepath = $temp_directory . '/' . DIRECTORY_SEPARATOR . $time . '_' . $file_name;
 
   // Look for the content type header
   if (isset($_SERVER["HTTP_CONTENT_TYPE"])) {

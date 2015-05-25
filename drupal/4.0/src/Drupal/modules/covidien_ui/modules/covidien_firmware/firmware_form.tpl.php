@@ -183,39 +183,39 @@ $action = $firmware['id'] ? '/firmware/update' : '/firmware/save';
         </td>
       </tr>
       <tr>
-        <td style="padding-left: 0px;">
+        <td style="padding-left: 0px; display:none;">
           <h4>3. Select the Hardware item from the table below to filter Hardware configuration(s)</h4>
         </td>
       </tr>
       <tr>
-        <td>
+        <td style="display:none;">
           <div id="div-hardware-list">
             <?php echo $hw_list; ?>
           </div>
         </td>
       </tr>
       <tr>
-        <td style="padding-left: 0px;">
+        <td style="padding-left: 0px; display:none;">
           <h4>4. Select the Hardware configuration(s) from the table below that are compatible with the firmware</h4>
         </td>
       </tr>
       <tr>
-        <td>
+        <td style="display:none;">
           <?php echo $hc_list; ?>
         </td>
       </tr>
       <tr>
-        <td>
+        <td style="display:none;">
           <div id="hardware-message" style="color:red;"><br/></div>
         </td>
       </tr>
       <tr>
-        <td style="padding-left: 0px;">
+        <td style="padding-left: 0px; display:none;">
           <h4>4. Select Regulatory Exception</h4>
         </td>
       </tr>
       <tr>
-        <td>
+        <td style="display:none;">
           <div style="float:left">
             <?php echo $reg_excep_list; ?>
           </div>
@@ -225,18 +225,13 @@ $action = $firmware['id'] ? '/firmware/update' : '/firmware/save';
         </td>
       </tr>
       <tr>
-        <td>
+        <td style="display:none;">
           <table id="regulatory_exp_list" style="width: 40%">
             <tr>
               <th style="width: 70%">Country</th>
               <th style="width: 30%"></th>
             </tr>
           </table>
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <br/>
         </td>
       </tr>
       <tr>

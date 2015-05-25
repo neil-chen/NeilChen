@@ -698,7 +698,8 @@
                         chunk: chunk,
                         chunks: chunks,
                         response: xhr.responseText,
-                        status: httpStatus
+                        status: httpStatus,
+                        cancelled: false
                       };
 
                       up.trigger('ChunkUploaded', file, chunkArgs);
@@ -707,7 +708,8 @@
                       // Stop upload
                       if (chunkArgs.cancelled) {
                         file.status = plupload.FAILED;
-                        return;
+                        console.log('chunkArgs.cancelled', file.status);
+                        //return;
                       }
 
                       file.loaded = Math.min(file.size, (chunk + 1) * chunkSize);

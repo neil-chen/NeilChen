@@ -568,7 +568,7 @@ function covidien_ui_input_validate($value, $empty = false) {
     foreach ($value as $key => $val) {
       $val = trim($val);
       //check blacklist, check value is not empty
-      if (empty($val) && $empty && ($val !== 0 || $val !== '0')) {
+      if (!strlen($val) && $empty) {
         return false;
       } else {
         if (preg_match($partten, $val)) {
@@ -582,7 +582,7 @@ function covidien_ui_input_validate($value, $empty = false) {
   } else {
     $value = trim($value);
     //check blacklist, check value is not empty
-    if (empty($value) && $empty && ($value !== 0 || $val !== '0')) {
+    if (!strlen($value) && $empty) {
       return false;
     } else {
       if (preg_match($partten, $value)) {

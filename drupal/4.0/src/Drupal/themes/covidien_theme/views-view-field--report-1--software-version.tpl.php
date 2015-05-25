@@ -20,12 +20,23 @@
  * the view is modified.
  */
 ?>   
-<?php
+<?php 
+  $sw_name_temp = explode(',', $row->software_name);
+  $count_sw_name = count($sw_name_temp);
+  $sw_name = ''; 
+  if($count_sw_name > 0){
+    $count_sw_name = $count_sw_name - 1;
+    $sw_name = $sw_name_temp[$count_sw_name];
+  }
   
   $temp = explode(',', $row->device_software_version_view_software_version);
   $count = count($temp);
   $count = $count - 1;
    
+  $software_and_version = '';
+  if($sw_name != ''){
+    $software_and_version = $sw_name . ' ' . $temp[$count];
+  }
   ?>
-  <?php print ($temp[$count]); ?> 
+  <?php print ($software_and_version); ?> 
  

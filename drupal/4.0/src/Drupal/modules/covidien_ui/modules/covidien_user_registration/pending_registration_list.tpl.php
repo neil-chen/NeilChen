@@ -11,6 +11,7 @@
   <div class="right_page"> 
     <?php print drupal_render($form['cov_user']);?>
     <?php print drupal_render($form['status']);?> 
+    <?php print drupal_render($form['show_archived']);?>;
     <?php print drupal_render($form['trainer']);?> 
      <?php// print drupal_render($submit);?> 
     <div class="submit_wrapper">

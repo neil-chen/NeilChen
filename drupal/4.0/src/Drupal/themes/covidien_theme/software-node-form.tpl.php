@@ -94,7 +94,6 @@ if (arg(0) == 'node' && arg(1) == 'add') {
           </div>				
         </td>
       </tr>
-
       <tr>
         <td>
           <div class="label_left"><label><?php echo t('Software Type:'); ?></label></div>
@@ -130,7 +129,7 @@ if (arg(0) == 'node' && arg(1) == 'add') {
                 <?php echo $sw_file; ?>
               </div>
             </div>
-            <div class="form-item-left" style="padding-left:22px;">
+            <div class="form-item-left">
               <div class="clear_div"><?php echo $no_file; ?></div>
             </div>
           </div>	
@@ -308,7 +307,7 @@ if (arg(0) == 'node' && arg(1) == 'add') {
             <?php echo $sw_file; ?>
           </div>
         </div>
-        <div class="form-item-left" style="padding-left:22px;">
+        <div class="form-item-left">
           <div class="clear_div"><?php echo $no_file; ?></div>
         </div>
       </td>

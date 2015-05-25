@@ -1346,7 +1346,7 @@ function covidien_reports_views_pre_execute(&$view) {
                 Device_VW.devicetype_nid AS devicetype_nid,
                 Device_VW.device_nid AS device_nid,
                 Device_VW.deviceserial AS device_software_version_view_deviceserial,
-                 
+                GROUP_CONCAT(case componet_node.type when 'software' then componet_node.title end) AS software_name,
                 Customer_VW.accountnumber AS accountnumber,
                 Customer_VW.customername AS device_software_version_view_customername,
                 Customer_VW.customer_nid AS customer_nid, 
@@ -1448,7 +1448,7 @@ function covidien_reports_views_pre_execute(&$view) {
     
     $query .= $query_where;
     //AND content_type_hardware.nid <> '' removed for GATEWAY-2220
-    $query .= " group by device_vw.deviceserial";
+    $query .= " group by Device_VW.deviceserial";
     
     $view->build_info['query'] = $query; // wrapped for legibility
     $view->build_info['query_args'] = $args;

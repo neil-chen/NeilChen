@@ -24,14 +24,8 @@ $clone_display_title = ($_GET['op'] == 'clone') ? '' : 'style="display:none;"';
   #div_table_choose .hsf-configuration-list-table tr td {
     margin: 0;
     padding: 0;
-    width: 33%;
     text-align: center;
     border: 0 none;
-  }
-  #div_table_choose .hsf-configuration-item-table {
-    padding: 0;
-    margin: -1px 0 -1px -1px;
-    /*width: 284px;*/
   }
   #div_table_choose tr th,#div_table_choose tr td,#div_table_choose .hsf-configuration-item-table tr td {
     padding: 5px;
@@ -59,59 +53,21 @@ $clone_display_title = ($_GET['op'] == 'clone') ? '' : 'style="display:none;"';
   }
   /*software config*/
   #div_table_choose {
-    position: relative;
     border: 0;
     height: 250px;
   }
   #div_table_choose .named-config-select-table-button table {
     height: 100px;
   }
-  #div_table_choose thead {
-    position: absolute;
-    z-index: 20;
-    height: 20px;
-    border: 0;
-  }
   #div_table_choose .no-result {
     margin: 0;
     padding: 0;
     display: none;
   }
-  #div_table_choose th, #div_table_choose table {
-    border: 0;
-  }
   #div_table_choose #left_table_h tbody, #div_table_choose #right_table_h tbody {
     width: 337px;
   }
-  #div_system .hsf-configuration-list-table thead {
-    position: relative;
-    width: 100%;
-  }
-  #sys_hardware_configuration thead, #sys_software_configuration thead, #sys_firmware_configuration thead {
-    position: absolute;
-  }
-  #div_system .hsf-configuration-list-table thead:first-child {
-    border-bottom: 1px solid #d1d3d4;
-  }
-  #sys_hardware_configuration tbody, #sys_software_configuration tbody, #sys_firmware_configuration tbody {
-    position: absolute;
-    top: 61px;
-    border: 1px solid #d1d3d4;
-    width: 282px;
-    max-height: 180px;
-    overflow-y: auto;
-  }
-  #sys_hardware_configuration tbody td:first-child, #sys_software_configuration tbody td:first-child, #sys_firmware_configuration tbody td:first-child {
-    width: 20px;
-  }
-  #sys_hardware_configuration tbody td:nth-child(2), #sys_software_configuration tbody td:nth-child(2), #sys_firmware_configuration tbody td:nth-child(2) {
-    width: 150px;
-  }
-  #sys_hardware_configuration tbody td:nth-child(3), #sys_software_configuration tbody td:nth-child(3), #sys_firmware_configuration tbody td:nth-child(3) {
-    width: 80px;
-  }
   .named-config-select-table-left-content tbody, .named-config-select-table-right tbody {
-    position: absolute;
     max-height: 180px;
     overflow-y: auto;
     border: 1px solid #d1d3d4;
@@ -132,35 +88,6 @@ $clone_display_title = ($_GET['op'] == 'clone') ? '' : 'style="display:none;"';
     overflow-y: auto;
     border: 1px solid #d1d3d4;
   }
-  #left_table_h thead th:first-child, #right_table_h thead th:first-child, 
-  #left_table_h thead td:first-child, #right_table_h thead td:first-child {
-    width: 20px;
-  }
-  #left_table_h th:nth-child(2), #right_table_h th:nth-child(2), 
-  #left_table_h td:nth-child(2), #right_table_h td:nth-child(2) {
-    width: 120px;
-  }
-  #left_table_h th:nth-child(3), #right_table_h th:nth-child(3), 
-  #left_table_h td:nth-child(3), #right_table_h td:nth-child(3) {
-    width: 80px;
-  }
-  #left_table_h th:nth-child(4), #right_table_h th:nth-child(4), 
-  #left_table_h td:nth-child(4), #right_table_h td:nth-child(4)  {
-    width: 80px;
-  }
-  /*IE CSS*/
-  #left_table_h th:first-child + th, #right_table_h th:first-child + th, 
-  #left_table_h td:first-child + td, #right_table_h td:first-child + td {
-    width: 117px\9;
-  }
-  #left_table_h th:first-child + th + th, #right_table_h th:first-child + th + th, 
-  #left_table_h td:first-child + td + td, #right_table_h td:first-child + td + td {
-    width: 80px;
-  }
-  #left_table_h th:first-child + th + th + th, #right_table_h th:first-child + th + th + th, 
-  #left_table_h td:first-child + td + td + td, #right_table_h td:first-child + td + td + td {
-    width: 80px;
-  }
   /*IE CSS end*/
   /*software config*/
   #div_table_choose #left_table_s thead, #div_table_choose #right_table_s thead {
@@ -174,49 +101,6 @@ $clone_display_title = ($_GET['op'] == 'clone') ? '' : 'style="display:none;"';
   #div_software .named-config-select-table-left, #div_software .named-config-select-table-right {
     width: 380px;
   }
-  #div_software .named-config-select-table-left span, #div_hardware .named-config-select-table-left span, #div_firmware .named-config-select-table-left span {
-    margin-left: 20px;
-  }
-  #left_table_s th:first-child, #right_table_s th:first-child, #left_table_s td:first-child, #right_table_s td:first-child {
-    width: 20px;
-  }
-  #left_table_s th:nth-child(2), #right_table_s th:nth-child(2), #left_table_s td:nth-child(2), #right_table_s td:nth-child(2) {
-    width: 50px;
-  }
-  #left_table_s th:nth-child(3), #right_table_s th:nth-child(3), #left_table_s td:nth-child(3), #right_table_s td:nth-child(3) {
-    width: 110px;
-  }
-  #left_table_s th:nth-child(4), #right_table_s th:nth-child(4), #left_table_s td:nth-child(4), #right_table_s td:nth-child(4) {
-    width: 55px;
-  }
-  #left_table_s th:nth-child(5), #right_table_s th:nth-child(5), #left_table_s td:nth-child(5), #right_table_s td:nth-child(5) {
-    width: 40px;
-  }
-  #left_table_s th:nth-child(6), #right_table_s th:nth-child(6), #left_table_s td:nth-child(6), #right_table_s td:nth-child(6) {
-    width: 60px;
-  }
-  /*IE CSS*/
-  #left_table_s th:first-child + th, #right_table_s th:first-child + th, 
-  #left_table_s td:first-child + td, #right_table_s td:first-child + td {
-    width: 50px;
-  }
-  #left_table_s th:first-child + th + th, #right_table_s th:first-child + th + th, 
-  #left_table_s td:first-child + td + td, #right_table_s td:first-child + td + td {
-    width: 110px;
-  }
-  #left_table_s th:first-child + th + th + th, #right_table_s th:first-child + th + th + th, 
-  #left_table_s td:first-child + td + td + td, #right_table_s td:first-child + td + td + td {
-    width: 55px;
-  }
-  #left_table_s th:first-child + th + th + th + th, #right_table_s th:first-child + th + th + th + th, 
-  #left_table_s td:first-child + td + td + td + td, #right_table_s td:first-child + td + td + td + td {
-    width: 40px;
-  }
-  #left_table_s th:first-child + th + th + th + th + th, #right_table_s th:first-child + th + th + th + th + th, 
-  #left_table_s td:first-child + td + td + td + td + td, #right_table_s td:first-child + td + td + td + td + td {
-    width: 66px\9;
-  }
-  /*IE CSS end*/
   /*firmware config*/
   #div_table_choose #left_table_f thead, #div_table_choose #right_table_f thead {
     width: 339px;
@@ -228,66 +112,29 @@ $clone_display_title = ($_GET['op'] == 'clone') ? '' : 'style="display:none;"';
   #left_table_f thead th, #right_table_f thead th {
     padding: 5px;
   }
-  #left_table_f thead th:first-child, #right_table_f thead th:first-child, #left_table_f thead td:first-child, #right_table_f thead td:first-child {
-    width: 20px;
-  }
-  #left_table_f th:nth-child(2), #right_table_f th:nth-child(2), #left_table_f td:nth-child(2), #right_table_f td:nth-child(2) {
-    width: 120px;
-  }
-  #left_table_f th:nth-child(3), #right_table_f th:nth-child(3), #left_table_f td:nth-child(3), #right_table_f td:nth-child(3) {
-    width: 80px;
-  }
-  #left_table_f th:nth-child(4), #right_table_f th:nth-child(4), #left_table_f td:nth-child(4), #right_table_f td:nth-child(4) {
-    width: 80px;
-  }
-  /*IE CSS*/
-  #left_table_f th:first-child + th, #right_table_f th:first-child + th, 
-  #left_table_f td:first-child + td, #right_table_f td:first-child + td {
-    width: 120px;
-  }
-  #left_table_f th:first-child + th + th, #right_table_f th:first-child + th + th, 
-  #left_table_f td:first-child + td + td, #right_table_f td:first-child + td + td {
-    width: 80px;
-  }
-  #left_table_f th:first-child + th + th + th, #right_table_f th:first-child + th + th + th, 
-  #left_table_f td:first-child + td + td + td, #right_table_f td:first-child + td + td + td {
-    width: 77px\9;
-  }
-  /*IE CSS end*/
   /*system config*/
+  #div_system {
+    margin-left: 20px;
+  }
   #sys_hardware_configuration {
     max-height: 400px;
     overflow-y: auto;
   }
-  /* pop up class */
-  #cboxOverlay {
-    cursor: auto;
-    display: block;
-    left: 0;
-    top: 0;
-    opacity: 0.9;
-    background: none repeat scroll 0 0 #fff;
-    height: 100%;
-    width: 100%;
-    position: fixed;
-    z-index: 9999;
-    text-align: center;
+  .system-table-header, .system-table-body {
+    clear: both;
   }
-  #modal {
-    position: absolute;
-    background: gray;
-    padding: 8px;
-    width: 500px;
+  .system-table-header li {
+    float: left;
+    width: 280px;
+    list-style: none;
   }
-  #modal-content {
-    background: white;
-    padding: 20px;
+  .system-table-body li {
+    float: left;
+    width: 280px;
+    list-style: none;
   }
-  #modal-content li {
-    background: white;
-    padding: 0;
-    margin-left: 70px;
-    text-align: left;
+  #div_hardware, #div_software, #div_firmware {
+    margin-left: 20px;
   }
 </style>
 

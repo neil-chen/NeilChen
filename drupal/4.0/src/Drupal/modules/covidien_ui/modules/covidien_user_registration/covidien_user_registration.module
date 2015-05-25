@@ -189,8 +189,29 @@ function covidien_user_registration_menu() {
     'type'             => MENU_CALLBACK, 
   );
   
+  //archive user
+  $items['covidien/self/archive'] = array(
+    'title' => t('Archive user'),
+    'description' => t('Manually Archive user'),
+    'page callback' => 'manually_archive_user', 
+    'page arguments'		=> array(3),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+    //'file' => 'pending_registration_list.inc'
+  );
+  /**/
+  //resend email to user
+  $items['covidien/self/email'] = array(
+    'title' => t('resend email'),
+    'description' => t('Resend email'),
+    'page callback' => 'resend_email_to_register', 
+    'page arguments'		=> array(3),
+    'access callback' => true,
+    'type' => MENU_CALLBACK,
+    //'file' => 'pending_registration_list.inc'
+  );
   
-	return $items;
+  return $items;
 }
  
 function covidien_user_registration_init() {
@@ -304,10 +325,40 @@ function covidien_user_register(){
  * Implements cron functioanlity.
  */
 function covidien_user_registration_cron() {
-	module_load_include('php', 'covidien_user_registration', 'download_approving_manager');
-	download_approving_manager_list ();
+  module_load_include('php', 'covidien_user_registration', 'download_approving_manager');
+  download_approving_manager_list ();
   self_registration_notification();
+  archive_user(); 
 }
+
+/**
+ * archieve pending and approved user if it is over 15 days.
+ */
+function archive_user(){
+    // make sure the cron job only archieve once  per-day.
+    $today_date = gmdate('Y-m-d',  time());
+    $last_archieved_day = variable_get ( 'last_archived_day', '' );
+    if($today_date == $last_archieved_day){
+        return;
+    }
+    variable_set ( 'last_archived_day', $today_date );
+
+    //archieve all pending and approved user that had been registered for 15 days or over.
+    $query = db_query("SELECT *
+        FROM {registrant}
+        WHERE create_time <= UNIX_TIMESTAMP( DATE_ADD( CURDATE( ) , INTERVAL -15 DAY ) )
+        AND status = 'Pending' or status = 'completed'");
+    
+    while ($data = db_fetch_object($query)) {
+        $sql = "UPDATE {registrant} SET  
+            status = 'archived'
+            WHERE id = %d;";
+        db_query($sql,$data->id); 
+    }
+    watchdog('archive', 'archived today date: ' . $today_date);
+
+}
+
 
 function self_registration_notification() {
 	global $base_url;
@@ -620,7 +671,7 @@ function check_email_account($email){
     $total = array();  	
     $result = db_query("SELECT count( email ) AS total
                         FROM {registrant}
-                        WHERE email = '%s'", $email);
+                        WHERE email = '%s' and status != 'archived'", $email);
      
     while ($data = db_fetch_object($result)) { 
       if($data->total > 0){
@@ -1034,7 +1085,7 @@ function get_customer_account($string) {
   }     
 } 
 
- 
+
 /**
  *
  * @param type $approving_manager
@@ -1060,5 +1111,63 @@ function validate_approving_manager($approving_manager,$cov_user){
     exit();
   }  
   drupal_json(array("valid" => 0));
+  exit();
+}
+ 
+/**
+ * Manually Archive user by ajax call
+ * @param type $approving_manager
+ * @param type $cov_user
+ * @return type string
+ */
+function manually_archive_user($register_id){ 
+    
+  $sql = "UPDATE {registrant} SET  
+            status = 'archived'
+            WHERE id = %d;";
+  db_query($sql,$register_id);
+  
+  drupal_json(array("valid" => 1));
+  exit();
+}
+    
+
+/**
+ * Manually resend email to approved user by ajax call
+ * @param type $approving_manager
+ * @param type $cov_user
+ * @return type string
+ */
+function resend_email_to_register($register_id){  
+  global $base_url; 
+  
+  $result = db_query("select * from"
+    . " {registrant} "
+    . " where id = %d ",$register_id);
+
+  $user = '';
+  while ($data = db_fetch_object($result)) {  
+    $user = $data;
+  }    
+  $temporary_url .= $user->id . '/' . $user->active_code . '/' . $user->email; 
+  $user_name = $user->first_name . ' ' . $user->last_name;
+  $email = $user->email;
+
+  //Send out email to register user
+  $to = $email; // to e-mail address
+  $from = "noreply@covidien.com"; // from e-mail address
+  $subject = "Your account has been accepted"; // subject of e-mail 
+  $body = "Dear " . $user_name . ",\n\nCongratulations! You have approved to " 
+          . $base_url . " the Covidien Device Management portal.\nPlease click the following link to reset your password. " 
+          . $base_url . "/self/reset_password/" . $user->id . '/' . $user->active_code . '/' . $user->email
+          . ".\nIf you not reset your password, you cannot access GDMP.\n\n"
+          . "Thank you,\n Covidien Admin";
+  $params = array(
+  'subject' => $subject,
+  'body' => $body,
+  );
+  drupal_mail('covidien_user_registration', 'self_register', $to, language_default(), $params, $from);
+
+  drupal_json(array("valid" => 1));
   exit();
 }

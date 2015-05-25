@@ -579,7 +579,7 @@ function covidien_theme_preprocess_log_list(&$variables) {
   if ($user->covidien_user != "Yes") {
     $query .= " and content_type_device_log.field_device_log_type_value Not In ('DebugLog','RFIDLog','RFDataLog') ";
   }
-
+  $query .= " group by 1 ";
   $query .= check_plain($_GET['sort']) ? tablesort_sql($header) : " ORDER BY field_service_datetime_value DESC ";
   $result = pager_query($query, $pageSize, 0, NULL, $args);
   $rows = array();

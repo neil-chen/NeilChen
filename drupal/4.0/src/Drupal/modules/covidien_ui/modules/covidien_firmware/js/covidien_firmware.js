@@ -85,6 +85,11 @@ $(document).ready(function() {
   $("#firmware_version").bind("keyup", validateComplete);
   $("#file_id").bind("change", validateComplete);
 
+  //GATEWAY-2934 check parent status
+  $("#firmware_status").change(function() {
+    check_parent_status($(this), $('#firmware_id').val());
+  });
+
   var firmware_file = $('#firmware_fileName').val();
   if (firmware_file) {
     $("#firmware_fileName").css("display", "none");
@@ -204,7 +209,7 @@ function validateComplete() {
   var duplicate_check = false;
   if ($("#firmware_name").val() != "" && $("#firmware_part").val() != "" && $("#firmware_version").val() != ""
           && $("#firmware_status").val() != "All" && $("[name=sel_device_type]").val() != "All"
-          && $("#right_table input[type='checkbox']").length && ($('#no_file').attr('checked') || $('#file_id').val() != 0)) {
+          && ($('#no_file').attr('checked') || $('#file_id').val() != 0)) {
     is_field_pass = true;
   } else {
     is_field_pass = false;
