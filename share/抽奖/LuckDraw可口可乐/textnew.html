@@ -1,0 +1,246 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="x-ua-compatible" content="IE=10;" />
+<meta http-equiv="Access-Control-Allow-Origin" content="*">
+<title>抽奖</title>
+<script type="text/javascript" src="js/jquery-1.7.2.min.js"></script>
+
+
+</head>
+<body>
+
+<style type="text/css">
+*{ padding:0px; margin:0px}
+td,th{ text-align:center; padding:10px 0}
+th{ background:#f6f6f6 none repeat scroll 0 0}
+.loading{ text-align:center; padding:30px 0; display:none}
+</style>
+
+
+
+
+<div style="width:1100px; margin:auto; margin-top:50px">
+选择文件<input type="file" id="filetext" >　　	抽奖数量：<input type="text" id="SNum"  onkeyup="Reducekeyup(1)" />  　<input type="button" value="抽取" id="chouqu" /> 　<input type="button" value="发送测试服务器" id="btnest" /> 　<input type="button" value="发送正式服务器" id="btnest2" /> 　<input type="button" name="out_excel" onclick="AutomateExcel();" value="IE导出到excel">　<br><br><br>
+  <table width="1100" border="1" id="data" cellpadding="0" cellspacing="0">
+  <tr>
+    <th width="100" scope="col">用户名称</th>
+    <th width="100" scope="col">省份</th>
+    <th width="100" scope="col">渠道</th>
+    <!--<th width="100" scope="col">draw_id</th>-->
+    <th width="100" scope="col">参与时间</th>
+    <th width="100" scope="col">电话号码</th>
+    <!--<th width="100" scope="col">小票图片</th>-->
+    <th width="100" scope="col">小票号码</th>
+  </tr>
+</table>
+
+</div>
+
+
+
+<script>
+    var count;//数据全个数
+    var pxml = null; //读取文件数据
+    var setSj;  //全局发送数据
+	
+	
+	//Reducekeyup输入抽奖个数为数字控制方法
+    function Reducekeyup() {
+        var pattern = /(^[1-9]\d+$)|(^\d+\.?\d*$)/;
+        if (!pattern.test($('#SNum').val())) {
+            $('#SNum').val('1');
+        }
+        else if ($('#SNum').val() == 0) {
+            $('#SNum').val('1');
+        }
+    }
+
+	/*
+	getFilValue(obj)控制火狐和IE的为相对路径
+	*/
+    function getFilValue(obj) {
+        if (isFirefox = navigator.userAgent.indexOf("Firefox") > 0) {//判断是否为狐火浏览器
+            return $(obj).val();
+        }
+        else {
+            var ni = $(obj).val().lastIndexOf('\\') + 1;
+            return $(obj).val().substr(ni);
+        }
+    }
+
+	
+	//发送数据到测试环境，并存储
+    $("#btnest").click(function () {
+        $.ajax({
+            type: "post",
+            url: "http://124.248.33.194/CocaCola/www/station.php?a=Index&m=getJsonId&key=sngkwh7ef2ah1sfho",//此链接已经配置好post数据
+            async: false,
+            data: {data: setSj},
+            contentType: "application/json; charset=utf-8",
+            dataType: "jsonp",
+            jsonp: "callback",
+            jsonpCallback: "itemsSearchGet",
+            success: function (data) {
+                alert("发送成功");
+            },
+            error: function () {
+                alert("发送错误");
+            }
+        })
+    })
+
+	//发送数据到正式环境，并存储
+    $("#btnest2").click(function () {
+        $.ajax({
+            type: "post",
+            url: "http://sh.app.socialjia.com/CocaCola/www/station.php?a=Index&m=getJsonId&key=sngkwh7ef2ah1sfho",
+            async: false,
+            data: {data: setSj},
+            contentType: "application/json; charset=utf-8",
+            dataType: "jsonp",
+            jsonp: "callback",
+            jsonpCallback: "itemsSearchGet",
+            success: function (data) {
+                alert("发送成功");
+            },
+            error: function () {
+                alert("发送错误");
+            }
+        })
+    })
+	
+	/*点击抽取事件 */
+    $("#chouqu").click(function () {
+        $.ajax({
+            url: getFilValue("#filetext"),
+            dataType: 'text',
+            success: function (evel) {
+
+                pxml = $(eval(evel));//文件数据
+                count = pxml.length;//文件数据长度
+                //console.log(pxml);
+                if (pxml != null) {
+                    var num = parseInt($("#SNum").val());//抽取个数
+                    if (num > 100)
+                    {
+                        alert("抽取数量不能超过100，请重新输入");
+                    }
+                    else
+                    {
+                        var sn = selectRand2(num); //抽取返回的数组
+                        setSj = addToHtml(sn);//抽取的获得的数据加入table方法
+
+                    }
+                }
+
+
+            }
+        });
+
+
+    });
+	
+	/*
+	抽取返回的数组index
+	*/
+    function selectRand2(num)
+    {
+        if (num >= count)//如果抽取个人大于数据个数全部遍历出来
+        {
+            var temp = [];
+            for (var i = 0; i < count; i++)
+                temp.push(i);
+            return temp;
+        }
+		
+		
+        var rtn = [];//随机抽取存储的数组
+        for (i = 0; i < num; i++)
+        {
+            var flag = true;
+            while (flag) {
+                flag = false;
+                var index = Math.floor(count * Math.random());
+                for (var j = 0; j < rtn.length; j++) {
+                    if (index == rtn[j]) {
+                        flag = true;
+                        break;
+                    }
+                }
+                if (!flag)
+                    rtn.push(index);
+            }
+        }
+        return rtn;
+    }
+	
+	/*
+	添加到table的方法
+	*/
+    function addToHtml(sn)
+    {
+        $("table tr:gt(0)").remove();//移除原始table里面的HTML
+        var rtID = [];//发送给服务器的数组数据
+        for (var i = 0; i < sn.length; i++)
+        {
+            var j = sn[i];//取到数组里面的值
+            var data = {draw_id: pxml[j].draw_id, user_id: pxml[j].id, openid_id: pxml[j].openid};//要发送的数据 后面字段是根据选择文件里面的字段名字来的 所以如果不同文件请修改这里么的字段名字
+            rtID.push(data);//把数据加入数组
+			
+		/*抽取的HTML字符串拼接开始*/
+            var taTD = "<td>" + pxml[j].name + "</td>";
+            taTD += "<td>" + pxml[j].province + "</td>";
+            taTD += "<td>" + pxml[j].channel + "</td>";
+            //taTD+="<td>"+pxml[j].draw_id+"</td>";
+            taTD += "<td>" + getLocalTime(pxml[j].draw_time) + "</td>";
+            taTD += "<td>" + pxml[j].phone_number + "</td>";
+            //taTD+="<td>"+pxml[j].receipt_img+"</td>";
+            taTD += "<td>" + pxml[j].receipt_number + "</td>";
+		/*抽取的HTML字符串拼接结束*/
+			
+            $("table").append("<tr>" + taTD + "</tr>");//追加到table里面
+        }
+        return rtID;
+    }
+
+
+	//getLocalTime(nS)时间戳转换成时间格式
+    function getLocalTime(nS) {
+        return new Date(parseInt(nS) * 1000).toLocaleString().replace(/:\d{1,2}$/, ' ');
+    }
+
+    //< !--IE导出Excel方法
+            function AutomateExcel()
+            {
+                
+                var oXL = new ActiveXObject("Excel.Application"); //创建应该对象
+                var oWB = oXL.Workbooks.Add();//新建一个Excel工作簿
+                var oSheet = oWB.ActiveSheet;//指定要写入内容的工作表为活动工作表
+                var table = document.all.data;//指定要写入的数据源的id
+                var hang = table.rows.length;//取数据源行数
+                var lie = table.rows(0).cells.length;//取数据源列数
+                
+// Add table headers going cell by cell.
+                        for (i = 0; i < hang; i++) {//在Excel中写行
+                    for (j = 0; j < lie; j++) {//在Excel中写列
+//定义格式
+                        oSheet.Cells(i + 1, j + 1).NumberFormatLocal = "@";
+//!!!!!!!上面这一句是将单元格的格式定义为文本
+                        oSheet.Cells(i + 1, j + 1).Font.Bold = true;//加粗
+                        oSheet.Cells(i + 1, j + 1).Font.Size = 10;//字体大小
+                        oSheet.Cells(i + 1, j + 1).value = table.rows(i).cells(j).innerText;//向单元格写入值
+                    }
+                }
+                oXL.Visible = true;
+                oXL.UserControl = true;
+            }
+//-->
+
+
+</script>
+
+
+</body>
+</html>
