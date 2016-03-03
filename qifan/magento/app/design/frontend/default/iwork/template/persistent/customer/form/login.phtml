@@ -1,0 +1,99 @@
+<?php
+/**
+ * Magento
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Academic Free License (AFL 3.0)
+ * that is bundled with this package in the file LICENSE_AFL.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/afl-3.0.php
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to license@magentocommerce.com so we can send you a copy immediately.
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade Magento to newer
+ * versions in the future. If you wish to customize Magento for your
+ * needs please refer to http://www.magentocommerce.com for more information.
+ *
+ * @category    design
+ * @package     base_default
+ * @copyright   Copyright (c) 2011 Magento Inc. (http://www.magentocommerce.com)
+ * @license     http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
+ */
+?>
+<?php
+/**
+ * Customer login form template
+ *
+ * @see app/design/frontend/base/default/template/customer/form/login.phtml
+ */
+/** @var $this Mage_Customer_Block_Form_Login */
+?>
+<div class="account-login">
+    <div class="lpoo">
+        <h5 class="lh5">ホームへ</h5>
+    </div>
+    
+    
+    
+        <div class="login_con1">
+    <?php echo $this->getMessagesBlock()->getGroupedHtml() ?>
+    <form action="<?php echo $this->getPostActionUrl() ?>" method="post" id="login-form">
+       <div>    
+<div class="loginright">
+               <h5>ログイン</h5>
+        	<h6>登録済みのお客さま</h6>
+            <p class="login_i"><span>メールアドレス：</span><input type="text" name="login[username]" value="<?php echo $this->htmlEscape($this->getUsername()) ?>" id="email" class="input-text required-entry validate-email" title="<?php echo $this->__('Email Address') ?>" /></p>
+            <p class="mai">例:username@network.jp</p>
+            <p class="login_i"><span style="padding-left:20px;">パスワード：</span><input type="password" name="login[password]" class="input-text required-entry validate-password" id="pass" title="<?php echo $this->__('Password') ?>" /></p>
+            <p class="zs">半角英数字6～12文字</p>
+            <p class="zs">パスワードを忘れた方は、メールアドレスを入力してこちらをクリックしてください。</p><div class="clear"></div></div>
+            <div style="clear:both;"> <button type="submit" class="vbn" title="<?php echo $this->__('Login') ?>" name="send" id="send2"><span><span>送信</span></span></button>&nbsp;&nbsp;&nbsp;&nbsp;<a href="<?php echo $this->getUrl("customer/account/forgotpassword/")?>">パスワードを取り戻す?</a></div>
+             <div style="height:20px;"></div>
+                        <?php echo $this->getChildHtml('persistent.remember.me'); ?>
+                    <?php echo $this->getChildHtml('persistent.remember.me.tooltip'); ?>
+                    
+                    
+                    
+       
+        </div>
+         <div class="loginleft">
+        	<h5></h5>
+            <h6>初めてのお客さま</h6>
+            <p><button type="button" title="<?php echo $this->__('Create an Account') ?>" class="vvbn" onclick="window.location='<?php echo Mage::helper('persistent')->getCreateAccountUrl($this->getCreateAccountUrl()) ?>';"><span><span>新規登録</span></span></button></p>
+        </div>
+   
+        
+        
+        <?php if (Mage::helper('checkout')->isContextCheckout()): ?>
+            <input name="context" type="hidden" value="checkout" />
+        <?php endif; ?>
+    </form>
+    <script type="text/javascript">
+    //<![CDATA[
+        var dataForm = new VarienForm('login-form', true);
+    //]]>
+    </script></div>
+   
+       <div class="login_con2" style="clear:both;">
+    	<P class="vi">このサイトは会員制です。まだ会員登録をしていない方は新規登録をクリックして会員登録を行ってください。												
+もしあなたがサロン経営者でしたら、サロン会員として登録することができ、以下の特典があります。</P>
+        	<p><b>1、</b>サロン会員はすべての商品を購入できます（一般商品とサロン専用商品）、一般会員はサロン専用商品を購入することは
+できません。</p>
+            <p><b>2、</b>サロン会員はすべての商品を、一般会員よりさらにお得な割引価格で購入できます。</p>
+            <p><b>3、</b>サロン会員は誰よりも早く当社の新商品情報を得ることができます。</li>>
+            <p><b>4、</b>サロン会員は当社スタッフの迅速な訪問と専門的なサービスを受けることができます。</p>
+            <p class="vi">サロン会員の登録方法は以下のようになります：</p>
+            <p>サロン会員を登録する際は法人名でご登録の上、営業許可証をアップロードしてください。当方で内容を確認し、48時間以内
+にメールで正式にサロン会員として登録が完了したことをお知らせいたします。					</p>
+			<p><b>※</b>初めて当サイトで購入するサロン会員様へ：我々の確認作業が終わる前にもし注文を済ませてしまったのならば、まだ支払い
+は行わないでください。確認完了後、よりお得なサロン会員割引価格で提供いたしますので、その時にあらためてお支払いください。		</p>
+			<p><b>※</b>当方の確認作業が終わる前にお支払いいただいた場合は、一般会員価格でのご購入となります。正式にサロン会員として登録
+された後も差額は返金いたしません。	</p>
+    </div>
+    <div class="clear"></div>
+    
+</div>

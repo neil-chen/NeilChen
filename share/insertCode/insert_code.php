@@ -14,7 +14,7 @@ while (!feof($file)) {
 fclose($file);
 
 //链接数据库
-$con = mysql_connect('124.248.33.194', 'root', 'root');
+$con = mysql_connect('127.0.0.1', 'root', 'root');
 if (!$con) {
     die('Could not connect: ' . mysql_error());
 }

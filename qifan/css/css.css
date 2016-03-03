@@ -1,0 +1,74 @@
+body {
+	font-size: 12px;
+	color: #000000;
+	line-height: 22px;
+	margin: 0;
+	padding: 0;
+}
+table {
+	border: 0;
+}
+td {
+	font-size: 12px; color: #000000; line-height: 22px;
+}
+th {
+	font-size: 12px; color: #000000; line-height: 22px;
+}
+a.left {
+	padding-left: 15px;
+}
+a.left:link {
+	color: #134b87; text-decoration: none
+}
+a.left:visited {
+	color: #134b87; text-decoration: none
+}
+a.left:hover {
+	color: #ff0000; text-decoration: none
+}
+a.left:active {
+	color: #134b87; text-decoration: none
+}
+a {
+	text-decoration: none
+}
+a:link {
+	color: #000000; text-decoration: none
+}
+a:visited {
+	color: #000000; text-decoration: none
+}
+a:hover {
+	text-decoration: underline
+}
+a:active {
+	color: #000000; text-decoration: none
+}
+img {
+	border-right: 0px; border-top: 0px; border-left: 0px; border-bottom: 0px
+}
+.red12 {
+	font-weight: bold; font-size: 12px; color: #b9006b
+}
+.whitebold {
+	font-weight: bold; font-size: 12px; color: #ffffff; line-height: 25px
+}
+.jia2 {
+	color: #a80303
+}
+.jia1 {
+	color: #817d7d
+}
+.line {
+	line-height: 22px
+}
+.da {
+	font-size: 12px; line-height: 22px; text-decoration: none
+}
+.daa {
+	font-weight: bold; font-size: 13px; color: #00264b; text-decoration: none
+}
+#demo {
+	overflow: hidden;
+	width: 739px;
+}

@@ -1,0 +1,33 @@
+IMG {
+	BORDER-RIGHT: 0px; BORDER-TOP: 0px; BORDER-LEFT: 0px; BORDER-BOTTOM: 0px
+}
+P.indent2 {
+	TEXT-INDENT: 2em
+}
+.mtDropdownMenu {
+	LEFT: -1000px; OVERFLOW: hidden; POSITION: absolute; TOP: -1000px
+}
+.mtDropdownMenu .content {
+	POSITION: absolute
+}
+.mtDropdownMenu .items {
+	BORDER-RIGHT: #fff 1px solid; BORDER-TOP: #fff 1px solid; Z-INDEX: 2; LEFT: 0px; BORDER-LEFT: #fff 1px solid; BORDER-BOTTOM: #fff 1px solid; POSITION: relative; TOP: 0px
+}
+.mtDropdownMenu .item {
+	BORDER-RIGHT: medium none; BORDER-TOP: medium none; FONT-SIZE: 12px; BORDER-LEFT: medium none; CURSOR: hand; COLOR: #333333; BORDER-BOTTOM: medium none; FONT-FAMILY: "Arial", "Verdana", "Helvetica", "sans-serif"; TEXT-DECORATION: none
+}
+.mtDropdownMenu .background {
+	Z-INDEX: 1; LEFT: 0px; POSITION: absolute; TOP: 0px; moz-opacity: .8
+}
+.mtDropdownMenu .shadowRight {
+	Z-INDEX: 3; FILTER: alpha(opacity=40); WIDTH: 2px; POSITION: absolute; TOP: 3px; moz-opacity: .4
+}
+.mtDropdownMenu .shadowBottom {
+	Z-INDEX: 1; FILTER: alpha(opacity=40); LEFT: 3px; POSITION: absolute; HEIGHT: 2px; moz-opacity: .4
+}
+.mtDropdownMenu .hover {
+	BACKGROUND: #80bfff
+}
+.mtDropdownMenu .item IMG {
+	MARGIN-LEFT: 10px
+}

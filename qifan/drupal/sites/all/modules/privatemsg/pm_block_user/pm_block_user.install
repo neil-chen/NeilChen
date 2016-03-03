@@ -1,0 +1,34 @@
+<?php
+// $Id: pm_block_user.install,v 1.1.2.2.2.2 2010/02/18 17:34:27 berdir Exp $
+/**
+ * @file
+ * Install file for pm_block_user.module
+ */
+
+/**
+ * Implement hook_schema().
+ */
+function pm_block_user_schema() {
+  $schema = array();
+
+  $schema['pm_block_user'] = array(
+    'description'       => '{pm_block_user} holds data mapping which authors who cannot messages to which recipients ',
+    'fields'        => array(
+      'author'    => array(
+        'description'   => 'ID of the author',
+        'type'          => 'int',
+        'not null'      => TRUE,
+        'unsigned'      => TRUE,
+      ),
+      'recipient'    => array(
+        'description'   => 'ID of the recipient',
+        'type'          => 'int',
+        'not null'      => TRUE,
+        'unsigned'      => TRUE,
+      ),
+    ),
+    'primary key' => array('author', 'recipient'),
+  );
+
+  return $schema;
+}

@@ -1,0 +1,22 @@
+; $Id: privatemsg.info,v 1.1.2.1.2.3.2.4.2.6 2011/01/12 08:49:05 berdir Exp $
+name = Private messages
+description = Allow private messages between users.
+package = Mail
+core = 7.x
+files[] = privatemsg.module
+files[] = privatemsg.test
+files[] = views/views_handler_field_privatemsg_link.inc
+files[] = views/privatemsg.views.inc
+files[] = privatemsg.theme.inc
+files[] = privatemsg.pages.inc
+files[] = privatemsg.admin.inc
+configure=admin/config/messaging/privatemsg
+
+test_dependencies[] = token
+
+; Information added by drupal.org packaging script on January 1, 1970 - 00:00
+version = "7.x-1.1"
+core = "7.x"
+project = "privatemsg"
+datestamp = "1295603230"
+

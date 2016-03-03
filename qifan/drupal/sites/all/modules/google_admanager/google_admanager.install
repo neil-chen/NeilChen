@@ -1,0 +1,133 @@
+<?php
+/**
+ * @file
+ * Install, update and uninstall functions for the google_admanager module.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function google_admanager_uninstall() {
+  variable_del('google_admanager_account');
+  variable_del('google_admanager_ad_slots');
+}
+
+/**
+ * Update legacy blocks to use BLOCK_NO_CACHE cache mode, for compatibility
+ * with Drupal 6's block cache feature.
+ */
+function google_admanager_update_6100() {
+  $ret = array();
+
+  $ret[] = update_sql("UPDATE {blocks} SET cache = -1 WHERE module = 'google_admanager'");
+
+  return $ret;
+}
+
+/**
+ * Rerun the previous update to force the BLOCK_NO_CACHE settings for blocks
+ * added subsequent to update 6100 but before changes in
+ * http://drupal.org/node/351214#comment-2254886 applied
+ */
+function google_admanager_update_6101() {
+  return google_admanager_update_6100();
+}
+
+
+/**
+ * Implementation of hook_update_N().
+ *
+ * Convert block deltas from integers to strings based on the
+ * Google Ad Manager slot name. See http://drupal.org/node/624284
+ */
+function google_admanager_wrong_update_6102() {
+  $ret = array();
+
+  $ad_slots = variable_get('google_admanager_ad_slots', '');
+  $ad_slots = explode("\n", str_replace(array("\r", "\t", "\0", "\x0B", " "), '', trim($ad_slots)));
+  $block_deltas = array();
+  foreach ($ad_slots as $i => $ad_slot) {
+    $block_deltas[$i] = truncate_utf8(drupal_strtolower($ad_slot), 32);
+  }
+  if (is_array($ad_slots)) {
+    $result = db_query("SELECT bid, delta FROM {blocks} WHERE module = 'google_admanager'");
+    while ($block = db_fetch_object($result)) {
+      if (isset($ad_slots[$block->delta])) {
+        //updating block with new delta based on the block name
+        $ret[] = update_sql("UPDATE {blocks} SET delta = '". $block_deltas[$block->delta] ."' WHERE bid = ". $block->bid);
+      }
+      else {
+        //removing the block which does not exist anymore
+        $ret[] = update_sql("DELETE FROM {blocks} WHERE bid = ". $block->bid);
+      }
+    }
+  }
+
+  return $ret;
+}
+
+/**
+ * This help user with 1.0 to upgrade, because the old 6102 is broken.
+ */
+function google_admanager_update_6102() {
+  return array();
+}
+
+/**
+ * Try again with last broken upgrade
+ * Description is at http://drupal.org/node/624284#comment-2939486
+ */
+function google_admanager_update_6103() {
+  $ret = array();
+  $delta = db_result(db_query("SELECT delta FROM {blocks} WHERE module = 'google_admanager'"));
+
+  if (empty($delta)) {
+    // nothing in database
+    return $ret;
+  }
+
+  $ad_slots = variable_get('google_admanager_ad_slots', '');
+  $ad_slots = explode("\n", str_replace(array("\r", "\t", "\0", "\x0B", " "), '', trim($ad_slots)));
+
+  if (strlen($delta) > 3) {
+    // convert back to the old schema
+    foreach ($ad_slots as $i => $ad_slot) {
+      db_query("UPDATE {blocks} SET delta = '%d' WHERE module = 'google_admanager' AND (delta = '%s' OR delta = '%s') LIMIT 1", $i, truncate_utf8(drupal_strtolower($ad_slot), 64), truncate_utf8(drupal_strtolower($ad_slot), 32));
+      if (module_exists('panels')) {
+        db_query("UPDATE {panels_pane} SET subtype = 'google_admanager-%d' WHERE type = 'block' AND (subtype = 'google_admanager-%s' OR subtype = 'google_admanager-%s') LIMIT 1", $i, truncate_utf8(drupal_strtolower($ad_slot), 64), truncate_utf8(drupal_strtolower($ad_slot), 32));
+      }
+    }
+  }
+
+  // Ok now the real update
+  foreach ($ad_slots as $i => $ad_slot) {
+    $ret[] = update_sql("UPDATE {blocks} SET delta = '". md5(trim($ad_slot)) ."' WHERE module = 'google_admanager' AND delta = '". $i ."'");
+    if (module_exists('panels')) {
+      $ret[] = update_sql("UPDATE {panels_pane} SET subtype = 'google_admanager-". md5(trim($ad_slot)) ."' WHERE type = 'block' AND subtype = 'google_admanager-". $i ."'");
+    }
+  }
+
+  return $ret;
+}
+
+/**
+ * Baseline for 6.x-2.x schema
+ */
+function google_admanager_update_6200() {
+  // run the latest update of 6.x-1.x branch
+  return google_admanager_update_6103();
+}
+
+/**
+ * Prepare for Drupal API 7.x
+ */
+function google_admanager_update_7000() {
+  return t('Updated to Drupal API 7.x.');
+}
+
+/**
+ * Baseline for 7.x-2.x schema
+ */
+function google_admanager_update_7200() {
+  return t('Updated to 7.x-2.x branch.');
+}

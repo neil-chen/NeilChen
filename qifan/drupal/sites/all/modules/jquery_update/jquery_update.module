@@ -1,0 +1,121 @@
+<?php
+
+/**
+ * @file
+ * Updates Drupal to use the latest version of jQuery.
+ */
+
+/**
+ * Implements hook_library().
+ */
+function jquery_update_library() {
+  // Register libraries available in the external directory.
+  $path = drupal_get_path('module', 'jquery_update') . '/ui/external';
+  $libraries['qunit'] = array(
+    'title' => 'QUnit',
+    'js' => array(
+      $path . '/qunit.js' => array(
+        'group' => JS_LIBRARY,
+        'weight' => 2,
+      ),
+    ),
+    'css' => array(
+      $path . '/qunit.css' => array(),
+    ),
+  );
+  $libraries['jquery.metadata'] = array(
+    'title' => 'QUnit',
+    'js' => array(
+      $path . '/jquery.metadata.js' => array(
+        'group' => JS_LIBRARY,
+        'weight' => 2,
+      ),
+    ),
+    'version' => '4187',
+  );
+  $libraries['jquery.bgiframe'] = array(
+    'title' => 'bgiframe',
+    'website' => 'http://docs.jquery.com/Plugins/bgiframe',
+    'js' => array(
+      $path . '/jquery.bgiframe.js' => array(
+        'group' => JS_LIBRARY,
+        'weight' => 2,
+      ),
+    ),
+    'version' => '2.1.2',
+  );
+  return $libraries;
+}
+
+/**
+ * Implementation of hook_js_alter().
+ */
+function jquery_update_library_alter(&$javascript) {
+  $path = drupal_get_path('module', 'jquery_update');
+
+  // Make sure we inject either the minified or uncompressed version as desired.
+  $min = variable_get('jquery_update_compression_type', 'min') == 'none' ? '' : '.min';
+
+  // Replace jQuery.
+  $javascript['jquery']['js']['misc/jquery.js']['data'] = $path . '/replace/jquery/jquery' . $min . '.js';
+  $javascript['jquery']['version'] = '1.5.1';
+
+  // Replace jQuery UI's JavaScript, beginning by defining the mapping.
+  $names = drupal_map_assoc(array(
+    'ui.accordion', 'ui.autocomplete', 'ui.button', 'ui.datepicker',
+    'ui.dialog', 'ui.draggable', 'ui.droppable', 'ui.mouse', 'ui.position',
+    'ui.progressbar', 'ui.resizable', 'ui.selectable', 'ui.slider',
+    'ui.sortable', 'ui.tabs', 'ui.widget', 'effects.blind', 'effects.bounce',
+    'effects.clip', 'effects.drop', 'effects.explode', 'effects.fade',
+    'effects.fold', 'effects.highlight', 'effects.pulsate', 'effects.scale',
+    'effects.shake', 'effects.slide', 'effects.transfer',
+  ));
+  $names['ui'] = 'ui.core';
+  $names['effects'] = 'effects.core';
+
+  // Construct the jQuery UI path and replace the JavaScript.
+  $jspath = $path . '/replace/ui/ui/' . (variable_get('jquery_update_compression_type', 'min') == 'min' ? 'minified/' : '');
+  foreach ($names as $name => $file) {
+    $corefile = 'misc/ui/jquery.' . $file . '.min.js';
+    $javascript[$name]['js'][$corefile]['data'] = $jspath . 'jquery.' . $file . $min . '.js';
+    $javascript[$name]['version'] = '1.8.11';
+  }
+
+  // Replace all CSS files.
+  $names = drupal_map_assoc(array(
+    'ui.accordion', 'ui.autocomplete', 'ui.button', 'ui.datepicker',
+    'ui.dialog', 'ui.progressbar', 'ui.resizable', 'ui.selectable',
+    'ui.slider', 'ui.tabs',
+  ));
+  $names['ui'] = 'ui.core';
+  $csspath = $path . '/replace/ui/themes/base/' . (variable_get('jquery_update_compression_type', 'min') == 'min' ? 'minified/' : '');
+  foreach ($names as $name => $file) {
+    $javascript[$name]['css']["misc/ui/jquery.$file.css"]['data'] = $csspath . 'jquery.' . $file . $min . '.css';
+  }
+  // Make sure ui.theme is replaced as well.
+  $javascript['ui']['css']['misc/ui/jquery.ui.theme.css']['data'] = $csspath . 'jquery.ui.theme' . $min . '.css';
+
+  // Replace the jQuery Cookie plugin.
+  $javascript['cookie']['js']['misc/jquery.cookie.js']['data'] = $path . '/replace/ui/external/jquery.cookie.js';
+  // Noting the version based on git commit as no version number is available.
+  $javascript['cookie']['version'] = '67fb34f6a866c40d0570';
+
+  // Replace jQuery Form plugin.
+  $javascript['jquery.form']['js']['misc/jquery.form.js']['data'] = $path . '/replace/misc/jquery.form.js';
+  $javascript['jquery.form']['version'] = '2.67';
+}
+
+/**
+ * Implementation of hook_form_FORM_ID_alter().
+ */
+function jquery_update_form_system_performance_settings_alter(&$form, &$form_state) {
+  $form['bandwidth_optimization']['jquery_update_compression_type'] = array(
+    '#type' => 'radios',
+    '#title' => t('jQuery compression level'),
+    '#options' => array(
+      'min' => t('Production (minified)'),
+      'none' => t('Development (uncompressed)'),
+    ),
+    '#default_value' => variable_get('jquery_update_compression_type', 'min'),
+  );
+}

@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<config>
+    <modules>
+        <Li_Customer>
+            <version>0.1.0</version>
+        </Li_Customer>
+    </modules>
+    <frontend>
+        <routers>
+            <customer>
+                <use>standard</use>
+                <args>
+                    <module>Li_Customer</module>
+                    <frontName>customer</frontName>
+                </args>
+            </customer>
+        </routers>
+</frontend>	
+<global>
+	<blocks>
+	  <customer>
+		  <rewrite>
+			  <form_login>Li_Customer_Block_Form_Login</form_login>
+		 </rewrite>
+	  </customer>
+   </blocks>
+
+ 	<routers>
+		<customer>
+			<rewrite>
+				<li_customer_account>
+				  <from><![CDATA[#^/account/#]]></from>
+				  <to>/customer/account/</to>
+				</li_customer_account>
+			</rewrite>
+		</customer>
+	</routers>
+	<helpers>
+		  <customer>
+			  <rewrite>
+				  <data>Li_Customer_Helper_Data</data>
+			 </rewrite>
+		  </customer>
+	 </helpers>
+</global>
+</config>

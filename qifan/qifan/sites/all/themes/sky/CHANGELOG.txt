@@ -1,0 +1,16 @@
+
+Sky 6.x-3.x, xxxx-xx-xx
+-------------------------
+#780814 by Jacine | mrinal_kanti: Fixed Redundant icons +|- are visible on navigation bar for menus with child items.
+#723696 by Jacine | Weka: Update CSS3 code to account for more browsers.
+#773354 by AlexisWilke | tnanek: Left side bar on top.
+#821960 by Jacine: Added a print stylesheet (finally).
+#784314 by Jacine | lthoughton: Fixed Superscript.
+by Jacine: Fixed term styling.
+#769642 by Jacine | beyond67: Fixed fieldset styling not showing in ie7.
+#497304 by maddentim: Fixed problems with Calendar and Calendar Popup modules.
+#775370 by kevee: Fixed If no meta information is available, hide the meta div.
+#932000 by wavesailor, deggertsen: Fixed CSS errors / typos (possible).
+#1049324 by AlexisWilke: Fixed typo -moz-border-raduis.
+#788884 by Jacine | danielpd: Fixed Green in menu.
+#839050 by Jacine, AlexisWilke: Fixed E_NOTICEs errors.

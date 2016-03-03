@@ -1,0 +1,63 @@
+BODY {
+	FONT-SIZE: 12px; COLOR: #000000; LINE-HEIGHT: 22px; FONT-FAMILY: ËÎÌו
+}
+TD {
+	FONT-SIZE: 12px; COLOR: #000000; LINE-HEIGHT: 22px; FONT-FAMILY: ËÎÌו
+}
+TH {
+	FONT-SIZE: 12px; COLOR: #000000; LINE-HEIGHT: 22px; FONT-FAMILY: ËÎÌו
+}
+BODY {
+	BACKGROUND-IMAGE: url(bg.gif); MARGIN: 0px
+}
+A.left:link {
+	COLOR: #134b87; TEXT-DECORATION: none
+}
+A.left:visited {
+	COLOR: #134b87; TEXT-DECORATION: none
+}
+A.left:hover {
+	COLOR: #ff0000; TEXT-DECORATION: none
+}
+A.left:active {
+	COLOR: #134b87; TEXT-DECORATION: none
+}
+A {
+	TEXT-DECORATION: none
+}
+A:link {
+	COLOR: #000000; TEXT-DECORATION: none
+}
+A:visited {
+	COLOR: #000000; TEXT-DECORATION: none
+}
+A:hover {
+	TEXT-DECORATION: underline
+}
+A:active {
+	COLOR: #000000; TEXT-DECORATION: none
+}
+IMG {
+	BORDER-RIGHT: 0px; BORDER-TOP: 0px; BORDER-LEFT: 0px; BORDER-BOTTOM: 0px
+}
+.red12 {
+	FONT-WEIGHT: bold; FONT-SIZE: 12px; COLOR: #b9006b
+}
+.whitebold {
+	FONT-WEIGHT: bold; FONT-SIZE: 12px; COLOR: #ffffff; LINE-HEIGHT: 25px
+}
+.jia2 {
+	COLOR: #a80303
+}
+.jia1 {
+	COLOR: #817d7d
+}
+.line {
+	LINE-HEIGHT: 22px
+}
+.da {
+	FONT-SIZE: 12px; LINE-HEIGHT: 22px; TEXT-DECORATION: none
+}
+.daa {
+	FONT-WEIGHT: bold; FONT-SIZE: 13px; COLOR: #00264b; TEXT-DECORATION: none
+}

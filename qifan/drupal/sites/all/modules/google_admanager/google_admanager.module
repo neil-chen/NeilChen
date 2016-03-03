@@ -1,0 +1,502 @@
+<?php
+/**
+ * Google Admanager, now DoubleClick for Publisher
+ * https://www.google.com/dfp/
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function google_admanager_menu() {
+  $items = array();
+  $base = array(
+    'access arguments' => array('administer google admanager'),
+    'file' => 'google_admanager.admin.inc',
+  );
+
+  $items['admin/config/system/google_admanager'] = $base + array(
+    'title' => 'Google Admanager',
+    'description' => 'Configure the settings used to generate the Google Admanager Slot Ad code.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('google_admanager_admin_settings_form'),
+  );
+
+  $items['admin/config/system/google_admanager/account'] = $base + array(
+    'title' => 'Account',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  $items['admin/config/system/google_admanager/superslot'] = $base + array(
+    'title' => 'Superslot',
+    'description' => 'Manage superslot',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('google_admanager_admin_superslot_form'),
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['admin/config/system/google_admanager/superslot/delete'] = $base + array(
+    'title' => 'Delete superslot',
+    'page callback' => 'google_admanager_admin_superslot_delete',
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_init().
+ */
+function google_admanager_init() {
+  drupal_add_css(drupal_get_path('module', 'google_admanager') . '/google_admanager.css');
+  if (variable_get('google_admanager_lazy', FALSE)) {
+    drupal_add_js(drupal_get_path('module', 'google_admanager') . '/google_admanager.js');
+  }
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function google_admanager_block_view($delta = '') {
+  $ad_slots = _google_admanager_get_ad_slots();
+  $block = array(
+    'subject' => '',
+    'content' => '',
+  );
+  if ($id = variable_get('google_admanager_account', '')) {
+    if (isset($ad_slots[$delta])) {
+      // ad slot
+      $block['content'] = theme('google_admanager_block', array('id' => $id, 'ad_slot' => $ad_slots[$delta]));
+    }
+    elseif (substr($delta, 0, 10) == 'superslot:') {
+      // superslot
+      $superslots = variable_get('google_admanager_superslots', array());
+      if ($superslot = $superslots[substr($delta, 10)]) {
+        foreach ($superslot as $ad_slot => $php) {
+          if (eval($php)) {
+            $block['content'] .= theme('google_admanager_block', array('id' => $id, 'ad_slot' => $ad_slot));
+          }
+        }
+      }
+    }
+  }
+  return $block;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function google_admanager_permission() {
+  return array(
+    'administer google admanager' => array(
+      'title' => t('Administer google admanager'),
+      'description' => t('Access the Google Admanager administration pages.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function google_admanager_block_info() {
+  $blocks = array();
+  if (! variable_get('google_admanager_noblock', FALSE)) {
+    $ad_slots = _google_admanager_get_ad_slots();
+    foreach ($ad_slots as $delta => $name) {
+      $blocks[$delta] = array(
+        'info' => 'GAM Ad slot: ' . $name,
+        'cache' => DRUPAL_NO_CACHE,
+      );
+    }
+  }
+
+  $superslots = variable_get('google_admanager_superslots', array());
+  foreach ($superslots as $name => $slots) {
+    $blocks['superslot:' . $name] = array(
+      'info' => 'GAM Superslot: ' . $name,
+      'cache' => DRUPAL_NO_CACHE,
+    );
+  }
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_configure().
+ */
+function google_admanager_block_configure($delta = 0) {
+  // Reuse the 'use PHP for settings' from block.module
+  if (!user_access('use PHP for settings') || substr($delta, 0, 10) !== 'superslot:') {
+    return;
+  }
+
+  $superslots = variable_get('google_admanager_superslots', array());
+  $name = substr($delta, 10);
+  if (! isset($superslots[$name])) {
+    return;
+  }
+
+  $form = array();
+  $form['google_admanager_visibility'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Ad slots visibility'),
+    '#description' => t('Use PHP code to define ad slot visibility. For example, to display an ad slot only to anonymous user, use <em>return empty($GLOBALS[\'user\']->uid);</em>. Or, to simple enable an ad slot, use <em>return TRUE;</em>'),
+  );
+
+  $ad_slots = array_values(_google_admanager_get_ad_slots());
+  $ad_slots = array_combine($ad_slots, $ad_slots);
+  $superslot = $superslots[$name];
+
+  // Create 5 empty slots configuration
+  // @TODO: It could be better to implement AHAH form
+  $superslot += array(
+    'fake slot1' => '',
+    'fake slot2' => '',
+    'fake slot3' => '',
+  );
+  $i = 1;
+  foreach ($superslot as $ad_slot => $php) {
+    $form['google_admanager_visibility']['superslot_' . $i . '_adslot'] = array(
+      '#type' => 'select',
+      '#title' => t('Ad slot'),
+      '#default_value' => $ad_slot,
+      '#options' => $ad_slots,
+    );
+    $form['google_admanager_visibility']['superslot_' . $i++ . '_php'] = array(
+      '#type' => 'textfield',
+      '#title' => t('PHP code for visibility condition'),
+      '#default_value' => $php,
+    );
+  }
+
+  return $form;
+}
+
+/**
+ * Implements hook_block_save().
+ */
+function google_admanager_block_save($delta = 0, $edit = array()) {
+  if (!user_access('use PHP for settings') || substr($delta, 0, 10) !== 'superslot:') {
+    return;
+  }
+
+  // When save account settings, delete blocks which belongs to the ad slots that have been removed
+  $superslot = array();
+  foreach ($edit as $key => $value) {
+    if (preg_match('/superslot_(\d+)_adslot/', $key)) {
+      $php = $edit[str_replace('adslot', 'php', $key)];
+      if (! empty($php)) {
+        $superslot[$value] = $php;
+      }
+    }
+  }
+  $superslots = variable_get('google_admanager_superslots', array());
+  $superslots[substr($delta, 10)] = $superslot;
+  variable_set('google_admanager_superslots', $superslots);
+}
+
+/**
+ * Implements hook_node_view().
+ */
+function google_admanager_node_view($node, $view_mode = 'full') {
+  if (arg(0) == 'node' && $view_mode == 'full') {
+    // If we have enabled Node Type attributes, add it
+    if (variable_get('google_admanager_nodetype_attributes', FALSE)) {
+      $type = _google_admanager_clean_string($node->type);
+      google_admanager_add_attribute("node_type", $type);
+    }
+
+    // TOOD: find the best strategy to expose vocabularies: per field or per vocabulary, and how
+/*
+    // If the node's taxonomy is not an array, or is but is empty, then return from this function - there is nothing more to do.
+    if (!is_array($node->taxonomy) || count($node->taxonomy) == 0) {
+      return;
+    }
+
+    // If we have not enabled any vocabs as attributes, then return from the function as there is nothing more to do.
+    $enabled_vocabs = variable_get('google_admanager_vocab_attributes', array());
+    if (count($enabled_vocabs) == 0) {
+      return;
+    }
+
+    // For every term, check if the vocab is enabled and, if so, add as an attribute
+    foreach ($node->taxonomy as $tid => $term) {
+      if ($enabled_vocabs[$term->vid]) {
+        google_admanager_add_term_attribute($term);
+      }
+    }
+*/
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function google_admanager_theme() {
+  return array(
+    'google_admanager_block' => array(
+      'variables' => array('id' => NULL, 'ad_slot' => NULL, 'cache' => FALSE),
+    ),
+  );
+}
+
+/**
+ * Theme function the Ad Slot code
+ */
+function theme_google_admanager_block($variables) {
+  $id = $variables['id'];
+  $ad_slot = $variables['ad_slot'];
+  $script = '<script type="text/javascript">GA_googleFillSlot("' . $ad_slot . '");</script>';
+
+  if ($variables['cache']) {
+    $script = '<script type="text/javascript">GA_googleAddSlot("' . $id . '", "' . $ad_slot . '");</script>' . $script;
+  }
+  else {
+    google_admanager_add_js('GA_googleAddSlot("' . $id . '", "' . $ad_slot . '");');
+  }
+
+  $style = '';
+  if (variable_get('google_admanager_lazy', FALSE)) {
+    // if ad slot name has the format some-name_widthxheight_something,
+    // set the div dimension
+    if (variable_get('google_admanager_autodetect', FALSE)) {
+      if (preg_match('/(\d+)x(\d+)(_.*|)$/', $ad_slot, $match)) {
+        $style = ' style="width:' . $match[1] . 'px;height:' . $match[2] . 'px;"';
+      }
+    }
+    google_admanager_add_block('<div id="gam-content-' . $ad_slot . '" class="gam-banner">' . $script . '</div>');
+    $script = '';
+  }
+
+  return '<div id="gam-holder-' . $ad_slot . '" class="gam-holder"' . $style . '>' . $script . '</div>';
+}
+
+/**
+ * Set page-level attributes to pass to GAM
+ */
+function google_admanager_add_attribute($key, $value) {
+  google_admanager_add_js('GA_googleAddAttr("' . check_plain($key) . '", "' . check_plain($value) . '");', 'attr');
+}
+
+/**
+ * Store ad slots js and when called with no slot, return the whole ad manager javascript
+ *
+ * @param $js (optional) string with the slot script to add to the array.
+ * @param $type (optional) scripts have to be split up into 4 types and are output
+ *   in order ['init', 'service', 'slot', 'close'].
+ * @return if $js is empty, then an array of stored google_admanager javascript
+ */
+function google_admanager_add_js($js = NULL, $type = 'slot') {
+  static $ga_js = array();
+
+  // add the js to a type
+  if (isset($js) && isset($type)) {
+    $ga_js[$type][] = $js;
+
+    //add the init and service scripts the first time this is run
+    if (!isset($ga_js['service'])) {
+      drupal_add_js('http://partner.googleadservices.com/gampad/google_service.js', array('type' => 'external', 'inline' => TRUE));
+
+      $id = variable_get('google_admanager_account', '');
+      google_admanager_add_js('GS_googleAddAdSenseService("' . $id . '");', 'service');
+      google_admanager_add_js('GS_googleEnableAllServices();', 'service');
+
+      // set the close script to fetch the ads.
+      google_admanager_add_js('GA_googleFetchAds();', 'close');
+    }
+    return;
+  }
+
+  if (!isset($js)) {
+    return $ga_js;
+  }
+}
+
+/**
+ * Each time there is an require to display an ad slot, the JavaScript that asks Google to fill
+ * the slot is passed to this function. If lazy mode is enable, it save the code and display it
+ * later. If not, the code is outputted immediately.
+ *
+ * @params $text text to add. If null, returns all text.
+ */
+function google_admanager_add_block($text = NULL) {
+  static $ga_block = array();
+  if (! $text) {
+    return $ga_block;
+  }
+  $ga_block[] = $text;
+}
+
+/**
+ * Output the Google Admanager scripts by way of drupal_add_js().
+ *
+ * @param $scope (optional) the scope to output the javascript. see drupal_add_js().
+ */
+function google_admanager_get_js($scope = 'header') {
+  //get the js for this page if it exists
+  $ga_js = google_admanager_add_js();
+  if (isset($ga_js)) {
+    $output_order = array('service', 'attr', 'slot', 'close');
+    foreach ($output_order as $type) {
+      if (empty($ga_js[$type])) {
+        continue;
+      }
+      $output = '';
+      foreach ($ga_js[$type] as $js) {
+        $output .= $js . "\n";
+      }
+      drupal_add_js($output, array('type' => 'inline', 'scope' => $scope));
+    }
+  }
+}
+
+/**
+ * Implements hook_preprocess_page().
+ */
+function google_admanager_preprocess_page(&$vars) {
+  if (variable_get('google_admanager_lazy', FALSE)) {
+    return;
+  }
+
+  // output the scripts through drupal_add_js()
+  google_admanager_get_js();
+
+  // This doesn't have any effect if another module/theme later overides it.
+  $vars['scripts'] =  drupal_get_js();
+}
+
+/**
+* Implements hook_page_alter().
+*/
+function google_admanager_page_alter(&$page) {
+  if ($lazy = google_admanager_add_block()) {
+    if ($ga_js = google_admanager_add_js()) {
+      $output_order = array('service', 'attr', 'slot', 'close');
+      $gam_script = '';
+      foreach ($output_order as $type) {
+        if (empty($ga_js[$type])) {
+          continue;
+        }
+        $output = "\n";
+        foreach ($ga_js[$type] as $js) {
+          $output .= $js . "\n";
+        }
+        $gam_script .= '<script type="text/javascript">' . $output . '</script>';
+      }
+      array_unshift($lazy, $gam_script);
+    }
+    $page['page_bottom']['google_admanager']= array(
+      '#type' => 'markup',
+      '#markup' => implode("\n", $lazy),
+    );
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function google_admanager_form_alter(&$form, $form_state, $form_id) {
+  if ($form_id == 'google_admanager_admin_settings_form') {
+    $form['#submit'][] = 'google_admanager_admin_settings_form_submit';
+  }
+}
+
+/**
+ * Implements hook_filter().
+ *
+ * Filter option to enable Google Admanager filter [google_ad:ad_slot]
+ */
+function google_admanager_filter_info() {
+  $filters['google_admanager_filter'] = array(
+    'title' => t('Google Admanager filter'),
+    'description' => t('Substitutes [google_ad:ad_slot] tags with the Google Admanager script.'),
+    'process callback' => '_google_admanager_substitute_tags',
+    'tips callback'  => '_google_admanager_filter_tips',
+  );
+  return $filters;
+}
+
+/**
+ * Filter tips callback for the Google Admanager filter.
+ */
+function _google_admanager_filter_tips($filter, $format, $long = FALSE) {
+  return t('You may use [google_ad:ad_slot] to display Google Admanager ads within your content.');
+}
+
+/**
+ * Replace all Admanager tags with their corresponding files or images.
+ *
+ * @param object $text
+ *   The text to process.
+ *
+ * @return string
+ *   The processed content of the given text.
+ */
+function _google_admanager_substitute_tags($text) {
+  if (preg_match_all("/\[(google_ad):([^=\\]]+)=?([^\\]]*)?\]/i", $text, $match)) {
+    $id = variable_get('google_admanager_account', '');
+    $s = $r = array();
+    foreach ($match[2] as $key => $ad_slot) {
+      $s[] = $match[0][$key];
+      $r[] = theme_google_admanager_block($id, $ad_slot, TRUE);
+    }
+    // Perform the replacements and return processed field.
+    return str_replace($s, $r, $text);
+  }
+  return $text;
+}
+
+/**
+ * Get all ad slots each correspond to block (with delta/name)
+ */
+function _google_admanager_get_ad_slots() {
+  $ad_slots = array();
+  $list = array_filter(explode("\n", str_replace(array("\r", "\t", "\0", "\x0B", " "), '', variable_get('google_admanager_ad_slots', ''))));
+  foreach ($list as $ad_slot) {
+    $ad_slots[md5(trim($ad_slot))] = $ad_slot;
+  }
+  // sorting the list for easy reference
+  asort($ad_slots);
+  return $ad_slots;
+}
+
+/**
+ * Re-usable function for adding term attributes
+ */
+function google_admanager_add_term_attribute($term) {
+  // Static caches to avoid repeating work and tracking already added terms
+  static $vocab_cache = array(), $added_terms = array();
+
+  // If we've already added this term, go no futher...
+  if (isset($added_terms[$term->tid])) {
+    return;
+  }
+
+  // If we've not built the vocab attribute "key" yet, do so now.
+  if (!isset($vocab_cache[$term->vid])) {
+    // Get the vocabulary
+    $vocab = taxonomy_vocabulary_load($term->vid);
+
+    // Build a "source key". This will be in the form of "v-{vocab name}". It must fit withint 10 characters
+    $orig_key = $key = 'v-' . _google_admanager_clean_string($vocab->name, 8);
+
+    // The counter and while loop ensures our shortened vocab names do not overlap
+    $counter = 1;
+    while ($vid = array_search($key, $vocab_cache) && $vid != $term->vid) {
+      $key = drupal_substr($orig_key, 0, 9) . $counter++;
+    }
+
+    // Set the unique key in the vocab cache
+    $vocab_cache[$vocab->vid] = $key;
+  }
+
+  // Add the attribute
+  google_admanager_add_attribute($vocab_cache[$term->vid], $term->name);
+
+  // Mark as "added"
+  $added_terms[$term->tid] = TRUE;
+}
+
+/**
+ * Internal function to "clean" a string to use as an attribute
+ */
+function _google_admanager_clean_string($string, $length = 40) {
+  return drupal_substr(preg_replace('/[^a-z0-9]+/', '-', drupal_strtolower($string)), 0, $length);
+}
+

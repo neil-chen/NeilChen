@@ -1,0 +1,31 @@
+<?php
+
+if ($this->helper('customer')->isLoggedIn()) {
+    $loglinks = array(
+		'welcome' => array(
+			'name' => 'ようこそ:' . $this->helper('customer')->getCustomer()->getName(),
+			'url' => 'customer/account',),
+		'logout' => array(
+			'name' => 'ログアウト',
+			'url' => 'customer/account/logout',),
+	);
+} else {
+	$loglinks = array(
+		'login' => array(
+			'name' => 'ログイン',
+			'url' => 'customer/account/login',),
+		'create' => array(
+			'name' => '会員登録',
+			'url' => 'customer/account/create',),
+	);
+}
+?>
+<div class="loginv">
+	<div class="lcentent">
+	  <ul>
+		<?php foreach ($loglinks as $link) { ?>
+		<li><a href="<?php echo $this->getUrl($link['url']);?>"><?php echo $link['name'];?></a></li>
+		<?php } ?>
+	  </ul>
+	</div>
+</div>

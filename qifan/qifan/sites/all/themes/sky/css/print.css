@@ -1,0 +1,27 @@
+html, html body {
+  background: #fff;
+  font-size: 12pt;
+  line-height: 1.6;
+  font-family: "Lucida Grande", "Lucida Sans Unicode", Verdana, Helvetica, Arial, sans-serif;
+  color: #000;
+  margin: 0;
+  padding: 0;
+}
+html body * {
+  color: #000;
+  -webkit-box-shadow: none !important;
+  -moz-box-shadow: none !important;
+}
+#navigation,
+#header,
+div.sidebar,
+div.tabs,
+#breadcrumbs {
+  display: none;
+}
+#wrapper {
+  font-size: 11pt;
+}
+body #main {
+  width: 100% !important;
+}

@@ -1,0 +1,17 @@
+; $Id: privatemsg_filter.info,v 1.1.2.1.2.3 2010/01/22 19:05:56 berdir Exp $
+name = Privatemsg filter
+description = Allow users to filter messages using tags or other criteria.
+package = Mail
+core = 7.x
+dependencies[] = privatemsg
+files[]=privatemsg_filter.module
+files[]=privatemsg_filter.test
+configure=admin/config/messaging/privatemsg/filter
+
+
+; Information added by drupal.org packaging script on January 1, 1970 - 00:00
+version = "7.x-1.1"
+core = "7.x"
+project = "privatemsg"
+datestamp = "1295603230"
+

@@ -1,0 +1,4 @@
+"Cache Lifetime (Seconds)","缓存时间(秒)"
+"86400 by default, if not set. To refresh instantly, Clear the Blocks HTML Output Cache.","如果不设置，默认为86400。马上刷新，清除块HTML输出缓存。"
+"Catalog RegularSellers Products List","目录固定产品列表"
+"Separator by comma","使用逗号分隔"
