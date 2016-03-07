@@ -1,0 +1,72 @@
+/**
+ * DB.class.php 添加 get 方法
+ * 使用示例
+ */
+public function demo()
+{
+    /**
+     * DB get 方法使用示例
+     */
+    $demoParams = array(
+        'fields'   => '',    // 需要获取的字段，默认为 *
+        'keyName'  => '',    // 使用某个字段的值作为 KEY （通常为关联使用 例： 用 id 作为 key 能方便获得多维数组数据） 注意该字段数据必须为唯一的，否则key 会重复的
+        'isPage'   => true,  // 是否需要分页处理，默认为 false （获取多条数据时，为 true 时会自动获得数据条数）
+        'pageSize' => 10,    // 获取的数据条数，默认为10条 ( isPage 为 true 时使用)
+
+        // 模糊查询
+        'like'     => array(
+            'name' => 'hei',   // 生成的结果 like '%hei%'
+        ),
+
+        // where 条件
+        'where'   => array(
+            'id'    => 1,
+            'age >' => 20,  // 支持在字段中使用条件如 “ <、 <=、 >、 >=、 != ” 等
+        ),
+
+        // where Or （不支持在字段中使用条件如 “ <、 <=、 >、 >=、 != ” 等）
+        'whereOr' => array(
+            'id'    => 1,
+            'age'   => 20,
+            'age >' => 20,  // 不支持这种写法，这种写法拼成sql 语句会报错的。
+        ),
+
+        // where in (注意此处 value 类型必须为一维数组)
+        'whereIn' => array(
+            'id' => array(1,2,3),
+            'id' => 1       // 不支持这种写法，这种写法拼成sql 语句会报错的。
+        ),
+
+        // where not in (注意此处 value 类型必须为一维数组)
+        'whereNotIn' => array(
+            'id' => array(1,2,3),
+            'id' => 1       // 不支持这种写法，这种写法拼成sql 语句会报错的。
+        ),
+
+        // 联表查询
+        'join'    => array(
+            // key 为表名, 支持多个join
+            'tableName' => array(
+                'as'   => 'tb', // 表的别名
+                'on'   => "tb.id = {$this->_table}.id", // ON 后面的条件
+                'type' => '',   // join 类型 （left、 inner、 right） 默认为 inner
+            ),
+
+            // 实用示例
+            'system_dept' => array(
+                'as' => 'dept',
+                'on' => "dept.dept_id = {$this->_table}.dept_id",
+            ),
+        ),
+
+        // 排序 (value 处不要加 order by )
+        'orderBy' => 'id ASC, age DESC',    
+
+        // 分组 (value 处不要加 group by )
+        'groupBy' => 'age',
+    );
+
+    $this->_db->get($this->_table, $demoParams);    // 获取多条数据
+
+    // $this->_db->get($this->_table, $demoParams, true);    // 获取单条数据
+}

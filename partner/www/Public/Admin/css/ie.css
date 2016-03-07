@@ -1,0 +1,11 @@
+.headerwrapper .header-right .btn-group > .btn {
+	background-color:#4182b9;
+    color:#fff;
+	}
+.ckbox label:before,.rdio label:before{
+	border:0
+	}
+	
+.modal-body > .form-group{
+	overflow:hidden
+	}
