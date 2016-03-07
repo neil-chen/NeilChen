@@ -4,29 +4,29 @@ define("VERSION", "v1.0");
 
 class Config {
 
-    // 微信APP ID
-    const APP_USER = 'PCHGIFTING';
-    const APP_ID = 'wxf305030001374a81';
-    const APP_SECRET = '5f5dad87854ee6eea2e4bdca0b86db87';
-    // 易维城KEY
-    const ENT_ID = 116;
-    const API_KEY = '9d351e5444ca8328721988dc84234e3d';
-    const API_SECRET = 'b5373ebe140e7ae9b30087bebc165900';
-    const API_URL = 'api.socialjia.com/index.php';
-    const TOKEN = '5100Skincareadsit1'; // 微信API Token
+    //微信APP ID
+    const APP_USER = 'weixin_app_user';
+    const APP_ID = 'weixin_app_id';
+    const APP_SECRET = 'weixin_app_secret';
+    //API KEY
+    const ENT_ID = 0;
+    const API_KEY = 'api_key';
+    const API_SECRET = 'api_secret';
+    const API_URL = 'api.xxx.com/index.php';
+    const TOKEN = 'weixin_api_token'; //微信API Token
     const PAGE_LISTROWS = 10;
     const VAR_PAGE = 1;
 
     public static $_CONFIGS = array(
-        'APP_ID' => 'wxf305030001374a81',
-        'APP_SECRET' => '5f5dad87854ee6eea2e4bdca0b86db87',
-        'ENT_ID' => '116',
-        'API_KEY' => '9d351e5444ca8328721988dc84234e3d',
-        'API_SECRET' => 'b5373ebe140e7ae9b30087bebc165900',
-        'TOKEN' => '5100Skincareadsit1',
+        'APP_ID' => 'weixin_app_id',
+        'APP_SECRET' => 'weinxin_app_secret',
+        'ENT_ID' => '0',
+        'API_KEY' => 'api_key',
+        'API_SECRET' => 'api_secret',
+        'TOKEN' => 'weinxin_api_token',
         'PAGE_LISTROWS' => '10',
         'VAR_PAGE' => '1',
-        'API_URL' => 'api.socialjia.com/index.php',
+        'API_URL' => 'api.xxx.com/index.php',
         'PUBLIC_SERVICE' => true, // 是否为正式服务，否：cache不会启用redis
         'DEBUGGING' => true, // debug 模式
         'ENABLE_RUN_LOG' => TRUE, // 是否开启运行日志
@@ -41,8 +41,7 @@ class Config {
         'DB_HOST' => 'localhost',
         'DB_USER' => 'root',
         'DB_PASSWORD' => '',
-        'DB_NAME' => 'weixinapp_5100_partner',
-        'DB_5100NAME' => 'weixinapp_5100',
+        'DB_NAME' => 'weixinapp_partner',
         'DEFAULT_ACTION' => 'Index', // 默认ACTION
         'DEFAULT_METHOD' => 'index', // 默认METHOD
         'APP_GROUP' => '', // App GROUP
@@ -52,27 +51,23 @@ class Config {
         // redis配置
         'REDIS_HOST' => '127.0.0.1',
         'REDIS_PORT' => '6379',
-        'CACHE_PROFIX' => '5100_partner',
+        'CACHE_PROFIX' => 'wx_partner',
         // 微信OAuth2.0授权接口地址
-        'WX_AUTH_PATH' => "http://call.socialjia.com/Wxapp/weixin_common/oauth2.0/link.php?entid=ENT_ID&url=REDIRET_URI",
+        'WX_AUTH_PATH' => "http://call.xxx.com/Wxapp/weixin_common/oauth2.0/link.php?entid=ENT_ID&url=REDIRET_URI",
         // 微信授权后回调地址
         'REDIRET_URI' => "",
         //微信支付
-        'WX_PARTHERID' => '1237870602', //商户号
-        'WX_PARTNERKEY' => 'Skincare51000429Skincare51000430', //商户号
+        'WX_PARTHERID' => '1234567890', //商户号
+        'WX_PARTNERKEY' => '1234556789999999', //商户号
         //活动配置
         'ACTIVITY_CONFIGS' => array(
             //合伙人活动配置
             'partners' => array(
                 //合伙人卡券ID								
-                "cards_arr" => array('pnwtvs3V5KhixALoDzSkYkfHesuo', 'pnwtvs8q38M0jj_PKwuDrSVs1sKc', 'pnwtvs7YB_0Q4ByJDXQxIB_ecVZc', 'pnwtvs0ee2pD3SMLVL0GXLTuR9EM'),
+                "cards_arr" => array('xxxxxxxxx_card_id_1', 'xxxxxx_card_id_2'),
                 //合伙人卡券抽奖配置
                 "prizes_arr" => array(
-                    array('prize_id' => 0, 'card_id' => 'pnwtvs3V5KhixALoDzSkYkfHesuo', 'card_name' => '30元代金券', 'value' => '30', 'rate' => 100)
-                /*
-                  array('prize_id'=>1,'card_id'=>'pnwtvs8q38M0jj_PKwuDrSVs1sKc','card_name'=>'80元代金券','value'=>'80','rate'=>20),
-                  array('prize_id'=>2,'card_id'=>'pnwtvs7YB_0Q4ByJDXQxIB_ecVZc','card_name'=>'130元代金券','value'=>'130','rate'=>20)
-                 */
+                    array('prize_id' => 0, 'card_id' => 'xxxxxx_card_id_30', 'card_name' => '30元代金券', 'value' => '30', 'rate' => 100)
                 ),
                 'card_info_type' => array(
                     '1' => '折扣券',
@@ -89,11 +84,6 @@ class Config {
                     2 => '卡券核销奖励',
                 ),
             ),
-            //商城活动配置
-            'shop' => array(
-                //微信2.0授权
-                'AUTH_PATH' => "http://call.socialjia.com/Wxapp/weixin_common/o2/link.php?entid=ENT_ID&url=REDIRET_URI&pay=1",
-            )
         )
     );
 
