@@ -1,5 +1,0 @@
-name = Trade Embargo
-description = Here the trede embargo country about device.
-core = 6.x
-package = Covidien
-dependencies[] = covidien_ui

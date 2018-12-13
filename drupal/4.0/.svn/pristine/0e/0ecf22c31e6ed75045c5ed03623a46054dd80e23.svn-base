@@ -1,6 +1,0 @@
-name = Covidien Device Info
-description = Device Information.
-core = 6.x
-package = Covidien
-dependencies[] = covidien_ui
-dependencies[] = nodereferrer

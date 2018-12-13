@@ -1,9 +1,0 @@
-name = Software Regulatory Approval
-description = Software Regulatory Approval.
-core = 6.x
-php = 5.0
-package = Covidien
-dependencies[] = content
-dependencies[] = content_profile
-dependencies[] = account_profile
-dependencies[] = covidien_ui

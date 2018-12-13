@@ -1,5 +1,0 @@
-name = Covidien Customer
-description = Here the covidien_customer specific customization done.
-core = 6.x
-package = Covidien
-dependencies[] = covidien_ui

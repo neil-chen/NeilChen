@@ -1,441 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-<head profile="http://selenium-ide.openqa.org/profiles/test-case">
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<link rel="selenium.base" href="http://10.243.118.130/" />
-<title>EditSoftware</title>
-</head>
-<body>
-<table cellpadding="1" cellspacing="1" border="1">
-<thead>
-<tr><td rowspan="1" colspan="3">EditSoftware</td></tr>
-</thead><tbody>
-<tr>
-	<td>open</td>
-	<td>/covidien</td>
-	<td></td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-name</td>
-	<td>admin</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-pass</td>
-	<td>admin123</td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-submit</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>link=Admin</td>
-	<td></td>
-</tr>
-<tr>
-	<td>setSpeed</td>
-	<td>3000</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>link=Software Catalog</td>
-	<td></td>
-</tr>
-<tr>
-	<td>store</td>
-	<td>javascript{'test'+ Math.floor(Math.random()*100000) ;}</td>
-	<td>esvariable</td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>link=Add New Software</td>
-	<td></td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-device-type-nid-nid</td>
-	<td>label=PB980_Ventilator</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-title</td>
-	<td>${esvariable}</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-sw-part-0-value</td>
-	<td>12345</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-sw-version-0-value</td>
-	<td>1.0</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-sw-description-0-value</td>
-	<td>Updated Software</td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-sw-type-nid-nid</td>
-	<td>index=1</td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-sw-status-nid-nid</td>
-	<td>index=1</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-sw-file-0-upload</td>
-	<td>/home/testfiles/SeleniumTestFile.txt</td>
-</tr>
-<tr>
-	<td>clickAt</td>
-	<td>id=edit-field-sw-file-0-filefield-upload</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>id=no_file</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>id=edit-go</td>
-	<td></td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=sw_priority</td>
-	<td>1</td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>//div/div/table/tbody/tr/td/input</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>//input[@value='--&gt;']</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-submit</td>
-	<td></td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-title</td>
-	<td>${esvariable}</td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-submit-softwarelist</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>//td/a</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Edit Software</td>
-	<td></td>
-</tr>
-<tr>
-	<td>selectWindow</td>
-	<td>null</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyText</td>
-	<td>css=h4</td>
-	<td>The Software item can be edited or deleted here.</td>
-</tr>
-<tr>
-	<td>setSpeed</td>
-	<td>100</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Software Name</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Device Type</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Software Part #</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Software Type</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Software Version</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Software Description</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Software Language</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Software Status</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>File Name</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Compatible Hardware</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Filter by hardware type</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Hardware Name</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Part Number</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Revision</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Hardware Type</td>
-	<td></td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-title</td>
-	<td>${esvariable}1</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-sw-part-0-value</td>
-	<td>123451</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-sw-version-0-value</td>
-	<td>1.1</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-sw-description-0-value</td>
-	<td>Updated Software 1</td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=secondary_submit</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Manage Regulatory Exceptions</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Software Name:</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Software Part Number:</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Software Version:</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Software Description:</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Country</td>
-	<td></td>
-</tr>
-<tr>
-	<td>setSpeed</td>
-	<td>3000</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>id=secondary_submit</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Software Name</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Software Part Number</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Software Version</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Software Description</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Country</td>
-	<td></td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-reg-approved-country-nid-nid</td>
-	<td>label=China</td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-submit</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>link=China</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Regulatory Exception</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Software Name</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Software Part Number</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Software Version</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Software Description</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Country</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-submit</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>link=Cancel</td>
-	<td></td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-title</td>
-	<td>${esvariable}1</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-sw-version-0-value</td>
-	<td>1.1</td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>css=td &gt; input.form-submit</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-submit</td>
-	<td></td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-title</td>
-	<td>${esvariable}1</td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>//td/a</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-delete</td>
-	<td></td>
-</tr>
-<tr>
-	<td>assertConfirmation</td>
-	<td>Are you sure you want to delete this software?</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>link=Logout</td>
-	<td></td>
-</tr>
-<tr>
-	<td>setSpeed</td>
-	<td>100</td>
-	<td></td>
-</tr>
-</tbody></table>
-</body>
-</html>

@@ -1,8 +1,0 @@
-<?php
-
-/**
- * hook_init
- */
-function covidien_seeddata_init() {
-  module_load_include('install', 'covidien_seeddata');
-}

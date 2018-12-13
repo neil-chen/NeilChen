@@ -1,861 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-<head profile="http://selenium-ide.openqa.org/profiles/test-case">
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<link rel="selenium.base" href="http://172.16.1.131/" />
-<title>Sample_data</title>
-</head>
-<body>
-<table cellpadding="1" cellspacing="1" border="1">
-<thead>
-<tr><td rowspan="1" colspan="3">Sample_data</td></tr>
-</thead><tbody>
-<tr>
-	<td>open</td>
-	<td>/</td>
-	<td></td>
-</tr>
-<tr>
-	<td>setSpeed</td>
-	<td>3000</td>
-	<td></td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-name</td>
-	<td>admin</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-pass-clear</td>
-	<td>Password</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-pass</td>
-	<td>admin123</td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-submit</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=anch_system_admin</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>link=Hardware Catalog</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-add-new</td>
-	<td></td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-device-type-nid-nid</td>
-	<td>label=PB980_Ventilator</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-title</td>
-	<td>GUIPCBA</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-hw-part-0-value</td>
-	<td>Part456</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-hw-version-0-value</td>
-	<td>1.A.4</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-hw-version-0-value</td>
-	<td>1.A.4</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-hw-description-0-value</td>
-	<td>Test</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-hw-description-0-value</td>
-	<td>Test</td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-hw-type-nid-nid</td>
-	<td>label=PCB</td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-submit</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-add-new</td>
-	<td></td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-device-type-nid-nid</td>
-	<td>label=PB980_Ventilator</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-title</td>
-	<td>BDPCBA</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-hw-part-0-value</td>
-	<td>Part123</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-hw-version-0-value</td>
-	<td>1.1.1</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-hw-description-0-value</td>
-	<td>Testing</td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-hw-type-nid-nid</td>
-	<td>label=MOTHERBOARD</td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-submit</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>link=Software Catalog</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-add-new</td>
-	<td></td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-device-type-nid-nid</td>
-	<td>label=PB980_Ventilator</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-title</td>
-	<td>BDSOFTWARE</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-sw-part-0-value</td>
-	<td>Part123</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-sw-version-0-value</td>
-	<td>VIKING_3.1.0.58</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-sw-description-0-value</td>
-	<td>Test</td>
-</tr>
-<tr>
-	<td>selectWindow</td>
-	<td>null</td>
-	<td></td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-sw-type-nid-nid</td>
-	<td>label=Software</td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-sw-status-nid-nid</td>
-	<td>label=In Production</td>
-</tr>
-<tr>
-	<td>setSpeed</td>
-	<td>3000</td>
-	<td></td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-sw-file-0-upload</td>
-	<td>/home/testfiles/SeleniumTestFile.txt</td>
-</tr>
-<tr>
-	<td>clickAt</td>
-	<td>id=edit-field-sw-file-0-filefield-upload</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>id=edit-go</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyElementPresent</td>
-	<td>css=tr.even &gt; td.views-field.views-field-nid</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyElementPresent</td>
-	<td>css=td.views-field.views-field-nid</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>//div[2]/table/tbody/tr/td/input</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyElementPresent</td>
-	<td>css=tr.even &gt; td.views-field.views-field-nid</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>//tr[2]/td/input</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-submit</td>
-	<td></td>
-</tr>
-<tr>
-	<td>setSpeed</td>
-	<td>100</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-add-new</td>
-	<td></td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-device-type-nid-nid</td>
-	<td>label=PB980_Ventilator</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-title</td>
-	<td>BDSOFTWARE</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-sw-part-0-value</td>
-	<td>Part123</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-sw-version-0-value</td>
-	<td>VIKING_3.1.0.59</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-sw-description-0-value</td>
-	<td>Test</td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-sw-type-nid-nid</td>
-	<td>label=Software</td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-sw-status-nid-nid</td>
-	<td>label=In Production</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-sw-file-0-upload</td>
-	<td>/home/testfiles/SeleniumTestFile.txt</td>
-</tr>
-<tr>
-	<td>clickAt</td>
-	<td>id=edit-field-sw-file-0-filefield-upload</td>
-	<td></td>
-</tr>
-<tr>
-	<td>setSpeed</td>
-	<td>3000</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>id=edit-go</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyElementPresent</td>
-	<td>css=td.views-field.views-field-nid</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>//div[2]/table/tbody/tr/td/input</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyElementPresent</td>
-	<td>css=tr.even &gt; td.views-field.views-field-nid</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>//tr[2]/td/input</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-submit</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=anch_system_admin</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>link=Document Catalog</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-add-new</td>
-	<td></td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-device-type-nid-nid</td>
-	<td>label=PB980_Ventilator</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-title</td>
-	<td>Test</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-document-part-number-0-value</td>
-	<td>Part1</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-document-version-0-value</td>
-	<td>1</td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-documnet-type-nid-nid</td>
-	<td>label=Release Notes</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-document-file-0-upload</td>
-	<td>/home/testfiles/SeleniumTestFile.txt</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-document-description-0-value</td>
-	<td>release1</td>
-</tr>
-<tr>
-	<td>clickAt</td>
-	<td>id=edit-field-document-file-0-filefield-upload</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyElementPresent</td>
-	<td>css=td.views-field.views-field-nid</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>//td/input</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyElementPresent</td>
-	<td>css=table.views-table.cols-4 &gt; tbody &gt; tr.odd.views-row-first &gt; td.views-field.views-field-nid</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>//td[2]/div/div/div[3]/table/tbody/tr/td/input</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyElementPresent</td>
-	<td>css=table.views-table.cols-4 &gt; tbody &gt; tr.even.views-row-last &gt; td.views-field.views-field-nid</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>//td[2]/div/div/div[3]/table/tbody/tr[2]/td/input</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyElementPresent</td>
-	<td>css=tr.even.views-row-last &gt; td.views-field.views-field-nid</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>//tr[2]/td/input</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-submit</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>link=Logout</td>
-	<td></td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-name</td>
-	<td>admin</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-pass-clear</td>
-	<td>Password</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-pass</td>
-	<td>admin123</td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-submit</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=anch_system_admin</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>link=Hardware Catalog</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-add-new</td>
-	<td></td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-device-type-nid-nid</td>
-	<td>label=SCD 700</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-title</td>
-	<td>Control Board</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-hw-part-0-value</td>
-	<td>Part456</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-hw-version-0-value</td>
-	<td>1.A.4</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-hw-version-0-value</td>
-	<td>1.A.4</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-hw-description-0-value</td>
-	<td>Test</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-hw-description-0-value</td>
-	<td>Test</td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-hw-type-nid-nid</td>
-	<td>label=PCB</td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-submit</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-add-new</td>
-	<td></td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-device-type-nid-nid</td>
-	<td>label=SCD 700</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-title</td>
-	<td>Control Board</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-hw-part-0-value</td>
-	<td>Part123</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-hw-version-0-value</td>
-	<td>1.1.1</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-hw-description-0-value</td>
-	<td>Testing</td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-hw-type-nid-nid</td>
-	<td>label=MOTHERBOARD</td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-submit</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>link=Software Catalog</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-add-new</td>
-	<td></td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-device-type-nid-nid</td>
-	<td>label=SCD 700</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-title</td>
-	<td>Control</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-sw-part-0-value</td>
-	<td>Part123</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-sw-version-0-value</td>
-	<td>VIKING_3.1.0.58</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-sw-description-0-value</td>
-	<td>Test</td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-sw-type-nid-nid</td>
-	<td>label=Software</td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-sw-status-nid-nid</td>
-	<td>label=In Production</td>
-</tr>
-<tr>
-	<td>setSpeed</td>
-	<td>3000</td>
-	<td></td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-sw-file-0-upload</td>
-	<td>/home/testfiles/SeleniumTestFile.txt</td>
-</tr>
-<tr>
-	<td>clickAt</td>
-	<td>id=edit-field-sw-file-0-filefield-upload</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>id=edit-go</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyElementPresent</td>
-	<td>css=tr.even &gt; td.views-field.views-field-nid</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyElementPresent</td>
-	<td>css=td.views-field.views-field-nid</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>//div[2]/table/tbody/tr/td/input</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyElementPresent</td>
-	<td>css=tr.even &gt; td.views-field.views-field-nid</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>//tr[2]/td/input</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-submit</td>
-	<td></td>
-</tr>
-<tr>
-	<td>setSpeed</td>
-	<td>100</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-add-new</td>
-	<td></td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-device-type-nid-nid</td>
-	<td>label=SCD 700</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-title</td>
-	<td>Control</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-sw-part-0-value</td>
-	<td>Part123</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-sw-version-0-value</td>
-	<td>VIKING_3.1.0.59</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-sw-description-0-value</td>
-	<td>Test</td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-sw-type-nid-nid</td>
-	<td>label=Software</td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-sw-status-nid-nid</td>
-	<td>label=In Production</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-sw-file-0-upload</td>
-	<td>/home/testfiles/SeleniumTestFile.txt</td>
-</tr>
-<tr>
-	<td>clickAt</td>
-	<td>id=edit-field-sw-file-0-filefield-upload</td>
-	<td></td>
-</tr>
-<tr>
-	<td>setSpeed</td>
-	<td>3000</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>id=edit-go</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyElementPresent</td>
-	<td>css=td.views-field.views-field-nid</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>//div[2]/table/tbody/tr/td/input</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyElementPresent</td>
-	<td>css=tr.even &gt; td.views-field.views-field-nid</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>//tr[2]/td/input</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-submit</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=anch_system_admin</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>link=Document Catalog</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-add-new</td>
-	<td></td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-device-type-nid-nid</td>
-	<td>label=SCD 700</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-title</td>
-	<td>Test</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-document-part-number-0-value</td>
-	<td>Part1</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-document-version-0-value</td>
-	<td>1</td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-documnet-type-nid-nid</td>
-	<td>label=Release Notes</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-document-file-0-upload</td>
-	<td>/home/testfiles/SeleniumTestFile.txt</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-document-description-0-value</td>
-	<td>release1</td>
-</tr>
-<tr>
-	<td>clickAt</td>
-	<td>id=edit-field-document-file-0-filefield-upload</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyElementPresent</td>
-	<td>css=td.views-field.views-field-nid</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>//td/input</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyElementPresent</td>
-	<td>css=table.views-table.cols-4 &gt; tbody &gt; tr.odd.views-row-first &gt; td.views-field.views-field-nid</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>//td[2]/div/div/div[3]/table/tbody/tr/td/input</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyElementPresent</td>
-	<td>css=table.views-table.cols-4 &gt; tbody &gt; tr.even.views-row-last &gt; td.views-field.views-field-nid</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>//td[2]/div/div/div[3]/table/tbody/tr[2]/td/input</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyElementPresent</td>
-	<td>css=tr.even &gt; td.views-field.views-field-nid</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>//tr[2]/td/input</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyElementPresent</td>
-	<td>css=tr.odd.views-row-last &gt; td.views-field.views-field-nid</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>//tr[3]/td/input</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-submit</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>link=Logout</td>
-	<td></td>
-</tr>
-</tbody></table>
-</body>
-</html>

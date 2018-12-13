@@ -1,5 +1,0 @@
-name = Covidien DeviceDb
-description = Here the covidien_devicedb specific customization done.
-core = 6.x
-package = Covidien
-dependencies[] = covidien_ui

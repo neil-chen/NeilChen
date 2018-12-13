@@ -1,301 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-<head profile="http://selenium-ide.openqa.org/profiles/test-case">
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<link rel="selenium.base" href="http://10.243.118.130/" />
-<title>SoftwareCatalog</title>
-</head>
-<body>
-<table cellpadding="1" cellspacing="1" border="1">
-<thead>
-<tr><td rowspan="1" colspan="3">SoftwareCatalog</td></tr>
-</thead><tbody>
-<tr>
-	<td>open</td>
-	<td>/</td>
-	<td></td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-name</td>
-	<td>admin</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-pass</td>
-	<td>admin123</td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-submit</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>link=Admin</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>link=Software Catalog</td>
-	<td></td>
-</tr>
-<tr>
-	<td>store</td>
-	<td>javascript{'test'+ Math.floor(Math.random()*100000) ;}</td>
-	<td>variable</td>
-</tr>
-<tr>
-	<td>setSpeed</td>
-	<td>3000</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>link=Add New Software</td>
-	<td></td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-title</td>
-	<td>${variable}</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-sw-part-0-value</td>
-	<td>12345</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-sw-version-0-value</td>
-	<td>1.0</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-sw-description-0-value</td>
-	<td>Updated Software</td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-sw-type-nid-nid</td>
-	<td>index=1</td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-sw-status-nid-nid</td>
-	<td>index=1</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-sw-file-0-upload</td>
-	<td>/home/testfiles/SeleniumTestFile.txt</td>
-</tr>
-<tr>
-	<td>clickAt</td>
-	<td>id=edit-field-sw-file-0-filefield-upload</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>id=no_file</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>id=edit-go</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyElementPresent</td>
-	<td>css=td.views-field.views-field-nid</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>//div/div/table/tbody/tr/td/input</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-submit</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>System Administration</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Software Catalog</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Select Device Type:</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Filter Categories:</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Hardware Type:</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Hardware Name:</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Hardware Revision:</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyValue</td>
-	<td>id=edit-title</td>
-	<td>Search - Enter Software Name</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-title</td>
-	<td>agent</td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-submit-softwarelist</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Show Software with Archived Status</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>id=sw_archieved_status</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-submit-softwarelist</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Name &amp; Version</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Part #</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Available</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Description</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Language</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>File Name</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>File Size</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Upload Date</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Status</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>id=sw_archieved_status</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>id=sw_archieved_status</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-submit-softwarelist</td>
-	<td></td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-title</td>
-	<td>${variable}</td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-submit-softwarelist</td>
-	<td></td>
-</tr>
-<tr>
-	<td>chooseOkOnNextConfirmation</td>
-	<td></td>
-	<td></td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-title</td>
-	<td>${variable}</td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-submit-softwarelist</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>//td/a</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-delete</td>
-	<td></td>
-</tr>
-<tr>
-	<td>assertConfirmation</td>
-	<td>Are you sure you want to delete this software?</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>link=Logout</td>
-	<td></td>
-</tr>
-<tr>
-	<td>setSpeed</td>
-	<td>100</td>
-	<td></td>
-</tr>
-</tbody></table>
-</body>
-</html>

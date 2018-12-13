@@ -1,5 +1,0 @@
-name = Covidien Device Config
-description = Here the covidien_device_config specific customization done.
-core = 6.x
-package = Covidien
-dependencies[] = covidien_ui

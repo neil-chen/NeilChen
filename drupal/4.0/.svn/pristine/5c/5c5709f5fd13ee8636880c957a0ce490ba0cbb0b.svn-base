@@ -1,5 +1,0 @@
-name = Covidien Mysql Views
-description = Here the covidien mysql views specific customization done.
-core = 6.x
-package = Covidien
-dependencies[] = covidien_ui

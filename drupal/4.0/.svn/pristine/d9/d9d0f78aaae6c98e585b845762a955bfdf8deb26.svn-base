@@ -1,6 +1,0 @@
-name = Covidien Firmware
-description = Firmware Catalog
-core = 6.x
-php = 5.0
-package = Covidien
-dependencies[] = covidien_ui

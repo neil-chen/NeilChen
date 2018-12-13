@@ -1,5 +1,0 @@
-name = Covidien db
-description = Here the covidien_db specific customization done.
-core = 6.x
-package = Covidien
-dependencies[] = covidien_ui

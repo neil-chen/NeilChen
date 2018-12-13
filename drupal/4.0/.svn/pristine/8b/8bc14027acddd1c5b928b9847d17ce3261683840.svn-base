@@ -1,5 +1,0 @@
-name = Covidien Ref Data
-description = Here the covidien data specific customization done.
-core = 6.x
-package = Covidien
-dependencies[] = covidien_ui

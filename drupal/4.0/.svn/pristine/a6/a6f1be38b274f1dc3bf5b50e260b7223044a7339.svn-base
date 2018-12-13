@@ -1,361 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-<head profile="http://selenium-ide.openqa.org/profiles/test-case">
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<link rel="selenium.base" href="http://10.243.118.130/" />
-<title>EditUser</title>
-</head>
-<body>
-<table cellpadding="1" cellspacing="1" border="1">
-<thead>
-<tr><td rowspan="1" colspan="3">EditUser</td></tr>
-</thead><tbody>
-<tr>
-	<td>open</td>
-	<td>/</td>
-	<td></td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-name</td>
-	<td>admin</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-pass</td>
-	<td>admin123</td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-submit</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>link=Admin</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>link=Admin</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>link=User Management</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>link=Add New</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>id=edit-field-covidien-employee-value-Yes</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyValue</td>
-	<td>id=auto_generate</td>
-	<td>Auto Generate</td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>id=auto_generate</td>
-	<td></td>
-</tr>
-<tr>
-	<td>store</td>
-	<td>javascript{Math.random().toString(36).substring(7);}</td>
-	<td>firstuservar</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-first-name-0-value</td>
-	<td>${firstuservar}</td>
-</tr>
-<tr>
-	<td>store</td>
-	<td>javascript{Math.random().toString(36).substring(7);}</td>
-	<td>lastuservar</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-last-name-0-value</td>
-	<td>${lastuservar}</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-name</td>
-	<td>javascript{Math.random().toString(36).substring(7)+&quot;@&quot;+&quot;testing&quot;+&quot;.com&quot;}</td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-device-avail-country-nid-nid</td>
-	<td>index=1</td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-user-language-nid-nid</td>
-	<td>index=1</td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-business-unit-nid-nid</td>
-	<td>index=1</td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>id=next</td>
-	<td></td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-Ventilation</td>
-	<td>label=User Admin</td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>id=default_Ventilation</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-submit</td>
-	<td></td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-name</td>
-	<td>${firstuservar} ${lastuservar}</td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-submit-Users</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>link=${firstuservar} ${lastuservar}</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>First name:</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Last name:</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Email address:</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Language:</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Password:</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Business Unit:</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyValue</td>
-	<td>id=auto_generate</td>
-	<td>Auto Generate</td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>id=auto_generate</td>
-	<td></td>
-</tr>
-<tr>
-	<td>store</td>
-	<td>javascript{Math.random().toString(36).substring(7);}</td>
-	<td>firstuservar1</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-first-name-0-value</td>
-	<td>${firstuservar1}</td>
-</tr>
-<tr>
-	<td>store</td>
-	<td>javascript{Math.random().toString(36).substring(7);}</td>
-	<td>lastuservar1</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-field-last-name-0-value</td>
-	<td>${lastuservar1}</td>
-</tr>
-<tr>
-	<td>store</td>
-	<td>javascript{Math.random().toString(36).substring(7)+&quot;@&quot;+Math.random().toString(36).substring(7)+&quot;.com&quot;}</td>
-	<td>emailuser1</td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-name</td>
-	<td>${emailuser1}</td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-user-language-nid-nid</td>
-	<td>index=1</td>
-</tr>
-<tr>
-	<td>select</td>
-	<td>id=edit-field-business-unit-nid-nid</td>
-	<td>index=1</td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>link=Cancel</td>
-	<td></td>
-</tr>
-<tr>
-	<td>type</td>
-	<td>id=edit-name</td>
-	<td>${firstuservar} ${lastuservar}</td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>id=edit-submit-Users</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>link=${firstuservar} ${lastuservar}</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyValue</td>
-	<td>id=auto_generate</td>
-	<td>Auto Generate</td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>id=auto_generate</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyValue</td>
-	<td>id=edit-field-first-name-0-value</td>
-	<td>${firstuservar}</td>
-</tr>
-<tr>
-	<td>verifyValue</td>
-	<td>id=edit-field-last-name-0-value</td>
-	<td>${lastuservar}</td>
-</tr>
-<tr>
-	<td>verifySelectedIndex</td>
-	<td>id=edit-field-user-language-nid-nid</td>
-	<td>1</td>
-</tr>
-<tr>
-	<td>verifySelectedIndex</td>
-	<td>id=edit-field-business-unit-nid-nid</td>
-	<td>1</td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>id=secondary_submit</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Edit Roles and User Permissions</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>User Name:</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>User Email ID:</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Class of Trade</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Role</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Default</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>link=Device Type Privileges</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Device Type</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Privilege</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Authorized</td>
-	<td></td>
-</tr>
-<tr>
-	<td>verifyTextPresent</td>
-	<td>Add New</td>
-	<td></td>
-</tr>
-<tr>
-	<td>click</td>
-	<td>link=Back</td>
-	<td></td>
-</tr>
-<tr>
-	<td>chooseOkOnNextConfirmation</td>
-	<td></td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>link=Delete this User</td>
-	<td></td>
-</tr>
-<tr>
-	<td>assertConfirmation</td>
-	<td>Are you sure you want to delete this user?</td>
-	<td></td>
-</tr>
-<tr>
-	<td>clickAndWait</td>
-	<td>link=Logout</td>
-	<td></td>
-</tr>
-</tbody></table>
-</body>
-</html>

@@ -1,9 +1,0 @@
-name = Covidien Theme
-description = Theme for Covidien.
-version = VERSION
-core = 6.x
-engine = phptemplate
-
-stylesheets[all][] = css/bootstrap.css
-stylesheets[all][] = css/style.css
-scripts[] = js/covidien_common.js
